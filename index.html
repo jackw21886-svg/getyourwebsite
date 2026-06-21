@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>GetYourWebsite — Bold websites for local businesses</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --bg:#06060a;
+    --bg2:#0b0b16;
+    --ink:#f4f4fb;
+    --muted:#a0a0b8;
+    --violet:#7c5cff;
+    --cyan:#28e0d6;
+    --pink:#ff5ca8;
+    --line:rgba(255,255,255,.08);
+    --card:rgba(255,255,255,.035);
+    --maxw:1180px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Inter',system-ui,sans-serif;
+    line-height:1.6;
+    overflow-x:hidden;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3,.display{font-family:'Space Grotesk',sans-serif;letter-spacing:-.02em;line-height:1.05}
+  a{color:inherit;text-decoration:none}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 24px}
+  .grad-text{background:linear-gradient(100deg,var(--violet),var(--cyan) 55%,var(--pink));-webkit-background-clip:text;background-clip:text;color:transparent}
+
+  /* cursor */
+  .cursor,.cursor-dot{position:fixed;top:0;left:0;border-radius:50%;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);mix-blend-mode:screen}
+  .cursor{width:34px;height:34px;border:1.5px solid rgba(124,92,255,.7);transition:width .2s,height .2s,background .2s}
+  .cursor-dot{width:6px;height:6px;background:var(--cyan)}
+  .cursor.grow{width:64px;height:64px;background:rgba(124,92,255,.12);border-color:transparent}
+  @media (hover:none){.cursor,.cursor-dot{display:none}}
+
+  /* nav */
+  header{position:fixed;top:0;left:0;right:0;z-index:100;transition:.35s}
+  header.scrolled{background:rgba(8,8,14,.72);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+  nav{display:flex;align-items:center;justify-content:space-between;height:74px}
+  .logo{font-family:'Space Grotesk';font-weight:700;font-size:20px;display:flex;align-items:center;gap:9px}
+  .logo .mark{width:26px;height:26px;border-radius:8px;background:linear-gradient(135deg,var(--violet),var(--cyan));box-shadow:0 0 24px rgba(124,92,255,.6);animation:spin 9s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .nav-links{display:flex;gap:30px;align-items:center}
+  .nav-links a{font-size:14.5px;color:var(--muted);transition:.2s;position:relative}
+  .nav-links a:hover{color:var(--ink)}
+  .nav-links a::after{content:'';position:absolute;left:0;bottom:-6px;height:2px;width:0;background:linear-gradient(90deg,var(--violet),var(--cyan));transition:.3s}
+  .nav-links a:hover::after{width:100%}
+  .btn{display:inline-flex;align-items:center;gap:8px;font-weight:600;font-size:14.5px;padding:12px 22px;border-radius:100px;border:1px solid transparent;cursor:pointer;transition:.25s;font-family:'Inter'}
+  .btn-primary{background:linear-gradient(100deg,var(--violet),var(--cyan));color:#06060a;box-shadow:0 8px 30px rgba(124,92,255,.35)}
+  .btn-primary:hover{transform:translateY(-2px);box-shadow:0 14px 44px rgba(124,92,255,.55)}
+  .btn-ghost{border-color:var(--line);color:var(--ink);background:transparent}
+  .btn-ghost:hover{border-color:var(--violet);background:rgba(124,92,255,.08)}
+  .nav-cta{display:flex;gap:12px;align-items:center}
+  .menu-btn{display:none;background:none;border:0;color:var(--ink);font-size:26px;cursor:pointer}
+
+  /* hero */
+  .hero{position:relative;min-height:100vh;display:flex;align-items:center;overflow:hidden}
+  #particles{position:absolute;inset:0;z-index:0}
+  .blob{position:absolute;border-radius:50%;filter:blur(90px);opacity:.5;z-index:0;animation:float 14s ease-in-out infinite}
+  .blob.b1{width:520px;height:520px;background:#6a3cff;top:-160px;right:-120px}
+  .blob.b2{width:440px;height:440px;background:#16b3aa;bottom:-160px;left:-120px;animation-delay:-5s}
+  .blob.b3{width:340px;height:340px;background:#ff3c8a;top:40%;left:55%;animation-delay:-9s;opacity:.32}
+  @keyframes float{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(40px,-40px) scale(1.12)}}
+  .hero-inner{position:relative;z-index:2;width:100%}
+  .pill{display:inline-flex;align-items:center;gap:9px;font-size:13px;color:var(--muted);border:1px solid var(--line);padding:7px 15px;border-radius:100px;background:rgba(255,255,255,.03);margin-bottom:26px}
+  .pulse{width:8px;height:8px;border-radius:50%;background:var(--cyan);box-shadow:0 0 0 0 rgba(40,224,214,.7);animation:pulse 2s infinite}
+  @keyframes pulse{70%{box-shadow:0 0 0 10px rgba(40,224,214,0)}100%{box-shadow:0 0 0 0 rgba(40,224,214,0)}}
+  .hero h1{font-size:clamp(42px,8vw,92px);font-weight:700;max-width:14ch}
+  .hero h1 .line{display:block;overflow:hidden}
+  .hero h1 .line span{display:block;transform:translateY(110%);animation:rise .9s cubic-bezier(.2,.9,.25,1) forwards}
+  .hero h1 .line:nth-child(2) span{animation-delay:.12s}
+  .hero h1 .line:nth-child(3) span{animation-delay:.24s}
+  @keyframes rise{to{transform:translateY(0)}}
+  .hero p.sub{font-size:clamp(17px,2.2vw,21px);color:var(--muted);max-width:52ch;margin:26px 0 36px;opacity:0;animation:fadeUp .8s .5s forwards}
+  .hero-cta{display:flex;gap:14px;flex-wrap:wrap;opacity:0;animation:fadeUp .8s .65s forwards}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+  .scroll-cue{position:absolute;bottom:30px;left:50%;transform:translateX(-50%);z-index:2;color:var(--muted);font-size:12px;letter-spacing:.2em;text-transform:uppercase;display:flex;flex-direction:column;align-items:center;gap:10px;opacity:0;animation:fadeUp 1s 1.1s forwards}
+  .mouse{width:24px;height:38px;border:1.5px solid var(--line);border-radius:14px;position:relative}
+  .mouse::before{content:'';position:absolute;top:7px;left:50%;transform:translateX(-50%);width:4px;height:7px;background:var(--cyan);border-radius:3px;animation:wheel 1.6s infinite}
+  @keyframes wheel{50%{transform:translate(-50%,12px);opacity:.3}}
+
+  /* marquee */
+  .marquee{border-block:1px solid var(--line);padding:20px 0;overflow:hidden;white-space:nowrap;background:var(--bg2)}
+  .track{display:inline-flex;gap:54px;animation:scroll 26s linear infinite;font-family:'Space Grotesk';font-weight:600;font-size:19px;color:var(--muted)}
+  .track span{opacity:.6;transition:.2s}
+  .marquee:hover .track{animation-play-state:paused}
+  .track b{color:var(--violet)}
+  @keyframes scroll{to{transform:translateX(-50%)}}
+
+  /* sections */
+  section{position:relative}
+  .pad{padding:120px 0}
+  .eyebrow{font-size:13px;letter-spacing:.22em;text-transform:uppercase;color:var(--cyan);font-weight:600;margin-bottom:16px}
+  .sec-title{font-size:clamp(30px,5vw,52px);font-weight:700;max-width:18ch}
+  .sec-lead{color:var(--muted);font-size:18px;max-width:54ch;margin-top:18px}
+
+  /* bento */
+  .bento{display:grid;grid-template-columns:repeat(6,1fr);gap:18px;margin-top:56px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:30px;position:relative;overflow:hidden;transition:.35s}
+  .card:hover{border-color:rgba(124,92,255,.5);transform:translateY(-4px)}
+  .card::after{content:'';position:absolute;inset:0;background:radial-gradient(400px circle at var(--mx,50%) var(--my,0%),rgba(124,92,255,.16),transparent 40%);opacity:0;transition:.3s}
+  .card:hover::after{opacity:1}
+  .c-lg{grid-column:span 4}
+  .c-sm{grid-column:span 2}
+  .c-md{grid-column:span 3}
+  .ic{width:48px;height:48px;border-radius:13px;display:grid;place-items:center;background:linear-gradient(135deg,rgba(124,92,255,.25),rgba(40,224,214,.18));margin-bottom:20px;color:var(--cyan)}
+  .ic svg{width:24px;height:24px}
+  .card h3{font-size:22px;margin-bottom:9px}
+  .card p{color:var(--muted);font-size:15px}
+
+  /* steps */
+  .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:56px;counter-reset:s}
+  .step{position:relative;padding:34px 28px;border:1px solid var(--line);border-radius:22px;background:var(--card);counter-increment:s}
+  .step::before{content:counter(s,decimal-leading-zero);font-family:'Space Grotesk';font-weight:700;font-size:54px;background:linear-gradient(120deg,var(--violet),var(--cyan));-webkit-background-clip:text;background-clip:text;color:transparent;display:block;margin-bottom:14px}
+  .step h3{font-size:21px;margin-bottom:8px}
+  .step p{color:var(--muted);font-size:15px}
+
+  /* stats */
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:24px;margin-top:24px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:56px 0}
+  .stat .num{font-family:'Space Grotesk';font-weight:700;font-size:clamp(40px,6vw,64px);line-height:1}
+  .stat .lbl{color:var(--muted);font-size:14.5px;margin-top:8px}
+
+  /* impact / payoff */
+  .impact{display:grid;grid-template-columns:1.1fr .9fr;gap:48px;align-items:center;margin-top:56px}
+  .chartbox{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:32px}
+  .chartbox .clbl{font-size:13px;color:var(--muted);margin-bottom:8px}
+  .bars{display:flex;align-items:flex-end;gap:34px;height:250px}
+  .bar{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%}
+  .bar .fill{width:100%;border-radius:14px 14px 0 0;height:0;transition:height 1.3s cubic-bezier(.2,.9,.25,1)}
+  .bar.b-low .fill{background:rgba(255,255,255,.13)}
+  .bar.b-high .fill{background:linear-gradient(180deg,var(--violet),var(--cyan));box-shadow:0 0 40px rgba(124,92,255,.4)}
+  .reveal.in .bar.b-low .fill{height:30%}
+  .reveal.in .bar.b-high .fill{height:100%}
+  .bar .val{font-family:'Space Grotesk';font-weight:700;font-size:24px;margin-bottom:12px;opacity:0;transform:translateY(8px);transition:.6s .9s}
+  .reveal.in .bar .val{opacity:1;transform:none}
+  .bar .cap{margin-top:14px;font-size:13px;color:var(--muted);text-align:center}
+  .impact-list{display:flex;flex-direction:column;gap:24px}
+  .impact-item{display:flex;gap:18px;align-items:flex-start}
+  .impact-item .big{font-family:'Space Grotesk';font-weight:700;font-size:36px;line-height:1;background:linear-gradient(120deg,var(--violet),var(--cyan));-webkit-background-clip:text;background-clip:text;color:transparent;min-width:104px}
+  .impact-item p{color:var(--muted);font-size:15px}
+  .impact-item p b{color:var(--ink);font-weight:600}
+
+  /* gallery */
+  .gallery{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;margin:48px 0}
+  .site{border:1px solid var(--line);border-radius:18px;overflow:hidden;background:var(--card);transition:.35s}
+  .site:hover{transform:translateY(-7px);border-color:rgba(124,92,255,.5)}
+  .site .top{display:flex;gap:6px;padding:11px 14px;border-bottom:1px solid var(--line);background:rgba(255,255,255,.03)}
+  .site .top i{width:9px;height:9px;border-radius:50%;background:rgba(255,255,255,.2)}
+  .site .shot{height:180px;padding:20px;overflow:hidden}
+  .site .shot .h{font-family:'Space Grotesk';font-weight:700;font-size:19px;color:#fff}
+  .site .shot .l{height:7px;border-radius:4px;background:rgba(255,255,255,.28);margin-top:9px}
+  .site .shot .row{display:flex;gap:8px;margin-top:16px}
+  .site .shot .row span{flex:1;height:38px;border-radius:8px;background:rgba(255,255,255,.18)}
+  .site .shot .chip{display:inline-block;margin-top:16px;padding:7px 13px;border-radius:100px;font-size:11.5px;font-weight:700;color:#06060a}
+  .site .meta{padding:14px 16px;display:flex;justify-content:space-between;align-items:center;font-size:14px;font-weight:500}
+  .site .meta span{color:var(--muted);font-weight:400}
+  @media(max-width:860px){.impact{grid-template-columns:1fr}.gallery{grid-template-columns:1fr}}
+
+  /* cta band */
+  .cta-band{position:relative;border-radius:32px;padding:72px 40px;text-align:center;overflow:hidden;background:linear-gradient(120deg,#160f33,#0c2a2a);border:1px solid var(--line)}
+  .cta-band .blob{opacity:.4}
+  .cta-band h2{font-size:clamp(32px,6vw,60px);font-weight:700;position:relative;z-index:2}
+  .cta-band p{color:var(--muted);font-size:19px;margin:18px auto 32px;max-width:46ch;position:relative;z-index:2}
+  .cta-band .btn{position:relative;z-index:2}
+
+  /* reveal */
+  .reveal{opacity:0;transform:translateY(34px);transition:.8s cubic-bezier(.2,.9,.25,1)}
+  .reveal.in{opacity:1;transform:none}
+
+  footer{border-top:1px solid var(--line);padding:54px 0 40px;background:var(--bg2)}
+  .foot{display:flex;justify-content:space-between;flex-wrap:wrap;gap:30px;align-items:flex-start}
+  .foot p{color:var(--muted);font-size:14.5px;max-width:34ch;margin-top:14px}
+  .foot-links{display:flex;gap:50px;flex-wrap:wrap}
+  .foot-col h4{font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:14px}
+  .foot-col a{display:block;color:var(--ink);font-size:14.5px;padding:5px 0;opacity:.8;transition:.2s}
+  .foot-col a:hover{opacity:1;color:var(--cyan)}
+  .copy{margin-top:44px;padding-top:24px;border-top:1px solid var(--line);color:var(--muted);font-size:13px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+
+  @media(max-width:860px){
+    .nav-links{display:none}
+    .menu-btn{display:block}
+    .bento{grid-template-columns:1fr}
+    .c-lg,.c-sm,.c-md{grid-column:span 1}
+    .steps{grid-template-columns:1fr}
+    .stats{grid-template-columns:repeat(2,1fr);gap:36px 24px}
+    .pad{padding:84px 0}
+  }
+  @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.hero h1 .line span{transform:none}.reveal{opacity:1;transform:none}}
+</style>
+</head>
+<body>
+<div class="cursor"></div><div class="cursor-dot"></div>
+
+<header id="hdr">
+  <div class="wrap">
+    <nav>
+      <a class="logo" href="#top"><span class="mark"></span>GetYourWebsite</a>
+      <div class="nav-links">
+        <a href="#work">What we do</a>
+        <a href="#how">How it works</a>
+        <a href="#why">Why us</a>
+        <a href="#impact">The payoff</a>
+        <a href="#showcase">Showcase</a>
+      </div>
+      <div class="nav-cta">
+        <a href="#contact" class="btn btn-ghost mag">Free mockup</a>
+        <a href="#contact" class="btn btn-primary mag">Get started</a>
+      </div>
+      <button class="menu-btn" aria-label="Menu">☰</button>
+    </nav>
+  </div>
+</header>
+
+<section class="hero" id="top">
+  <canvas id="particles"></canvas>
+  <div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div>
+  <div class="wrap hero-inner">
+    <span class="pill"><span class="pulse"></span> Websites built for local businesses</span>
+    <h1>
+      <span class="line"><span>Your business</span></span>
+      <span class="line"><span>deserves a site</span></span>
+      <span class="line"><span class="grad-text">that turns heads.</span></span>
+    </h1>
+    <p class="sub">We design bold, fast, modern websites that make local businesses look like the big leagues — and we'll prove it with a free custom mockup before you pay a cent.</p>
+    <div class="hero-cta">
+      <a href="#contact" class="btn btn-primary mag">Get my free mockup →</a>
+      <a href="#showcase" class="btn btn-ghost mag">See the work</a>
+    </div>
+  </div>
+  <div class="scroll-cue"><span>Scroll</span><span class="mouse"></span></div>
+</section>
+
+<div class="marquee">
+  <div class="track">
+    <span>Restaurants</span><span><b>•</b></span><span>Bakeries</span><span><b>•</b></span><span>Salons</span><span><b>•</b></span><span>Gyms</span><span><b>•</b></span><span>Cafes</span><span><b>•</b></span><span>Dentists</span><span><b>•</b></span><span>Contractors</span><span><b>•</b></span><span>Retail</span><span><b>•</b></span>
+    <span>Restaurants</span><span><b>•</b></span><span>Bakeries</span><span><b>•</b></span><span>Salons</span><span><b>•</b></span><span>Gyms</span><span><b>•</b></span><span>Cafes</span><span><b>•</b></span><span>Dentists</span><span><b>•</b></span><span>Contractors</span><span><b>•</b></span><span>Retail</span><span><b>•</b></span>
+  </div>
+</div>
+
+<section class="pad" id="work">
+  <div class="wrap">
+    <div class="reveal">
+      <div class="eyebrow">What we do</div>
+      <h2 class="sec-title">Everything your business needs to <span class="grad-text">win online.</span></h2>
+    </div>
+    <div class="bento">
+      <div class="card c-lg reveal tilt">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9h18M9 21V9"/><rect x="3" y="3" width="18" height="18" rx="2"/></svg></div>
+        <h3>Custom design, never templates</h3>
+        <p>Every site is built around your brand, your customers, and the way you actually do business — not a cookie-cutter theme everyone else is using.</p>
+      </div>
+      <div class="card c-sm reveal tilt">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h7l-1 8 10-12h-7z"/></svg></div>
+        <h3>Lightning fast</h3>
+        <p>Optimized to load in a blink on any phone.</p>
+      </div>
+      <div class="card c-sm reveal tilt">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M12 18h.01"/></svg></div>
+        <h3>Mobile first</h3>
+        <p>Looks flawless where your customers actually are.</p>
+      </div>
+      <div class="card c-md reveal tilt">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg></div>
+        <h3>Built to get found</h3>
+        <p>Clean, search-friendly structure so locals discover you on Google when they're ready to buy.</p>
+      </div>
+      <div class="card c-md reveal tilt">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg></div>
+        <h3>See it before you buy</h3>
+        <p>We build a real mockup of your site for free. Love it? Go live. Not for you? No cost, no pressure.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="pad" id="how" style="background:var(--bg2)">
+  <div class="wrap">
+    <div class="reveal">
+      <div class="eyebrow">How it works</div>
+      <h2 class="sec-title">From hello to live in <span class="grad-text">three steps.</span></h2>
+    </div>
+    <div class="steps">
+      <div class="step reveal"><h3>We reach out</h3><p>We learn about your business — what you offer, who you serve, and the look you want.</p></div>
+      <div class="step reveal"><h3>We build your mockup</h3><p>You get a free, custom-designed preview of your new site, tailored to your business.</p></div>
+      <div class="step reveal"><h3>You go live</h3><p>Love it? We polish it, connect everything, and launch. You own a site that finally fits you.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="pad" id="why">
+  <div class="wrap">
+    <div class="reveal">
+      <div class="eyebrow">Why us</div>
+      <h2 class="sec-title">Numbers that <span class="grad-text">matter.</span></h2>
+    </div>
+    <div class="stats reveal">
+      <div class="stat"><div class="num" data-to="100">0</div><div class="lbl">% custom-built, zero templates</div></div>
+      <div class="stat"><div class="num" data-to="48">0</div><div class="lbl">hours to your free mockup</div></div>
+      <div class="stat"><div class="num" data-to="0">0</div><div class="lbl">cost to see your design</div></div>
+      <div class="stat"><div class="num" data-to="3">0</div><div class="lbl">x more enquiries with a real site</div></div>
+    </div>
+  </div>
+</section>
+
+<section class="pad" id="impact" style="background:var(--bg2)">
+  <div class="wrap">
+    <div class="reveal">
+      <div class="eyebrow">The payoff</div>
+      <h2 class="sec-title">A great website <span class="grad-text">pays for itself.</span></h2>
+      <p class="sec-lead">Your next customer is searching online right now. Show up looking sharp and they call you — show up outdated (or not at all) and they scroll to someone who did.</p>
+    </div>
+    <div class="impact reveal">
+      <div class="chartbox">
+        <div class="clbl">Typical monthly customer enquiries</div>
+        <div class="bars">
+          <div class="bar b-low"><span class="val">1x</span><div class="fill"></div><span class="cap">No site / outdated</span></div>
+          <div class="bar b-high"><span class="val">3x+</span><div class="fill"></div><span class="cap">With GetYourWebsite</span></div>
+        </div>
+      </div>
+      <div class="impact-list">
+        <div class="impact-item"><div class="big">75%</div><p>of people <b>judge a business's credibility</b> on its website design alone.</p></div>
+        <div class="impact-item"><div class="big">70%+</div><p>of customers <b>research a business online</b> before they ever call or walk in.</p></div>
+        <div class="impact-item"><div class="big">24/7</div><p>your site keeps selling — <b>calls, bookings, and orders</b> while you sleep.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="pad" id="showcase">
+  <div class="wrap">
+    <div class="reveal" style="text-align:center;margin:0 auto;max-width:760px">
+      <div class="eyebrow" style="justify-content:center">Showcase</div>
+      <h2 class="sec-title" style="margin:0 auto">Built bold. <span class="grad-text">Built for you.</span></h2>
+      <p class="sec-lead" style="margin:18px auto 40px">We design sites that look hand-crafted, move beautifully, and make your business impossible to scroll past.</p>
+    </div>
+    <div class="gallery">
+      <div class="site reveal">
+        <div class="top"><i></i><i></i><i></i></div>
+        <div class="shot" style="background:linear-gradient(140deg,#2a1a12,#6b3f22)">
+          <div class="h">Rosa's Bakery</div>
+          <div class="l" style="width:62%"></div><div class="l" style="width:42%"></div>
+          <div class="row"><span></span><span></span><span></span></div>
+          <span class="chip" style="background:#f0a35e">Order fresh →</span>
+        </div>
+        <div class="meta">Bakery<span>Sample design</span></div>
+      </div>
+      <div class="site reveal">
+        <div class="top"><i></i><i></i><i></i></div>
+        <div class="shot" style="background:linear-gradient(140deg,#0e1630,#1d2b6b)">
+          <div class="h">Iron Forge Gym</div>
+          <div class="l" style="width:55%"></div><div class="l" style="width:38%"></div>
+          <div class="row"><span></span><span></span><span></span></div>
+          <span class="chip" style="background:#28e0d6">Join now →</span>
+        </div>
+        <div class="meta">Fitness<span>Sample design</span></div>
+      </div>
+      <div class="site reveal">
+        <div class="top"><i></i><i></i><i></i></div>
+        <div class="shot" style="background:linear-gradient(140deg,#0c2230,#10566b)">
+          <div class="h">Bright Smile Dental</div>
+          <div class="l" style="width:60%"></div><div class="l" style="width:40%"></div>
+          <div class="row"><span></span><span></span><span></span></div>
+          <span class="chip" style="background:#7c5cff;color:#fff">Book a visit →</span>
+        </div>
+        <div class="meta">Dental<span>Sample design</span></div>
+      </div>
+    </div>
+    <div class="cta-band reveal" id="contact">
+      <div class="blob b1" style="top:-180px;right:-80px"></div>
+      <div class="blob b2" style="bottom:-180px;left:-80px"></div>
+      <h2>Ready to look <span class="grad-text">unforgettable?</span></h2>
+      <p>Get a free custom mockup of your new website. No commitment, no catch — just proof of how good your business can look.</p>
+      <a href="mailto:hello@getyourwebsite.com" class="btn btn-primary mag" style="font-size:16px;padding:15px 30px">Claim my free mockup →</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="foot">
+      <div>
+        <a class="logo" href="#top"><span class="mark"></span>GetYourWebsite</a>
+        <p>Bold, modern websites for local businesses — designed to be seen, built to convert.</p>
+      </div>
+      <div class="foot-links">
+        <div class="foot-col"><h4>Company</h4><a href="#work">What we do</a><a href="#how">How it works</a><a href="#why">Why us</a></div>
+        <div class="foot-col"><h4>Get started</h4><a href="#contact">Free mockup</a><a href="mailto:hello@getyourwebsite.com">Contact</a></div>
+      </div>
+    </div>
+    <div class="copy"><span>© 2026 GetYourWebsite. All rights reserved.</span><span>Made for local businesses that mean business.</span></div>
+  </div>
+</footer>
+
+<script>
+(function(){
+  var rm = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* custom cursor */
+  var cur=document.querySelector('.cursor'),dot=document.querySelector('.cursor-dot'),cx=0,cy=0,tx=0,ty=0;
+  if(!matchMedia('(hover:none)').matches){
+    window.addEventListener('mousemove',function(e){tx=e.clientX;ty=e.clientY;dot.style.left=tx+'px';dot.style.top=ty+'px';});
+    (function loop(){cx+=(tx-cx)*.18;cy+=(ty-cy)*.18;cur.style.left=cx+'px';cur.style.top=cy+'px';requestAnimationFrame(loop);})();
+    document.querySelectorAll('a,button,.card').forEach(function(el){
+      el.addEventListener('mouseenter',function(){cur.classList.add('grow')});
+      el.addEventListener('mouseleave',function(){cur.classList.remove('grow')});
+    });
+  }
+
+  /* nav scrolled */
+  var hdr=document.getElementById('hdr');
+  window.addEventListener('scroll',function(){hdr.classList.toggle('scrolled',window.scrollY>30)});
+
+  /* reveal on scroll */
+  var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}})},{threshold:.15});
+  document.querySelectorAll('.reveal').forEach(function(el){io.observe(el)});
+
+  /* count up */
+  var sio=new IntersectionObserver(function(es){es.forEach(function(e){
+    if(!e.isIntersecting)return; var el=e.target,to=+el.dataset.to,d=1400,s=performance.now();
+    (function tick(now){var p=Math.min((now-s)/d,1);el.textContent=Math.round(to*(1-Math.pow(1-p,3)));if(p<1)requestAnimationFrame(tick);})(s);
+    sio.unobserve(el);
+  })},{threshold:.6});
+  document.querySelectorAll('.num').forEach(function(el){sio.observe(el)});
+
+  /* card glow follows mouse */
+  document.querySelectorAll('.card').forEach(function(c){
+    c.addEventListener('mousemove',function(e){var r=c.getBoundingClientRect();c.style.setProperty('--mx',(e.clientX-r.left)+'px');c.style.setProperty('--my',(e.clientY-r.top)+'px');});
+  });
+
+  /* magnetic buttons */
+  if(!rm){document.querySelectorAll('.mag').forEach(function(b){
+    b.addEventListener('mousemove',function(e){var r=b.getBoundingClientRect();b.style.transform='translate('+((e.clientX-r.left-r.width/2)*.25)+'px,'+((e.clientY-r.top-r.height/2)*.35)+'px)';});
+    b.addEventListener('mouseleave',function(){b.style.transform='';});
+  });}
+
+  /* particle constellation */
+  var cv=document.getElementById('particles'),ctx=cv.getContext('2d'),W,H,pts=[];
+  function size(){W=cv.width=cv.offsetWidth;H=cv.height=cv.offsetHeight;}
+  function init(){size();var n=Math.min(90,Math.floor(W*H/16000));pts=[];for(var i=0;i<n;i++)pts.push({x:Math.random()*W,y:Math.random()*H,vx:(Math.random()-.5)*.4,vy:(Math.random()-.5)*.4});}
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    for(var i=0;i<pts.length;i++){var p=pts[i];p.x+=p.vx;p.y+=p.vy;if(p.x<0||p.x>W)p.vx*=-1;if(p.y<0||p.y>H)p.vy*=-1;
+      ctx.beginPath();ctx.arc(p.x,p.y,1.6,0,7);ctx.fillStyle='rgba(160,160,220,.55)';ctx.fill();
+      for(var j=i+1;j<pts.length;j++){var q=pts[j],dx=p.x-q.x,dy=p.y-q.y,d=dx*dx+dy*dy;if(d<14000){ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(q.x,q.y);ctx.strokeStyle='rgba(124,92,255,'+(.18*(1-d/14000))+')';ctx.lineWidth=1;ctx.stroke();}}
+    }
+    requestAnimationFrame(draw);
+  }
+  if(!rm){init();draw();window.addEventListener('resize',init);}
+
+  /* mobile menu */
+  document.querySelector('.menu-btn').addEventListener('click',function(){
+    var n=document.querySelector('.nav-links');
+    var open=n.style.display==='flex';
+    n.style.cssText=open?'':'display:flex;position:absolute;top:74px;left:0;right:0;flex-direction:column;background:rgba(8,8,14,.97);padding:24px;gap:18px;border-bottom:1px solid var(--line)';
+  });
+})();
+</script>
+</body>
+</html>
