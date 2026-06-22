@@ -151,17 +151,18 @@
 
   /* gallery */
   .gallery{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;margin:48px 0}
-  .site{border:1px solid var(--line);border-radius:18px;overflow:hidden;background:var(--card);transition:.35s}
-  .site:hover{transform:translateY(-7px);border-color:rgba(124,92,255,.5)}
-  .site .top{display:flex;gap:6px;padding:11px 14px;border-bottom:1px solid var(--line);background:rgba(255,255,255,.03)}
-  .site .top i{width:9px;height:9px;border-radius:50%;background:rgba(255,255,255,.2)}
-  .site .shot{height:180px;padding:20px;overflow:hidden}
-  .site .shot .h{font-family:'Space Grotesk';font-weight:700;font-size:19px;color:#fff}
-  .site .shot .l{height:7px;border-radius:4px;background:rgba(255,255,255,.28);margin-top:9px}
-  .site .shot .row{display:flex;gap:8px;margin-top:16px}
-  .site .shot .row span{flex:1;height:38px;border-radius:8px;background:rgba(255,255,255,.18)}
-  .site .shot .chip{display:inline-block;margin-top:16px;padding:7px 13px;border-radius:100px;font-size:11.5px;font-weight:700;color:#06060a}
-  .site .meta{padding:14px 16px;display:flex;justify-content:space-between;align-items:center;font-size:14px;font-weight:500}
+  .site{display:block;border:1px solid var(--line);border-radius:18px;overflow:hidden;background:var(--card);transition:.35s}
+  .site:hover{transform:translateY(-7px);border-color:rgba(124,92,255,.5);box-shadow:0 26px 54px rgba(0,0,0,.45)}
+  .site .top{display:flex;align-items:center;gap:6px;padding:10px 14px;border-bottom:1px solid var(--line);background:rgba(255,255,255,.04)}
+  .site .top i{width:9px;height:9px;border-radius:50%;background:rgba(255,255,255,.22);flex:none}
+  .site .top .url{margin-left:8px;font-family:monospace;font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .site .shot{position:relative;height:200px;overflow:hidden}
+  .site .shot img{width:100%;height:100%;object-fit:cover;transition:.5s}
+  .site:hover .shot img{transform:scale(1.05)}
+  .site .shot .ov{position:absolute;inset:0;background:linear-gradient(180deg,rgba(6,6,10,.05),rgba(6,6,10,.85));display:flex;flex-direction:column;justify-content:flex-end;padding:18px}
+  .site .shot .ov h3{font-family:'Space Grotesk';font-weight:700;font-size:20px;color:#fff;margin:0}
+  .site .shot .ov .go{font-size:12.5px;font-weight:600;color:var(--cyan);margin-top:4px}
+  .site .meta{padding:13px 16px;display:flex;justify-content:space-between;align-items:center;font-size:13.5px;font-weight:500}
   .site .meta span{color:var(--muted);font-weight:400}
   @media(max-width:860px){.impact{grid-template-columns:1fr}.gallery{grid-template-columns:1fr}}
 
@@ -343,36 +344,21 @@
       <p class="sec-lead" style="margin:18px auto 40px">We design sites that look hand-crafted, move beautifully, and make your business impossible to scroll past.</p>
     </div>
     <div class="gallery">
-      <div class="site reveal">
-        <div class="top"><i></i><i></i><i></i></div>
-        <div class="shot" style="background:linear-gradient(140deg,#2a1a12,#6b3f22)">
-          <div class="h">Rosa's Bakery</div>
-          <div class="l" style="width:62%"></div><div class="l" style="width:42%"></div>
-          <div class="row"><span></span><span></span><span></span></div>
-          <span class="chip" style="background:#f0a35e">Order fresh →</span>
-        </div>
-        <div class="meta">Bakery<span>Sample design</span></div>
-      </div>
-      <div class="site reveal">
-        <div class="top"><i></i><i></i><i></i></div>
-        <div class="shot" style="background:linear-gradient(140deg,#0e1630,#1d2b6b)">
-          <div class="h">Iron Forge Gym</div>
-          <div class="l" style="width:55%"></div><div class="l" style="width:38%"></div>
-          <div class="row"><span></span><span></span><span></span></div>
-          <span class="chip" style="background:#28e0d6">Join now →</span>
-        </div>
-        <div class="meta">Fitness<span>Sample design</span></div>
-      </div>
-      <div class="site reveal">
-        <div class="top"><i></i><i></i><i></i></div>
-        <div class="shot" style="background:linear-gradient(140deg,#0c2230,#10566b)">
-          <div class="h">Bright Smile Dental</div>
-          <div class="l" style="width:60%"></div><div class="l" style="width:40%"></div>
-          <div class="row"><span></span><span></span><span></span></div>
-          <span class="chip" style="background:#7c5cff;color:#fff">Book a visit →</span>
-        </div>
-        <div class="meta">Dental<span>Sample design</span></div>
-      </div>
+      <a class="site reveal" href="bakery.html" target="_blank" rel="noopener">
+        <div class="top"><i></i><i></i><i></i><span class="url">rosasbakery.com</span></div>
+        <div class="shot"><img src="https://loremflickr.com/640/420/bakery,bread?lock=11" alt="Rosa's Bakery website preview"><div class="ov"><h3>Rosa's Bakery</h3><span class="go">View live demo →</span></div></div>
+        <div class="meta">Bakery<span>Live demo</span></div>
+      </a>
+      <a class="site reveal" href="gym.html" target="_blank" rel="noopener">
+        <div class="top"><i></i><i></i><i></i><span class="url">ironforgegym.com</span></div>
+        <div class="shot"><img src="https://loremflickr.com/640/420/gym,fitness,dark?lock=41" alt="Iron Forge Gym website preview"><div class="ov"><h3>Iron Forge Gym</h3><span class="go">View live demo →</span></div></div>
+        <div class="meta">Fitness<span>Live demo</span></div>
+      </a>
+      <a class="site reveal" href="dental.html" target="_blank" rel="noopener">
+        <div class="top"><i></i><i></i><i></i><span class="url">brightsmiledental.com</span></div>
+        <div class="shot"><img src="https://loremflickr.com/640/420/dentist,smile?lock=51" alt="Bright Smile Dental website preview"><div class="ov"><h3>Bright Smile Dental</h3><span class="go">View live demo →</span></div></div>
+        <div class="meta">Dental<span>Live demo</span></div>
+      </a>
     </div>
     <div class="cta-band reveal" id="contact">
       <div class="blob b1" style="top:-180px;right:-80px"></div>

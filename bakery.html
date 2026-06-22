@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" /><meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Rosa's Bakery — Fresh from the oven, every morning</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{--cream:#fbf5ec;--ink:#3a2a20;--terra:#c0633a;--terra-d:#9c4a26;--gold:#d99a52;--line:#e7dccb}
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{background:var(--cream);color:var(--ink);font-family:'Inter',sans-serif;line-height:1.7}
+  h1,h2,h3,.serif{font-family:'Playfair Display',serif;line-height:1.08}
+  a{color:inherit;text-decoration:none}
+  img{display:block;max-width:100%}
+  .wrap{max-width:1140px;margin:0 auto;padding:0 26px}
+  .btn{display:inline-block;font-weight:600;font-size:15px;padding:14px 28px;border-radius:100px;transition:.25s;cursor:pointer}
+  .btn-fill{background:var(--terra);color:#fff}
+  .btn-fill:hover{background:var(--terra-d);transform:translateY(-2px)}
+  .btn-out{border:1.5px solid var(--ink);color:var(--ink)}
+  .btn-out:hover{background:var(--ink);color:var(--cream)}
+  header{position:sticky;top:0;z-index:50;background:rgba(251,245,236,.86);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+  nav{display:flex;align-items:center;justify-content:space-between;height:78px}
+  .brand{font-family:'Playfair Display';font-weight:800;font-size:26px;color:var(--terra-d)}
+  .brand span{font-style:italic}
+  .nav-links{display:flex;gap:34px;font-size:15px}
+  .nav-links a{position:relative}
+  .nav-links a:hover{color:var(--terra)}
+  .hero{display:grid;grid-template-columns:1.05fr .95fr;gap:50px;align-items:center;padding:70px 0 90px}
+  .tag{display:inline-block;font-size:13px;letter-spacing:.18em;text-transform:uppercase;color:var(--terra);font-weight:600;margin-bottom:18px}
+  .hero h1{font-size:clamp(42px,6vw,72px);font-weight:800}
+  .hero h1 em{color:var(--terra);font-style:italic}
+  .hero p{font-size:19px;margin:24px 0 32px;max-width:46ch;color:#6b5546}
+  .hero-img{position:relative}
+  .hero-img img{border-radius:18px 18px 120px 18px;height:520px;width:100%;object-fit:cover;box-shadow:0 30px 60px rgba(120,70,40,.22)}
+  .badge{position:absolute;left:-26px;bottom:40px;background:#fff;border-radius:16px;padding:18px 22px;box-shadow:0 16px 36px rgba(120,70,40,.18);text-align:center}
+  .badge b{font-family:'Playfair Display';font-size:30px;display:block;color:var(--terra-d)}
+  .badge span{font-size:13px;color:#8a7565}
+  .strip{background:var(--terra-d);color:#fbe7d6;text-align:center;padding:16px;font-family:'Playfair Display';font-style:italic;font-size:20px}
+  section{padding:90px 0}
+  .sec-head{text-align:center;max-width:640px;margin:0 auto 56px}
+  .sec-head h2{font-size:clamp(30px,5vw,46px);font-weight:700}
+  .sec-head p{color:#8a7565;font-size:17px;margin-top:14px}
+  .menu{display:grid;grid-template-columns:repeat(3,1fr);gap:30px}
+  .item{background:#fff;border-radius:18px;overflow:hidden;box-shadow:0 10px 30px rgba(120,70,40,.08);transition:.3s}
+  .item:hover{transform:translateY(-6px);box-shadow:0 22px 44px rgba(120,70,40,.16)}
+  .item .ph{height:210px;overflow:hidden}
+  .item .ph img{height:100%;width:100%;object-fit:cover;transition:.5s}
+  .item:hover .ph img{transform:scale(1.07)}
+  .item .body{padding:22px 24px}
+  .item h3{font-size:22px;display:flex;justify-content:space-between;align-items:baseline}
+  .item h3 .pr{font-family:'Inter';font-size:16px;color:var(--terra)}
+  .item p{color:#8a7565;font-size:14.5px;margin-top:6px}
+  .visit{display:grid;grid-template-columns:1fr 1fr;gap:50px;align-items:center;background:#fff;border-radius:24px;padding:50px;box-shadow:0 16px 40px rgba(120,70,40,.1)}
+  .visit img{border-radius:16px;height:360px;width:100%;object-fit:cover}
+  .visit h2{font-size:40px;font-weight:700;margin-bottom:18px}
+  .hours{list-style:none;margin:22px 0}
+  .hours li{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--line);font-size:15px}
+  footer{background:var(--ink);color:#e7d8cc;padding:60px 0 36px;margin-top:30px}
+  .foot{display:flex;justify-content:space-between;flex-wrap:wrap;gap:30px}
+  .foot .brand{color:#fff}
+  .foot p{color:#bba897;font-size:14.5px;margin-top:12px;max-width:32ch}
+  .foot a{display:block;color:#e7d8cc;padding:5px 0;font-size:14.5px;opacity:.85}
+  .foot a:hover{opacity:1;color:var(--gold)}
+  .demo-bar{background:var(--gold);color:#3a2a20;text-align:center;font-size:13.5px;font-weight:600;padding:9px}
+  .reveal{opacity:0;transform:translateY(26px);transition:.7s}
+  .reveal.in{opacity:1;transform:none}
+  @media(max-width:820px){.hero,.visit{grid-template-columns:1fr}.menu{grid-template-columns:1fr}.nav-links{display:none}.hero-img img{height:360px}}
+</style>
+</head>
+<body>
+<div class="demo-bar">Live demo by GetYourWebsite — this is a sample of what your site could look like.</div>
+<header><div class="wrap"><nav>
+  <div class="brand">Rosa's <span>Bakery</span></div>
+  <div class="nav-links"><a href="#menu">Menu</a><a href="#visit">Visit</a><a href="#">Custom orders</a><a href="#">Gallery</a></div>
+  <a href="#visit" class="btn btn-fill">Order ahead</a>
+</nav></div></header>
+
+<div class="wrap"><section class="hero">
+  <div>
+    <span class="tag">Est. in the neighborhood</span>
+    <h1>Baked fresh<br>before you're <em>awake.</em></h1>
+    <p>Sourdough loaves, flaky croissants and custom cakes — handmade every morning with real butter and a whole lot of love.</p>
+    <div><a href="#menu" class="btn btn-fill">See the menu</a> &nbsp; <a href="#visit" class="btn btn-out">Find us</a></div>
+  </div>
+  <div class="hero-img">
+    <img src="https://loremflickr.com/800/900/bakery,bread?lock=11" alt="Fresh bread">
+    <div class="badge"><b>5am</b><span>oven's already on</span></div>
+  </div>
+</section></div>
+
+<div class="strip">"The best almond croissant I've had outside of Paris." — a very happy regular</div>
+
+<div class="wrap"><section id="menu">
+  <div class="sec-head reveal"><h2>Out of the oven today</h2><p>A rotating selection of what we're proudest of. Everything's made from scratch, daily.</p></div>
+  <div class="menu">
+    <div class="item reveal"><div class="ph"><img src="https://loremflickr.com/600/450/sourdough,bread?lock=21" alt=""></div><div class="body"><h3>Country Sourdough <span class="pr">$7</span></h3><p>48-hour slow ferment, crackling crust, open crumb.</p></div></div>
+    <div class="item reveal"><div class="ph"><img src="https://loremflickr.com/600/450/croissant?lock=22" alt=""></div><div class="body"><h3>Butter Croissant <span class="pr">$4</span></h3><p>Laminated by hand over two days. Impossibly flaky.</p></div></div>
+    <div class="item reveal"><div class="ph"><img src="https://loremflickr.com/600/450/cake,bakery?lock=23" alt=""></div><div class="body"><h3>Celebration Cakes <span class="pr">from $38</span></h3><p>Custom-made for birthdays, weddings and big news.</p></div></div>
+  </div>
+</section></div>
+
+<div class="wrap"><section id="visit">
+  <div class="visit reveal">
+    <img src="https://loremflickr.com/700/600/bakery,cafe,interior?lock=31" alt="Inside the bakery">
+    <div>
+      <h2>Come say good morning</h2>
+      <p style="color:#8a7565">Pull up a stool, grab a coffee, and watch the bakers do their thing. We're on the corner, and we'd love to see you.</p>
+      <ul class="hours">
+        <li><span>Mon – Fri</span><b>6:00am – 5:00pm</b></li>
+        <li><span>Saturday</span><b>7:00am – 4:00pm</b></li>
+        <li><span>Sunday</span><b>7:00am – 2:00pm</b></li>
+      </ul>
+      <a href="tel:+15125550148" class="btn btn-fill">Call (512) 555-0148</a>
+    </div>
+  </div>
+</section></div>
+
+<footer><div class="wrap"><div class="foot">
+  <div><div class="brand">Rosa's <span>Bakery</span></div><p>Handmade bread, pastries and cakes, fresh every single morning.</p></div>
+  <div><a href="#menu">Menu</a><a href="#">Custom orders</a><a href="#">Gallery</a></div>
+  <div><a href="#visit">Visit us</a><a href="tel:+15125550148">(512) 555-0148</a><a href="#">Instagram</a></div>
+</div></div></footer>
+<script>
+  var io=new IntersectionObserver(function(e){e.forEach(function(x){if(x.isIntersecting){x.target.classList.add('in');io.unobserve(x.target)}})},{threshold:.12});
+  document.querySelectorAll('.reveal').forEach(function(el){io.observe(el)});
+</script>
+</body>
+</html>
