@@ -22,3 +22,7 @@ pnpm-debug.log*
 # editors
 .vscode/
 .idea/
+
+# Python bytecode from the design skills — regenerated on every run
+__pycache__/
+*.pyc
