@@ -1,0 +1,20 @@
+# Netlify config. Only used if you deploy there instead of GitHub Pages.
+#
+# Connect the repo at app.netlify.com and Netlify reads this file — there is
+# nothing else to configure. Netlify serves from the root, so BASE_PATH stays
+# unset (defaults to "/").
+
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "22"
+  # Change this to your Netlify URL, or your own domain once you have one.
+  SITE_URL = "https://getyourwebsite.netlify.app"
+
+# Astro writes a 404.html; this makes Netlify actually serve it.
+[[redirects]]
+  from = "/*"
+  to = "/404.html"
+  status = 404

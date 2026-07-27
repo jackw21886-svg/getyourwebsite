@@ -1,0 +1,65 @@
+# Builds the site and publishes it to GitHub Pages on every push to main.
+#
+# One-time setup (you only ever do this once):
+#   GitHub → this repo → Settings → Pages → Build and deployment → Source:
+#   choose "GitHub Actions". That's it.
+#
+# The site then lives at https://jackw21886-svg.github.io/getyourwebsite/
+#
+# When you buy a domain, change SITE_URL below to it and set BASE_PATH to "/",
+# then add the domain under Settings → Pages → Custom domain.
+
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  # Lets you re-run a deploy by hand from the Actions tab.
+  workflow_dispatch:
+
+# Pages needs these to publish.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# If you push twice quickly, let the second one win rather than queueing.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm run build
+        env:
+          # The public address of the site. Used for sitemap.xml, robots.txt
+          # and the social card links.
+          SITE_URL: https://jackw21886-svg.github.io
+          # GitHub Pages serves project sites from /<repo-name>/, so every
+          # internal link has to be prefixed. Set to "/" for a custom domain.
+          BASE_PATH: /getyourwebsite
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
