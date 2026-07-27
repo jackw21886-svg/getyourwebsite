@@ -51,23 +51,36 @@ const GOLD = '245, 194, 75';
 const SILVER = '169, 173, 182';
 const WHITE = '255, 255, 255';
 
-// ── Copy beats ─────────────────────────────────────────────────────────────
+// ── Timing ─────────────────────────────────────────────────────────────────
+//
+// Everything below is measured in **vh of scroll from the top of the hero**,
+// not in fractions of it, and converted to progress at runtime against the
+// hero's real height.
+//
+// That indirection matters. Progress is normalised to the hero's scroll
+// distance, so if these were fractions, changing the hero's height in
+// Hero.astro would silently retime the whole sequence — shortening the tail
+// would also speed up the assembly. In vh they're absolute: change the height
+// and only the amount of tail after the last beat moves.
+//
 // [fadeInStart, fadeInEnd, fadeOutStart, fadeOutEnd]; null means "already
 // there" / "stays". These windows are what guarantee only one beat is ever
 // on screen at a time.
-const BEATS = {
-  open: [null, null, 0.16, 0.26],
-  build: [0.3, 0.38, 0.56, 0.63],
-  launch: [0.66, 0.72, 0.8, 0.85],
-  close: [0.86, 0.93, null, null],
+const BEATS_VH = {
+  open: [null, null, 40, 65],
+  build: [75, 95, 140, 157.5],
+  launch: [165, 180, 200, 212.5],
+  close: [215, 232.5, null, null],
 };
 
+const HINT_FADE_VH = [5, 22.5];
+
 // The assembly runs between these two points in the scroll.
-const BUILD_FROM = 0.26;
-const BUILD_TO = 0.68;
+const BUILD_FROM_VH = 65;
+const BUILD_TO_VH = 170;
 // …and the launch between these.
-const LAUNCH_FROM = 0.68;
-const LAUNCH_TO = 0.87;
+const LAUNCH_FROM_VH = 170;
+const LAUNCH_TO_VH = 217.5;
 
 /**
  * The assembled website, in normalised site coordinates: x and y both run
@@ -144,10 +157,14 @@ function readProgress() {
   return clamp01(-rect.top / scrollable);
 }
 
-/** Opacity for a beat window at progress p. */
-function beatAlpha([inA, inB, outA, outB], p) {
-  const fadeIn = inA === null ? 1 : range(p, inA, inB);
-  const fadeOut = outA === null ? 0 : range(p, outA, outB);
+/**
+ * Opacity for a beat window at progress p.
+ * `s` is the hero's scroll distance in vh, which converts the window's
+ * absolute vh positions into the same 0–1 space as p.
+ */
+function beatAlpha([inA, inB, outA, outB], p, s) {
+  const fadeIn = inA === null ? 1 : range(p, inA / s, inB / s);
+  const fadeOut = outA === null ? 0 : range(p, outA / s, outB / s);
   return fadeIn * (1 - fadeOut);
 }
 
@@ -498,17 +515,20 @@ function start() {
     { passive: true }
   );
 
-  function setBeats(p) {
-    for (const [name, win] of Object.entries(BEATS)) {
+  function setBeats(p, scrollVH) {
+    for (const [name, win] of Object.entries(BEATS_VH)) {
       const el = panels[name];
       if (!el) continue;
-      const a = beatAlpha(win, p);
+      const a = beatAlpha(win, p, scrollVH);
       el.style.opacity = String(a);
       const off = a < 0.02;
       el.inert = off;
       el.setAttribute('aria-hidden', String(off));
     }
-    if (hint) hint.style.opacity = String(1 - range(p, 0.02, 0.09));
+    if (hint)
+      hint.style.opacity = String(
+        1 - range(p, HINT_FADE_VH[0] / scrollVH, HINT_FADE_VH[1] / scrollVH)
+      );
   }
 
   function frame(now) {
@@ -562,6 +582,19 @@ function start() {
     }
 
     // ── Assembly / launch state ─────────────────────────────────────────
+    // The hero's scroll distance, in vh — what converts the absolute beat
+    // positions above into this frame's progress space.
+    // …in vh, so 238 means "two and a bit screens of scrolling". The ×100 is
+    // the whole point: the beats above are written in vh, not in screens.
+    const scrollVH = Math.max(
+      ((heroEl.getBoundingClientRect().height - window.innerHeight) / window.innerHeight) * 100,
+      1
+    );
+    const BUILD_FROM = BUILD_FROM_VH / scrollVH;
+    const BUILD_TO = BUILD_TO_VH / scrollVH;
+    const LAUNCH_FROM = LAUNCH_FROM_VH / scrollVH;
+    const LAUNCH_TO = LAUNCH_TO_VH / scrollVH;
+
     const build = range(p, BUILD_FROM, BUILD_TO);
     const launch = range(p, LAUNCH_FROM, LAUNCH_TO);
     const launchE = easeInCubic(launch);
@@ -730,7 +763,7 @@ function start() {
     ctx.fillRect(0, 0, W, H);
 
     // Copy follows the raw scroll, not the damped scene.
-    setBeats(target);
+    setBeats(target, scrollVH);
 
     if (!drawn) {
       drawn = true;

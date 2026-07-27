@@ -4,7 +4,8 @@
  *
  * How it works
  * ------------
- * The outer .hero is ~350vh tall. Inside it, .hero__stage is position:sticky
+ * The outer .hero is a few screens tall (see the .hero rule below). Inside
+ * it, .hero__stage is position:sticky
  * so it parks at the top of the viewport for the whole scroll — that's the
  * "pin", done in CSS rather than with a scroll library, which keeps it
  * jank-free and means there is no layout shift if JS is slow.
@@ -98,8 +99,12 @@ import { url } from '../data/url.js';
 <style>
   .hero {
     position: relative;
-    /* 350vh of scroll to play the whole sequence through. */
-    height: 350vh;
+    /* The scroll distance the sequence plays over. 100vh of this is the
+       pinned stage itself, so the animation gets height - 100vh of travel.
+       The beats in hero.js are positioned in absolute vh, so changing this
+       only lengthens or shortens the quiet tail after the CTAs land — it
+       does not retime the assembly or the launch. */
+    height: 338vh;
     background: var(--black);
   }
 
