@@ -1,0 +1,357 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { url } from '../data/url.js';
+
+/**
+ * A note on claims: everything on this page is deliberately qualitative.
+ * We are not inventing statistics. If you want a number here, find a real,
+ * current, citable source and replace the [EDIT] block near the bottom.
+ */
+
+const WITHOUT = [
+  ['Invisible when it matters', 'Someone searches for what you do, tonight, and finds three competitors and not you.'],
+  ['Open only when you are', 'Every question — hours, prices, do you do X — has to go through a phone call.'],
+  ['Word of mouth only', 'A recommendation still ends with "look them up", and there\'s nothing to look up.'],
+  ['Smaller than you really are', 'People judge fast. No site reads as either brand new or barely running.'],
+];
+
+const WITH = [
+  ['Found by people ready to buy', 'You turn up when someone is actively looking, not when you happen to advertise.'],
+  ['Open 24 hours', 'Hours, prices, menus and directions answer themselves while you sleep.'],
+  ['Trust before the first hello', 'Real photos, real prices and real reviews do the convincing before you speak.'],
+  ['Inquiries arrive on their own', 'A form at 11pm is a job on Monday you never had to chase.'],
+];
+
+const OUTCOMES = [
+  {
+    label: '01',
+    title: 'More revenue',
+    body: 'A website doesn\'t create demand out of nothing — it catches the demand that already exists and is currently going somewhere else. The people searching for a bakery in your town tonight are going to buy from someone. A site is how you get counted.',
+    points: [
+      'You appear in searches you currently miss entirely',
+      'Higher-value work finds you, because people can see what you actually do',
+      'No commission, unlike the directories and delivery apps',
+    ],
+  },
+  {
+    label: '02',
+    title: 'More new clients',
+    body: 'The hardest customer to win is the one who has never heard of you. A website is the cheapest introduction you will ever make — it works on everyone who searches, all year, without you doing anything after it launches.',
+    points: [
+      'People who\'d never have called you will fill in a form',
+      'Google Maps, socials and flyers all get somewhere real to point at',
+      'Existing customers can finally send you to their friends properly',
+    ],
+  },
+  {
+    label: '03',
+    title: 'A more streamlined day',
+    body: 'This is the one nobody expects and everybody notices. Every question your site answers is a phone call you don\'t take in the middle of something else.',
+    points: [
+      'Hours, directions, prices and menus stop being phone calls',
+      'Bookings and quote requests arrive written down, not half-remembered',
+      'You stop repeating the same five answers every single day',
+    ],
+  },
+];
+---
+
+<BaseLayout
+  title="Benefits"
+  description="What a website actually changes for a local business: more revenue, more new clients, and a lot fewer phone calls answering the same five questions."
+>
+  <section class="section section--dark has-stars has-glow section--tight">
+    <div class="shell">
+      <div class="section-head" data-reveal>
+        <p class="eyebrow">Why a website</p>
+        <h1>Most of your next customers will look you up first.</h1>
+        <p class="lead">
+          They'll do it on a phone, in about eight seconds, while deciding
+          between you and someone else. This page is about what they find.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- The split -->
+  <section class="section">
+    <div class="shell">
+      <div class="section-head section-head--center" data-reveal>
+        <p class="eyebrow">The difference</p>
+        <h2>Same business. Two very different weeks.</h2>
+      </div>
+
+      <div class="split" data-reveal-group>
+        <div class="split__col split__col--without" data-reveal>
+          <p class="split__head">Without a website</p>
+          <ul>
+            {
+              WITHOUT.map(([t, d]) => (
+                <li>
+                  <strong>{t}</strong>
+                  <span>{d}</span>
+                </li>
+              ))
+            }
+          </ul>
+        </div>
+
+        <div class="split__col split__col--with" data-reveal>
+          <p class="split__head">With a website</p>
+          <ul>
+            {
+              WITH.map(([t, d]) => (
+                <li>
+                  <strong>{t}</strong>
+                  <span>{d}</span>
+                </li>
+              ))
+            }
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Three outcomes -->
+  <section class="section section--dark has-stars">
+    <div class="shell">
+      <div class="section-head" data-reveal>
+        <p class="eyebrow">What changes</p>
+        <h2>Three things a site actually does for you.</h2>
+      </div>
+
+      <div class="outcomes" data-reveal-group>
+        {
+          OUTCOMES.map((o) => (
+            <article class="outcome" data-reveal>
+              <p class="outcome__label">{o.label}</p>
+              <div class="outcome__body">
+                <h3>{o.title}</h3>
+                <p>{o.body}</p>
+                <ul>
+                  {o.points.map((p) => <li>{p}</li>)}
+                </ul>
+              </div>
+            </article>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- Evidence -->
+  <section class="section">
+    <div class="shell-narrow">
+      <div class="section-head" data-reveal>
+        <p class="eyebrow">Being straight with you</p>
+        <h2>We're not going to make up numbers.</h2>
+        <p class="lead">
+          Plenty of web agencies will quote you a statistic about how many
+          customers check a business online. Most of those numbers get copied
+          between marketing blogs until nobody can find the original study.
+          We'd rather leave the space empty than fill it with something we
+          can't stand behind.
+        </p>
+      </div>
+
+      <div class="stat-slot" data-reveal>
+        <p class="stat-slot__tag">[EDIT: stat + source]</p>
+        <p>
+          If you want a real figure here, find a current, citable source — a
+          national statistics office, a named industry survey with a
+          publication date — and put the number and the link in this block.
+          One real statistic beats five invented ones.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section--dark has-stars has-glow">
+    <div class="shell-narrow" style="text-align:center" data-reveal>
+      <h2>See what your business would look like online — it costs nothing.</h2>
+      <p class="lead" style="margin-inline:auto">
+        We'll build you a real homepage concept for free. Then you can decide
+        whether any of this is worth doing, with something concrete in front of
+        you instead of an argument.
+      </p>
+      <div class="btn-row btn-row--center" style="margin-top:var(--s-5)">
+        <a class="btn btn--gold btn--lg" href={url('/contact')}>Request a free mockup</a>
+        <a class="btn btn--ghost btn--lg" href={url('/work')}>See our work</a>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  /* Split comparison ------------------------------------------------------ */
+
+  .split {
+    display: grid;
+    gap: var(--s-4);
+  }
+
+  .split__col {
+    padding: var(--s-5);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--line-light);
+  }
+
+  .split__col--without { background: #fafafb; }
+
+  .split__col--with {
+    background: var(--black);
+    border-color: var(--black);
+    color: var(--silver-light);
+  }
+
+  .split__head {
+    font-family: var(--font-mono);
+    font-size: var(--t-label);
+    font-weight: 500;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    padding-bottom: var(--s-3);
+    margin-bottom: var(--s-4);
+    border-bottom: 1px solid var(--line-light);
+  }
+
+  .split__col--without .split__head { color: var(--ink-soft); }
+
+  .split__col--with .split__head {
+    color: var(--gold);
+    border-bottom-color: rgba(230, 231, 235, 0.18);
+  }
+
+  .split__col ul {
+    display: flex;
+    flex-direction: column;
+    gap: var(--s-4);
+  }
+
+  .split__col li {
+    position: relative;
+    padding-left: 1.9rem;
+  }
+
+  .split__col li::before {
+    position: absolute;
+    left: 0;
+    top: 0;
+    font-family: var(--font-mono);
+    font-size: 1.1rem;
+    line-height: 1.5;
+  }
+
+  .split__col--without li::before { content: '×'; color: #a9aeb7; }
+  .split__col--with li::before { content: '✓'; color: var(--gold); }
+
+  .split__col strong {
+    display: block;
+    font-family: var(--font-display);
+    font-size: 1.15rem;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    margin-bottom: 0.2rem;
+  }
+
+  .split__col--with strong { color: var(--white); }
+
+  .split__col span {
+    font-size: 0.98rem;
+    line-height: 1.55;
+  }
+
+  .split__col--without span { color: var(--ink-soft); }
+  .split__col--with span { color: var(--silver); }
+
+  /* Outcomes -------------------------------------------------------------- */
+
+  .outcomes {
+    display: flex;
+    flex-direction: column;
+    gap: var(--s-5);
+  }
+
+  .outcome {
+    display: grid;
+    gap: var(--s-3);
+    padding-top: var(--s-5);
+    border-top: 1px solid var(--line-dark);
+  }
+
+  .outcome__label {
+    font-family: var(--font-mono);
+    font-size: 0.9rem;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    color: var(--gold);
+  }
+
+  .outcome h3 {
+    font-size: clamp(1.5rem, 1.2rem + 1.2vw, 2.1rem);
+    color: var(--white);
+    margin-bottom: var(--s-3);
+  }
+
+  .outcome__body > p {
+    color: var(--silver);
+    font-size: var(--t-lead);
+    max-width: 44rem;
+  }
+
+  .outcome__body ul {
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+    margin-top: var(--s-4);
+  }
+
+  .outcome__body li {
+    position: relative;
+    padding-left: 1.5rem;
+    color: var(--silver-light);
+    font-size: 1rem;
+  }
+
+  .outcome__body li::before {
+    content: '→';
+    position: absolute;
+    left: 0;
+    font-family: var(--font-mono);
+    color: var(--gold);
+  }
+
+  /* Stat placeholder ------------------------------------------------------ */
+
+  .stat-slot {
+    padding: var(--s-5);
+    border: 1px dashed rgba(10, 10, 12, 0.24);
+    border-radius: var(--radius-lg);
+    background: #fafafb;
+  }
+
+  .stat-slot__tag {
+    display: inline-block;
+    font-family: var(--font-mono);
+    font-size: var(--t-small);
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    color: var(--gold-deep);
+    background: var(--gold-soft);
+    border: 1px solid var(--gold-line);
+    border-radius: var(--radius-pill);
+    padding: 0.25rem 0.8rem;
+    margin-bottom: var(--s-3);
+  }
+
+  .stat-slot p:last-child {
+    color: var(--ink-soft);
+    font-size: 0.98rem;
+  }
+
+  @media (min-width: 860px) {
+    .split { grid-template-columns: 1fr 1fr; gap: var(--s-5); }
+    .outcome { grid-template-columns: 6rem 1fr; gap: var(--s-5); }
+  }
+</style>

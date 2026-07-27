@@ -1,0 +1,53 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import ProjectCard from '../components/ProjectCard.astro';
+import { PROJECTS } from '../data/site.js';
+import { url } from '../data/url.js';
+---
+
+<BaseLayout
+  title="Our Work"
+  description="Six concept websites we've built for local businesses — bakery, dental, gym, auto repair, landscaping and restaurant. All live, all clickable."
+>
+  <section class="section section--dark has-stars has-glow section--tight page-head">
+    <div class="shell">
+      <div class="section-head" data-reveal>
+        <p class="eyebrow">Our work</p>
+        <h1>Concept sites we've built — real client work coming soon.</h1>
+        <p class="lead">
+          We're new, and we'd rather show you something honest than something
+          invented. Every site below is a complete, working build we made to
+          prove what we can do. Open any of them and click around — they're real
+          pages, not pictures of pages.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="shell">
+      <div class="grid grid-3" data-reveal-group>
+        {PROJECTS.map((project) => <ProjectCard project={project} reveal />)}
+      </div>
+    </div>
+  </section>
+
+  <section class="section section--dark has-stars has-glow">
+    <div class="shell-narrow" style="text-align:center" data-reveal>
+      <h2>Want one of these with your name on it?</h2>
+      <p class="lead" style="margin-inline:auto">
+        Send us your business and we'll build you a free homepage mockup — the
+        same quality as everything above, with your brand, your words and your
+        photos.
+      </p>
+      <div class="btn-row btn-row--center" style="margin-top:var(--s-5)">
+        <a class="btn btn--gold btn--lg" href={url('/contact')}>Request a free mockup</a>
+        <a class="btn btn--ghost btn--lg" href={url('/pricing')}>See pricing</a>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .page-head .section-head { margin-bottom: 0; }
+</style>

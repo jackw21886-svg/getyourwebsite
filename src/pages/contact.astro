@@ -1,0 +1,507 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { CONTACT_EMAIL, WEB3FORMS_KEY } from '../data/site.js';
+import { url } from '../data/url.js';
+
+/**
+ * The form posts to Web3Forms (free, no account server-side, works on static
+ * hosting). Put your access key in WEB3FORMS_KEY in src/data/site.js.
+ *
+ * It is a real <form> with a real action, so it still submits without
+ * JavaScript — Web3Forms just redirects to its own thank-you page instead of
+ * showing the inline success state. The script at the bottom upgrades it.
+ */
+const keyIsSet = WEB3FORMS_KEY && !WEB3FORMS_KEY.startsWith('REPLACE_WITH');
+---
+
+<BaseLayout
+  title="Contact"
+  description="Request a free website mockup for your business, or ask us anything. We read every inquiry and reply personally."
+>
+  <section class="section section--dark has-stars has-glow section--tight">
+    <div class="shell">
+      <div class="section-head" data-reveal>
+        <p class="eyebrow">Get in touch</p>
+        <h1>Request a free mockup.</h1>
+        <p class="lead">
+          Tell us about your business and we'll build you a homepage concept —
+          free, no commitment. Or just ask us a question; we don't mind.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="shell contact">
+      <!-- Side rail -->
+      <aside class="contact__aside" data-reveal>
+        <div class="note">
+          <p>
+            <strong>We read every inquiry and reply personally.</strong>
+            Pricing is confirmed after we review your request — the mockup is
+            always free.
+          </p>
+        </div>
+
+        <div class="direct">
+          <h2 class="direct__h">Rather just email us?</h2>
+          <a class="direct__mail" href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>
+          <p class="direct__note">
+            That address goes to the same place as this form. Use whichever you
+            prefer.
+          </p>
+        </div>
+
+        <ol class="next">
+          <li><span>1</span> You send this form</li>
+          <li><span>2</span> We reply within a day or two</li>
+          <li><span>3</span> We build your free mockup</li>
+        </ol>
+      </aside>
+
+      <!-- Form -->
+      <div class="contact__form" data-reveal>
+        {
+          !keyIsSet && (
+            <p class="setup-warning">
+              <strong>[EDIT] This form isn't connected yet.</strong> Get a free
+              access key at web3forms.com and put it in
+              <code>WEB3FORMS_KEY</code> in <code>src/data/site.js</code>. Until
+              then submissions will fail and visitors are shown the email
+              address instead.
+            </p>
+          )
+        }
+
+        <form
+          id="inquiry"
+          action="https://api.web3forms.com/submit"
+          method="POST"
+          novalidate
+          data-form
+        >
+          <input type="hidden" name="access_key" value={WEB3FORMS_KEY} />
+          <input
+            type="hidden"
+            name="subject"
+            value="New mockup inquiry from getyourwebsite"
+          />
+          <input type="hidden" name="from_name" value="GetYourWebsite site" />
+
+          <!-- Honeypot. Hidden off-screen; bots fill it, people never see it. -->
+          <div class="honeypot" aria-hidden="true">
+            <label for="botcheck">Leave this field empty</label>
+            <input id="botcheck" type="checkbox" name="botcheck" tabindex="-1" autocomplete="off" />
+          </div>
+
+          <div class="fields">
+            <div class="field">
+              <label for="name">Your name <span class="req">*</span></label>
+              <input class="input" id="name" name="name" type="text" autocomplete="name" required />
+            </div>
+
+            <div class="field">
+              <label for="business">Business name <span class="req">*</span></label>
+              <input class="input" id="business" name="business_name" type="text" autocomplete="organization" required />
+            </div>
+
+            <div class="field">
+              <label for="type">Business type <span class="req">*</span></label>
+              <input
+                class="input"
+                id="type"
+                name="business_type"
+                type="text"
+                placeholder="Bakery, dentist, landscaper…"
+                required
+              />
+            </div>
+
+            <div class="field">
+              <label for="email">Email <span class="req">*</span></label>
+              <input class="input" id="email" name="email" type="email" autocomplete="email" required />
+            </div>
+
+            <div class="field">
+              <label for="phone">Phone <span class="opt">optional</span></label>
+              <input class="input" id="phone" name="phone" type="tel" autocomplete="tel" />
+            </div>
+
+            <div class="field">
+              <label for="current">Current website <span class="opt">optional</span></label>
+              <input
+                class="input"
+                id="current"
+                name="current_website"
+                type="url"
+                placeholder="https://"
+                inputmode="url"
+              />
+            </div>
+          </div>
+
+          <fieldset class="want">
+            <legend class="fieldset-legend">What are you after? <span class="req">*</span></legend>
+            <div class="want__opts">
+              <label class="radio-card">
+                <input type="radio" name="looking_for" value="Free mockup" checked required />
+                <span>
+                  <strong>A free mockup</strong>
+                  <small>See what a homepage could look like, no commitment.</small>
+                </span>
+              </label>
+              <label class="radio-card">
+                <input type="radio" name="looking_for" value="Full website" />
+                <span>
+                  <strong>A full website</strong>
+                  <small>You're ready to build the real thing.</small>
+                </span>
+              </label>
+              <label class="radio-card">
+                <input type="radio" name="looking_for" value="Not sure yet" />
+                <span>
+                  <strong>Not sure yet</strong>
+                  <small>Ask us anything — we'll help you work it out.</small>
+                </span>
+              </label>
+            </div>
+          </fieldset>
+
+          <div class="field">
+            <label for="details">Anything specific you need?</label>
+            <textarea
+              class="textarea"
+              id="details"
+              name="details"
+              placeholder="A menu people can read on their phone, online booking, a gallery, somewhere to put reviews…"
+            ></textarea>
+            <span class="hint">The more you tell us, the closer the first mockup will be.</span>
+          </div>
+
+          <div class="field">
+            <label for="heard">How did you hear about us? <span class="opt">optional</span></label>
+            <input class="input" id="heard" name="heard_about" type="text" />
+          </div>
+
+          <!-- Live region: screen readers announce success and errors. -->
+          <p class="status" data-status role="status" aria-live="polite" hidden></p>
+
+          <button class="btn btn--gold btn--lg submit" type="submit" data-submit>
+            Send my inquiry
+          </button>
+
+          <p class="small-print">
+            We'll only ever use this to reply to you. No list, no newsletter,
+            nothing passed on.
+          </p>
+        </form>
+
+        <!-- Shown in place of the form after a successful send. -->
+        <div class="done" data-done hidden>
+          <div class="done__mark" aria-hidden="true">✓</div>
+          <h2>That's with us.</h2>
+          <p>
+            Thanks — we've got your inquiry and we'll reply personally, usually
+            within a day or two. If it's urgent, email us directly at
+            <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>.
+          </p>
+          <div class="btn-row" style="margin-top:var(--s-4)">
+            <a class="btn btn--outline" href={url('/work')}>See our work while you wait</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .contact {
+    display: grid;
+    gap: var(--s-6);
+    align-items: start;
+  }
+
+  /* Aside ----------------------------------------------------------------- */
+
+  .note {
+    padding: var(--s-4);
+    border-left: 2px solid var(--gold);
+    background: var(--gold-soft);
+    border-radius: 0 var(--radius) var(--radius) 0;
+  }
+
+  .note strong { display: block; margin-bottom: 0.3rem; }
+  .note p { color: var(--ink-soft); font-size: 0.98rem; }
+  .note strong { color: var(--black); }
+
+  .direct { margin-top: var(--s-5); }
+
+  .direct__h {
+    font-family: var(--font-mono);
+    font-size: var(--t-label);
+    font-weight: 500;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    margin-bottom: var(--s-2);
+  }
+
+  .direct__mail {
+    font-family: var(--font-display);
+    font-size: 1.2rem;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    color: var(--gold-deep);
+    word-break: break-all;
+  }
+
+  .direct__note {
+    margin-top: var(--s-2);
+    font-size: var(--t-small);
+    color: var(--ink-soft);
+  }
+
+  .next {
+    display: flex;
+    flex-direction: column;
+    gap: var(--s-3);
+    margin-top: var(--s-5);
+    padding-top: var(--s-5);
+    border-top: 1px solid var(--line-light);
+  }
+
+  .next li {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    font-size: 0.95rem;
+    color: var(--ink-soft);
+  }
+
+  .next span {
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: var(--black);
+    color: var(--gold);
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+  }
+
+  /* Form ------------------------------------------------------------------ */
+
+  .setup-warning {
+    padding: var(--s-3) var(--s-4);
+    margin-bottom: var(--s-4);
+    border: 1px dashed var(--gold-deep);
+    border-radius: var(--radius);
+    background: var(--gold-soft);
+    font-size: 0.92rem;
+    color: var(--ink-soft);
+  }
+
+  .setup-warning code {
+    font-family: var(--font-mono);
+    font-size: 0.85em;
+    background: rgba(10, 10, 12, 0.06);
+    padding: 0.05em 0.35em;
+    border-radius: 4px;
+  }
+
+  .fields {
+    display: grid;
+    gap: var(--s-4);
+  }
+
+  .req { color: var(--gold-deep); }
+
+  .opt {
+    font-weight: 400;
+    color: var(--ink-soft);
+    font-size: 0.85em;
+  }
+
+  .want {
+    border: 0;
+    margin-top: var(--s-5);
+  }
+
+  .want__opts {
+    display: grid;
+    gap: var(--s-2);
+    margin-top: var(--s-3);
+  }
+
+  .radio-card span { display: block; }
+  .radio-card strong { display: block; font-size: 0.98rem; }
+
+  .radio-card small {
+    display: block;
+    color: var(--ink-soft);
+    font-size: var(--t-small);
+    line-height: 1.45;
+  }
+
+  .contact__form .field + .field,
+  .want + .field { margin-top: var(--s-4); }
+
+  .status {
+    margin-top: var(--s-4);
+    padding: var(--s-3) var(--s-4);
+    border-radius: var(--radius);
+    font-size: 0.95rem;
+  }
+
+  .status[data-state='error'] {
+    background: #fdf0ef;
+    border: 1px solid #d9b0ac;
+    color: #8c241b;
+  }
+
+  .status[data-state='sending'] {
+    background: var(--silver-light);
+    border: 1px solid var(--line-light);
+    color: var(--ink-soft);
+  }
+
+  .submit { margin-top: var(--s-4); width: 100%; }
+
+  .small-print {
+    margin-top: var(--s-3);
+    font-size: var(--t-small);
+    color: var(--ink-soft);
+    text-align: center;
+  }
+
+  /* Success ---------------------------------------------------------------- */
+
+  .done {
+    padding: var(--s-6) var(--s-5);
+    border: 1px solid var(--gold);
+    border-radius: var(--radius-lg);
+    background: var(--gold-soft);
+    text-align: center;
+  }
+
+  .done[hidden] { display: none; }
+
+  .done__mark {
+    display: grid;
+    place-items: center;
+    width: 54px;
+    height: 54px;
+    margin: 0 auto var(--s-4);
+    border-radius: 50%;
+    background: var(--gold);
+    color: var(--black);
+    font-size: 1.6rem;
+    font-weight: 700;
+  }
+
+  .done h2 { margin-bottom: var(--s-3); }
+  .done p { color: var(--ink-soft); max-width: 34rem; margin-inline: auto; }
+  .done a { color: var(--gold-deep); font-weight: 600; }
+  .done .btn-row { justify-content: center; }
+
+  @media (min-width: 700px) {
+    .fields { grid-template-columns: 1fr 1fr; }
+  }
+
+  @media (min-width: 960px) {
+    .contact { grid-template-columns: 0.8fr 1.2fr; gap: var(--s-8); }
+    .contact__aside { position: sticky; top: 110px; }
+  }
+</style>
+
+<script>
+  const form = document.querySelector<HTMLFormElement>('[data-form]');
+  const status = document.querySelector<HTMLElement>('[data-status]');
+  const done = document.querySelector<HTMLElement>('[data-done]');
+  const submit = document.querySelector<HTMLButtonElement>('[data-submit]');
+
+  if (form && status && done && submit) {
+    /** Show a message in the live region. */
+    const say = (text: string, state: 'sending' | 'error') => {
+      status.textContent = text;
+      status.dataset.state = state;
+      status.hidden = false;
+    };
+
+    /**
+     * Validate in the browser first so people get errors next to the field
+     * rather than after a round trip. Returns the first invalid element.
+     */
+    function firstInvalid(): HTMLInputElement | HTMLTextAreaElement | null {
+      const controls = form!.querySelectorAll<HTMLInputElement | HTMLTextAreaElement>(
+        'input:not([type=hidden]), textarea'
+      );
+
+      for (const el of controls) {
+        el.removeAttribute('aria-invalid');
+      }
+
+      for (const el of controls) {
+        if (!el.checkValidity()) {
+          el.setAttribute('aria-invalid', 'true');
+          return el;
+        }
+      }
+      return null;
+    }
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+
+      const bad = firstInvalid();
+      if (bad) {
+        say(bad.validationMessage || 'Please check the highlighted field.', 'error');
+        bad.focus();
+        return;
+      }
+
+      submit.disabled = true;
+      const originalLabel = submit.textContent;
+      submit.textContent = 'Sending…';
+      say('Sending your inquiry…', 'sending');
+
+      try {
+        const res = await fetch(form.action, {
+          method: 'POST',
+          headers: { Accept: 'application/json' },
+          body: new FormData(form),
+        });
+        const data = await res.json().catch(() => ({}));
+
+        if (!res.ok || data.success === false) {
+          throw new Error(data.message || `Request failed (${res.status})`);
+        }
+
+        // Swap the form out for the confirmation and move focus to it so
+        // screen reader and keyboard users land in the right place.
+        form.hidden = true;
+        status.hidden = true;
+        done.hidden = false;
+        done.setAttribute('tabindex', '-1');
+        done.focus();
+        done.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      } catch (err) {
+        say(
+          `Sorry — that didn't send (${
+            err instanceof Error ? err.message : 'unknown error'
+          }). Please email us directly and we'll pick it up straight away.`,
+          'error'
+        );
+        submit.disabled = false;
+        submit.textContent = originalLabel;
+      }
+    });
+
+    // Clear the invalid flag as soon as someone starts fixing a field.
+    form.addEventListener('input', (e) => {
+      (e.target as HTMLElement).removeAttribute('aria-invalid');
+    });
+  }
+</script>

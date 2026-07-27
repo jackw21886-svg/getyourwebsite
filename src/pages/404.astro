@@ -1,0 +1,74 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { NAV_LINKS } from '../data/site.js';
+import { url } from '../data/url.js';
+---
+
+<BaseLayout
+  title="Lost in space"
+  description="That page doesn't exist — but the rest of the site does."
+>
+  <section class="section section--dark has-stars lost">
+    <div class="shell-narrow lost__inner">
+      <p class="lost__code">404</p>
+      <h1>Lost in space.</h1>
+      <p class="lead">
+        There's nothing at this address. It might have moved, or the link might
+        have a typo in it. Either way, here's the way back.
+      </p>
+
+      <div class="btn-row btn-row--center" style="margin-top:var(--s-5)">
+        <a class="btn btn--gold btn--lg" href={url('/')}>Back to Earth</a>
+        <a class="btn btn--ghost btn--lg" href={url('/contact')}>Send us a signal</a>
+      </div>
+
+      <nav class="lost__links" aria-label="All pages">
+        {NAV_LINKS.map((link) => <a href={url(link.href)}>{link.label}</a>)}
+      </nav>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .lost {
+    display: grid;
+    place-items: center;
+    min-height: calc(100vh - 72px);
+  }
+
+  .lost__inner { text-align: center; }
+
+  /* A big ghosted number behind the headline. */
+  .lost__code {
+    font-family: var(--font-mono);
+    font-size: clamp(6rem, 4rem + 16vw, 14rem);
+    font-weight: 700;
+    line-height: 0.85;
+    letter-spacing: -0.06em;
+    color: transparent;
+    -webkit-text-stroke: 1.5px rgba(245, 194, 75, 0.42);
+    margin-bottom: var(--s-3);
+    user-select: none;
+  }
+
+  .lost .lead { margin-inline: auto; }
+
+  .lost__links {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--s-2) var(--s-4);
+    margin-top: var(--s-7);
+    padding-top: var(--s-5);
+    border-top: 1px solid var(--line-dark);
+  }
+
+  .lost__links a {
+    font-size: 0.95rem;
+    color: var(--silver);
+    text-decoration: none;
+    transition: color var(--dur) var(--ease);
+  }
+
+  .lost__links a:hover { color: var(--gold); }
+</style>

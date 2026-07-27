@@ -1,0 +1,339 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Hero from '../components/Hero.astro';
+import ProjectCard from '../components/ProjectCard.astro';
+import TierCard from '../components/TierCard.astro';
+import { FEATURED_PROJECTS, TIERS, PRICING_DISCLAIMER } from '../data/site.js';
+import { url } from '../data/url.js';
+---
+
+<BaseLayout
+  title="GetYourWebsite"
+  description="Custom websites for local businesses, built by high school students. Request a free mockup — no commitment, no cost."
+  transparentNav
+  bleed
+>
+  <Hero />
+
+  <!-- 1. Our Work ------------------------------------------------------- -->
+  <section class="section">
+    <div class="shell">
+      <div class="section-head" data-reveal>
+        <p class="eyebrow">Our work</p>
+        <h2>Concept sites, built like real ones.</h2>
+        <p class="lead">
+          Every one of these is a full, working site — not a mock-up in a design tool.
+          Open them and click around.
+        </p>
+      </div>
+
+      <div class="grid grid-3" data-reveal-group>
+        {FEATURED_PROJECTS.map((project) => <ProjectCard project={project} reveal />)}
+      </div>
+
+      <p class="section-more" data-reveal>
+        <a class="link-arrow" href={url('/work')}>See all six builds</a>
+      </p>
+    </div>
+  </section>
+
+  <!-- 2. Demo ----------------------------------------------------------- -->
+  <section class="section section--dark has-stars">
+    <div class="shell demo-teaser">
+      <div class="demo-teaser__copy" data-reveal>
+        <p class="eyebrow">The demo</p>
+        <h2>See what it's like to be our client.</h2>
+        <p class="lead">
+          When we build your site you get a private portal: open your website,
+          click any part of it, and tell us what to change. No email chains, no
+          "third paragraph, second sentence".
+        </p>
+        <p class="lead">
+          We rebuilt that portal here with sample data so you can try it before
+          you ever contact us.
+        </p>
+        <p class="demo-teaser__cta">
+          <a class="btn btn--gold" href={url('/demo')}>Try the client demo</a>
+        </p>
+      </div>
+
+      <!-- A stylised browser frame around a screenshot of the real sandbox -->
+      <div class="demo-teaser__frame" data-reveal>
+        <div class="browser">
+          <div class="browser__bar" aria-hidden="true">
+            <span></span><span></span><span></span>
+            <div class="browser__url">portal.getyourwebsite</div>
+          </div>
+          <img
+            src={url('/shots/demo.webp')}
+            alt="The GetYourWebsite client portal, showing a website version list with Open and Request changes buttons."
+            width="1280"
+            height="800"
+            loading="lazy"
+            decoding="async"
+          />
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3. Benefits ------------------------------------------------------- -->
+  <section class="section">
+    <div class="shell">
+      <div class="section-head section-head--center" data-reveal>
+        <p class="eyebrow">Why a website</p>
+        <h2>The difference a website makes.</h2>
+      </div>
+
+      <div class="compare" data-reveal-group>
+        <div class="compare__col compare__col--without" data-reveal>
+          <p class="compare__label">Without a website</p>
+          <ul class="compare__list">
+            <li>Invisible to anyone searching right now</li>
+            <li>Only open when someone picks up the phone</li>
+            <li>Relies entirely on word of mouth</li>
+            <li>Looks smaller than you are</li>
+          </ul>
+        </div>
+
+        <div class="compare__col compare__col--with" data-reveal>
+          <p class="compare__label">With a website</p>
+          <ul class="compare__list">
+            <li>Found by people looking for you today</li>
+            <li>Open 24/7, answering the same questions for you</li>
+            <li>Builds trust before the first conversation</li>
+            <li>Takes inquiries while you sleep</li>
+          </ul>
+        </div>
+      </div>
+
+      <p class="section-more" data-reveal>
+        <a class="link-arrow" href={url('/benefits')}>The full case for getting online</a>
+      </p>
+    </div>
+  </section>
+
+  <!-- 4. Pricing -------------------------------------------------------- -->
+  <section class="section section--dark has-stars">
+    <div class="shell">
+      <div class="section-head section-head--center" data-reveal>
+        <p class="eyebrow">Pricing</p>
+        <h2>Three ways to get off the ground.</h2>
+        <p class="lead">And the first step costs nothing.</p>
+      </div>
+
+      <div class="grid grid-3" data-reveal-group>
+        {TIERS.map((tier) => <TierCard tier={tier} condensed reveal />)}
+      </div>
+
+      <p class="pricing-note" data-reveal>{PRICING_DISCLAIMER}</p>
+
+      <p class="section-more" data-reveal>
+        <a class="link-arrow" href={url('/pricing')}>Full pricing and FAQ</a>
+      </p>
+    </div>
+  </section>
+
+  <!-- 5. Why Us --------------------------------------------------------- -->
+  <section class="section">
+    <div class="shell why-teaser">
+      <div class="why-teaser__copy" data-reveal>
+        <p class="eyebrow">Why us</p>
+        <h2>We're students. That's the point.</h2>
+        <p class="lead">
+          We build websites for businesses in our town because they deserve to be
+          online, and because we're putting ourselves through college. You get our
+          full attention — our reputation here is the only one we have.
+        </p>
+        <p class="section-more">
+          <a class="link-arrow" href={url('/why-us')}>What makes us different</a>
+        </p>
+      </div>
+
+      <figure class="why-teaser__photo" data-reveal>
+        <!-- [EDIT] Replace with a real team photo: public/team.webp, then swap
+             this placeholder block for an <img>. -->
+        <div class="photo-placeholder" role="img" aria-label="Placeholder for a team photo">
+          <span>[EDIT: team photo]</span>
+        </div>
+      </figure>
+    </div>
+  </section>
+
+  <!-- 6. Final CTA ------------------------------------------------------ -->
+  <section class="section section--dark has-stars has-glow cta-band">
+    <div class="shell-narrow" style="text-align:center" data-reveal>
+      <h2 class="cta-band__title">
+        Your business deserves a website that's above and beyond.
+      </h2>
+      <p class="lead" style="margin-inline:auto">
+        Tell us about it and we'll send back a free mockup of your homepage. No
+        commitment, no cost, no catch.
+      </p>
+      <div class="btn-row btn-row--center" style="margin-top:var(--s-5)">
+        <a class="btn btn--gold btn--lg" href={url('/contact')}>Request a free mockup</a>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .section-more { margin-top: var(--s-6); }
+  .section-head--center + .grid + .section-more,
+  .compare + .section-more { text-align: center; }
+
+  /* Demo teaser ---------------------------------------------------------- */
+
+  .demo-teaser {
+    display: grid;
+    gap: var(--s-6);
+    align-items: center;
+  }
+
+  .demo-teaser__cta { margin-top: var(--s-5); }
+  .demo-teaser .lead + .lead { margin-top: var(--s-3); }
+
+  .browser {
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    border: 1px solid var(--line-dark);
+    background: var(--panel);
+    box-shadow: var(--shadow-dark);
+  }
+
+  .browser__bar {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.7rem 0.9rem;
+    background: #16161d;
+    border-bottom: 1px solid var(--line-dark);
+  }
+
+  .browser__bar > span {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: rgba(230, 231, 235, 0.22);
+  }
+
+  .browser__url {
+    flex: 1;
+    margin-left: 0.5rem;
+    padding: 0.2rem 0.7rem;
+    border-radius: var(--radius-pill);
+    background: rgba(230, 231, 235, 0.06);
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--silver);
+  }
+
+  .browser img { width: 100%; height: auto; }
+
+  /* Benefits compare ----------------------------------------------------- */
+
+  .compare {
+    display: grid;
+    gap: var(--s-4);
+  }
+
+  .compare__col {
+    padding: var(--s-5);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--line-light);
+  }
+
+  .compare__col--without {
+    background: #fafafb;
+    color: var(--ink-soft);
+  }
+
+  .compare__col--with {
+    background: var(--black);
+    border-color: var(--black);
+    color: var(--silver-light);
+  }
+
+  .compare__label {
+    font-family: var(--font-mono);
+    font-size: var(--t-label);
+    font-weight: 500;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    margin-bottom: var(--s-4);
+  }
+
+  .compare__col--without .compare__label { color: var(--ink-soft); }
+  .compare__col--with .compare__label { color: var(--gold); }
+
+  .compare__list { display: flex; flex-direction: column; gap: var(--s-3); }
+
+  .compare__list li {
+    position: relative;
+    padding-left: 1.7rem;
+    font-size: 1.05rem;
+    line-height: 1.5;
+  }
+
+  .compare__list li::before {
+    position: absolute;
+    left: 0;
+    top: -0.05rem;
+    font-family: var(--font-mono);
+    font-size: 1.05rem;
+  }
+
+  .compare__col--without li::before { content: '×'; color: #b0b4bc; }
+  .compare__col--with li::before { content: '✓'; color: var(--gold); }
+
+  /* Why us teaser -------------------------------------------------------- */
+
+  .why-teaser {
+    display: grid;
+    gap: var(--s-6);
+    align-items: center;
+  }
+
+  .photo-placeholder {
+    display: grid;
+    place-items: center;
+    aspect-ratio: 4 / 3;
+    border-radius: var(--radius-lg);
+    border: 1px dashed rgba(10, 10, 12, 0.22);
+    background:
+      repeating-linear-gradient(
+        -45deg,
+        #f6f6f8 0 12px,
+        #fdfdfe 12px 24px
+      );
+    color: var(--ink-soft);
+    font-family: var(--font-mono);
+    font-size: var(--t-small);
+    letter-spacing: 0.08em;
+  }
+
+  /* Pricing note --------------------------------------------------------- */
+
+  .pricing-note {
+    max-width: 44rem;
+    margin: var(--s-5) auto 0;
+    text-align: center;
+    font-size: var(--t-small);
+    color: var(--silver);
+  }
+
+  /* Final CTA ------------------------------------------------------------ */
+
+  .cta-band__title {
+    font-size: clamp(2rem, 1.4rem + 2.8vw, 3.4rem);
+    margin-bottom: var(--s-4);
+  }
+
+  /* Two-up layouts kick in at tablet width ------------------------------- */
+
+  @media (min-width: 860px) {
+    .demo-teaser { grid-template-columns: 0.9fr 1.1fr; gap: var(--s-8); }
+    .why-teaser { grid-template-columns: 1.1fr 0.9fr; gap: var(--s-8); }
+    .compare { grid-template-columns: 1fr 1fr; gap: var(--s-5); }
+  }
+</style>

@@ -1,0 +1,217 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import TierCard from '../components/TierCard.astro';
+import { TIERS, PRICING_DISCLAIMER } from '../data/site.js';
+import { url } from '../data/url.js';
+
+const FAQ = [
+  {
+    q: 'How long does it take?',
+    a: 'A free mockup usually takes us two to four days. A full site is one to three weeks depending on the tier, and most of that is waiting on content and revisions rather than building. If you have a deadline, tell us up front and we\'ll be straight about whether we can hit it.',
+  },
+  {
+    q: 'What do you need from us?',
+    a: 'Less than you\'d think. Your logo if you have one, any photos you want used, your hours and contact details, and a rough idea of what you want people to do when they land on the site. We write the first draft of the words ourselves and you edit them — most people find that far easier than staring at a blank page.',
+  },
+  {
+    q: 'How do revisions work?',
+    a: 'You get a private portal. Open your site, click any part of it, and type what you want changed — a heading, a photo, a whole section. We get the note attached to that exact element, so nothing gets lost in translation. Each tier includes a set number of rounds, and a round means one batch of changes, not one change.',
+  },
+  {
+    q: 'What\'s the catch with the free mockup?',
+    a: 'There isn\'t one. We build a real homepage concept for your business and send you a link. If you like it, we talk about finishing the site. If you don\'t, you keep the link and we\'ve lost nothing but the practice. We don\'t ask for card details and we don\'t chase you.',
+  },
+  {
+    q: 'Who owns the site?',
+    a: 'You do. When it\'s done we hand over the files and set it up on hosting in your name. You are never locked into us for changes, and we\'ll happily explain how to make small edits yourself.',
+  },
+  {
+    q: 'What about hosting and a domain?',
+    a: 'The sites we build run on free hosting that\'s genuinely fast and reliable, so there\'s no monthly fee from us. A domain name (yourbusiness.com) costs around $12 a year direct from a registrar — you buy it and own it, we set it up.',
+  },
+];
+---
+
+<BaseLayout
+  title="Pricing"
+  description="Three straightforward tiers for a local business website, starting with a free homepage mockup. Example pricing plus a personal quote after we review your inquiry."
+>
+  <section class="section section--dark has-stars has-glow section--tight">
+    <div class="shell">
+      <div class="section-head section-head--center" data-reveal>
+        <p class="eyebrow">Pricing</p>
+        <h1>Straight numbers, no packages you don't need.</h1>
+        <p class="lead">
+          Every business is different, so treat these as the shape of what
+          things cost rather than a checkout page.
+        </p>
+      </div>
+
+      <!-- Free mockup gets its own strip above the paid tiers -->
+      <div class="free" data-reveal>
+        <div class="free__body">
+          <span class="badge badge--gold">Start here · $0</span>
+          <h2 class="free__title">Free Mockup</h2>
+          <p>
+            A homepage concept designed for your actual business — your name,
+            your services, your photos. No commitment, no card, no catch. It's
+            how every project here starts.
+          </p>
+        </div>
+        <a class="btn btn--gold btn--lg free__cta" href={url('/contact')}>Request yours</a>
+      </div>
+
+      <div class="grid grid-3 tiers" data-reveal-group>
+        {TIERS.map((tier) => <TierCard tier={tier} reveal />)}
+      </div>
+
+      <p class="disclaimer" data-reveal>{PRICING_DISCLAIMER}</p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="shell-narrow">
+      <div class="section-head" data-reveal>
+        <p class="eyebrow">Questions</p>
+        <h2>The things everyone asks</h2>
+      </div>
+
+      <div class="faq" data-reveal-group>
+        {
+          FAQ.map((item) => (
+            <details class="faq__item" data-reveal>
+              <summary>
+                <span>{item.q}</span>
+                <span class="faq__mark" aria-hidden="true"></span>
+              </summary>
+              <p>{item.a}</p>
+            </details>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <section class="section section--dark has-stars has-glow">
+    <div class="shell-narrow" style="text-align:center" data-reveal>
+      <h2>Still not sure which one you need?</h2>
+      <p class="lead" style="margin-inline:auto">
+        Neither are most people. Send us an inquiry describing your business and
+        we'll tell you honestly which tier fits — including if the answer is the
+        cheapest one.
+      </p>
+      <div class="btn-row btn-row--center" style="margin-top:var(--s-5)">
+        <a class="btn btn--gold btn--lg" href={url('/contact')}>Get a personal quote</a>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  /* Free mockup strip ---------------------------------------------------- */
+
+  .free {
+    display: flex;
+    flex-direction: column;
+    gap: var(--s-4);
+    align-items: flex-start;
+    padding: var(--s-5);
+    margin-bottom: var(--s-5);
+    border: 1px solid var(--gold);
+    border-radius: var(--radius-lg);
+    background: linear-gradient(120deg, rgba(245, 194, 75, 0.12), rgba(245, 194, 75, 0.02) 55%);
+  }
+
+  .free__title {
+    font-size: clamp(1.8rem, 1.3rem + 1.8vw, 2.6rem);
+    color: var(--white);
+    margin: var(--s-3) 0 var(--s-2);
+  }
+
+  .free p {
+    color: var(--silver-light);
+    max-width: 44rem;
+  }
+
+  .free__cta { flex-shrink: 0; }
+
+  .tiers { margin-top: var(--s-6); }
+
+  .disclaimer {
+    max-width: 46rem;
+    margin: var(--s-6) auto 0;
+    padding: var(--s-3) var(--s-4);
+    border-left: 2px solid var(--gold);
+    text-align: left;
+    font-size: var(--t-small);
+    color: var(--silver-light);
+    background: rgba(230, 231, 235, 0.04);
+  }
+
+  /* FAQ ------------------------------------------------------------------ */
+
+  .faq {
+    border-top: 1px solid var(--line-light);
+  }
+
+  .faq__item {
+    border-bottom: 1px solid var(--line-light);
+  }
+
+  .faq__item summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--s-4);
+    padding: var(--s-4) 0;
+    cursor: pointer;
+    list-style: none;
+    font-family: var(--font-display);
+    font-size: clamp(1.1rem, 1rem + 0.4vw, 1.35rem);
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    transition: color var(--dur) var(--ease);
+  }
+
+  .faq__item summary::-webkit-details-marker { display: none; }
+  .faq__item summary:hover { color: var(--gold-deep); }
+
+  /* A plus that becomes a minus when the item is open. */
+  .faq__mark {
+    position: relative;
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
+  }
+
+  .faq__mark::before,
+  .faq__mark::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    width: 100%;
+    height: 1.5px;
+    background: var(--gold-deep);
+    transition: transform var(--dur) var(--ease);
+  }
+
+  .faq__mark::after { transform: rotate(90deg); }
+  .faq__item[open] .faq__mark::after { transform: rotate(0deg); }
+
+  .faq__item p {
+    padding-bottom: var(--s-4);
+    max-width: 46rem;
+    color: var(--ink-soft);
+  }
+
+  @media (min-width: 820px) {
+    .free {
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--s-6);
+      padding: var(--s-5) var(--s-6);
+    }
+  }
+</style>

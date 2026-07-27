@@ -1,0 +1,281 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { url } from '../data/url.js';
+
+const PROMISES = [
+  {
+    title: 'You talk to the people building it',
+    body: 'No account manager, no ticket queue. The person who replies to your email is the person writing the code. If something is wrong you tell us and it gets fixed that day.',
+  },
+  {
+    title: 'We reply fast, because we can',
+    body: 'We are not juggling forty clients. We take on what we can genuinely do well, which means your message doesn\'t sit in a queue behind someone bigger.',
+  },
+  {
+    title: 'Prices that make sense for a small business',
+    body: 'We\'re not paying for an office, a sales team or a brand consultant, so you\'re not paying for them either. What you\'re buying is the work.',
+  },
+  {
+    title: 'We treat every site like our reputation depends on it',
+    body: 'It does. We have six concept builds and whatever our clients say about us. In a town this size that\'s the entire marketing budget.',
+  },
+];
+
+const STEPS = [
+  { n: '01', t: 'You send an inquiry', d: 'Tell us about the business. Takes two minutes and costs nothing.' },
+  { n: '02', t: 'We build a free mockup', d: 'A real homepage concept for your business, usually within a few days.' },
+  { n: '03', t: 'We revise it together', d: 'In your own portal — click any part of the site and tell us what to change.' },
+  { n: '04', t: 'We launch it', d: 'Set up on hosting in your name, handed over, yours to keep.' },
+];
+---
+
+<BaseLayout
+  title="Why Us"
+  description="We're high school students building real websites for local businesses — to help our community get online and to pay for college. Here's what that means for you."
+>
+  <section class="section section--dark has-stars has-glow section--tight">
+    <div class="shell">
+      <div class="section-head" data-reveal>
+        <p class="eyebrow">What makes us different</p>
+        <h1>We're high school students. That's the point.</h1>
+        <p class="lead">
+          Not a disclaimer — the reason this works. Here's who we are and why
+          you should care.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Story + photo -->
+  <section class="section">
+    <div class="shell story">
+      <div class="story__copy" data-reveal>
+        <p class="eyebrow">Our story</p>
+        <h2>Three reasons we do this.</h2>
+
+        <div class="story__reasons">
+          <div>
+            <h3>The businesses here deserve to be online.</h3>
+            <p>
+              There are shops and trades in this town that have been running for
+              twenty years and don't turn up on Google at all. Not because they're
+              doing anything wrong — because building a website has always been
+              expensive, confusing, or both. That's a fixable problem and we
+              decided to fix it.
+            </p>
+          </div>
+
+          <div>
+            <h3>We want to actually be part of the place we live.</h3>
+            <p>
+              It's a strange thing to grow up somewhere and have no real stake in
+              it. Building something for the bakery down the road, and then walking
+              past it, is about as direct as that gets.
+            </p>
+          </div>
+
+          <div>
+            <h3>We're raising money for college.</h3>
+            <p>
+              We'll say that plainly, because it's the honest answer and pretending
+              otherwise would be strange. Every site we build goes toward tuition.
+              It also means we have a very concrete reason to do the job properly:
+              a happy client tells someone else, and that's the whole business.
+            </p>
+          </div>
+        </div>
+
+        <!-- [EDIT] Your names, school and town, if you want them public. -->
+        <p class="story__names">
+          <span class="tag">[EDIT]</span>
+          We're <strong>[EDIT: your names]</strong>, students at
+          <strong>[EDIT: school]</strong> in <strong>[EDIT: town]</strong>.
+        </p>
+      </div>
+
+      <figure class="story__photo" data-reveal>
+        <!-- [EDIT] Drop a real team photo at public/team.webp and replace this
+             whole placeholder div with:
+             <img src={url('/team.webp')} alt="…" width="900" height="1100" /> -->
+        <div class="photo-placeholder" role="img" aria-label="Placeholder for a photo of the team">
+          <span>[EDIT: team photo]</span>
+        </div>
+        <figcaption>[EDIT: caption — names, left to right]</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <!-- Promises -->
+  <section class="section section--dark has-stars">
+    <div class="shell">
+      <div class="section-head" data-reveal>
+        <p class="eyebrow">What it means for you</p>
+        <h2>Four things you get from working with us.</h2>
+      </div>
+
+      <div class="grid grid-2" data-reveal-group>
+        {
+          PROMISES.map((p) => (
+            <article class="card" data-reveal>
+              <h3>{p.title}</h3>
+              <p>{p.body}</p>
+            </article>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- How we work -->
+  <section class="section">
+    <div class="shell">
+      <div class="section-head" data-reveal>
+        <p class="eyebrow">How we work</p>
+        <h2>Four steps, and you can stop after any of them.</h2>
+      </div>
+
+      <ol class="flow" data-reveal-group>
+        {
+          STEPS.map((s) => (
+            <li class="flow__step" data-reveal>
+              <span class="flow__n">{s.n}</span>
+              <h3>{s.t}</h3>
+              <p>{s.d}</p>
+            </li>
+          ))
+        }
+      </ol>
+
+      <p class="flow__note" data-reveal>
+        Step three is the part people don't expect.
+        <a class="link-arrow" href={url('/demo')}>Try the client portal yourself</a>
+      </p>
+    </div>
+  </section>
+
+  <section class="section section--dark has-stars has-glow">
+    <div class="shell-narrow" style="text-align:center" data-reveal>
+      <h2>Let us build you something.</h2>
+      <p class="lead" style="margin-inline:auto">
+        The first step is a free mockup, and it genuinely costs you nothing but
+        the two minutes it takes to tell us about your business.
+      </p>
+      <div class="btn-row btn-row--center" style="margin-top:var(--s-5)">
+        <a class="btn btn--gold btn--lg" href={url('/contact')}>Request a free mockup</a>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  /* Story ----------------------------------------------------------------- */
+
+  .story {
+    display: grid;
+    gap: var(--s-6);
+    align-items: start;
+  }
+
+  .story__reasons {
+    display: flex;
+    flex-direction: column;
+    gap: var(--s-5);
+    margin-top: var(--s-5);
+  }
+
+  .story__reasons h3 {
+    font-size: 1.25rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .story__reasons p {
+    color: var(--ink-soft);
+    max-width: 40rem;
+  }
+
+  .story__names {
+    margin-top: var(--s-5);
+    padding: var(--s-4);
+    border-radius: var(--radius);
+    background: #fafafb;
+    border: 1px dashed rgba(10, 10, 12, 0.2);
+    color: var(--ink-soft);
+  }
+
+  .tag {
+    display: inline-block;
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    color: var(--gold-deep);
+    background: var(--gold-soft);
+    border: 1px solid var(--gold-line);
+    border-radius: var(--radius-pill);
+    padding: 0.1rem 0.6rem;
+    margin-right: 0.5rem;
+  }
+
+  .photo-placeholder {
+    display: grid;
+    place-items: center;
+    aspect-ratio: 4 / 5;
+    border-radius: var(--radius-lg);
+    border: 1px dashed rgba(10, 10, 12, 0.22);
+    background: repeating-linear-gradient(-45deg, #f6f6f8 0 12px, #fdfdfe 12px 24px);
+    color: var(--ink-soft);
+    font-family: var(--font-mono);
+    font-size: var(--t-small);
+    letter-spacing: 0.08em;
+  }
+
+  .story__photo figcaption {
+    margin-top: var(--s-3);
+    font-size: var(--t-small);
+    color: var(--ink-soft);
+    font-family: var(--font-mono);
+  }
+
+  /* Flow ------------------------------------------------------------------ */
+
+  .flow {
+    display: grid;
+    gap: var(--s-5);
+  }
+
+  .flow__step {
+    padding-top: var(--s-4);
+    border-top: 2px solid var(--gold);
+  }
+
+  .flow__n {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: 1.6rem;
+    font-weight: 700;
+    letter-spacing: -0.04em;
+    color: var(--gold-deep);
+    line-height: 1;
+    margin-bottom: var(--s-3);
+  }
+
+  .flow__step h3 { margin-bottom: 0.35rem; }
+
+  .flow__step p {
+    color: var(--ink-soft);
+    font-size: 0.98rem;
+  }
+
+  .flow__note {
+    margin-top: var(--s-6);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.6rem;
+    color: var(--ink-soft);
+  }
+
+  @media (min-width: 900px) {
+    .story { grid-template-columns: 1.15fr 0.85fr; gap: var(--s-8); }
+    .flow { grid-template-columns: repeat(4, 1fr); gap: var(--s-4); }
+  }
+</style>

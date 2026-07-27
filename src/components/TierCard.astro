@@ -1,0 +1,225 @@
+---
+/**
+ * A pricing tier card. Used twice: condensed on the home page teaser, and in
+ * full on /pricing. Tier content lives in TIERS in src/data/site.js.
+ */
+import { url } from '../data/url.js';
+
+interface Props {
+  tier: {
+    id: string;
+    name: string;
+    price: string;
+    tagline: string;
+    pages: string;
+    revisions: string;
+    design: string;
+    delivery: string;
+    like: string;
+    likeHref: string;
+    popular?: boolean;
+    features: string[];
+  };
+  /** Home page version: fewer lines, no spec table */
+  condensed?: boolean;
+  reveal?: boolean;
+}
+
+const { tier, condensed = false, reveal = false } = Astro.props;
+---
+
+<article
+  class:list={['tier', { 'tier--popular': tier.popular }]}
+  data-reveal={reveal ? '' : undefined}
+>
+  {tier.popular && <span class="tier__flag">Most popular</span>}
+
+  <header class="tier__head">
+    <h3 class="tier__name">{tier.name}</h3>
+    <p class="tier__price">{tier.price}</p>
+    <p class="tier__tagline">{tier.tagline}</p>
+  </header>
+
+  {
+    condensed ? (
+      <ul class="tier__quick">
+        <li>{tier.pages}</li>
+        <li>{tier.revisions}</li>
+        <li>{tier.delivery}</li>
+      </ul>
+    ) : (
+      <>
+        <dl class="tier__spec">
+          <div><dt>Pages</dt><dd>{tier.pages}</dd></div>
+          <div><dt>Revisions</dt><dd>{tier.revisions}</dd></div>
+          <div><dt>Design</dt><dd>{tier.design}</dd></div>
+          <div><dt>Delivery</dt><dd>{tier.delivery}</dd></div>
+        </dl>
+
+        <ul class="tier__features">
+          {tier.features.map((f) => <li>{f}</li>)}
+        </ul>
+      </>
+    )
+  }
+
+  <p class="tier__like">
+    <a href={url(tier.likeHref)} target="_blank" rel="noopener noreferrer">
+      {tier.like}
+      <span class="sr-only">(opens in a new tab)</span>
+    </a>
+  </p>
+
+  <a
+    class:list={['btn', tier.popular ? 'btn--gold' : 'btn--ghost', 'tier__cta']}
+    href={url('/contact')}
+  >
+    Start with a free mockup
+  </a>
+</article>
+
+<style>
+  .tier {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    padding: var(--s-5);
+    background: var(--panel);
+    border: 1px solid var(--line-dark);
+    border-radius: var(--radius-lg);
+    transition: transform var(--dur) var(--ease), border-color var(--dur) var(--ease),
+      box-shadow var(--dur) var(--ease);
+  }
+
+  .tier:hover {
+    transform: translateY(-4px);
+    border-color: var(--gold-line);
+    box-shadow: var(--shadow-dark);
+  }
+
+  /* The recommended tier gets the gold outline — the one moment of emphasis
+     in the row. */
+  .tier--popular {
+    border-color: var(--gold);
+    background: linear-gradient(180deg, rgba(245, 194, 75, 0.07), transparent 40%), var(--panel);
+  }
+
+  .tier__flag {
+    position: absolute;
+    top: -0.72rem;
+    left: var(--s-5);
+    padding: 0.25rem 0.75rem;
+    background: var(--gold);
+    color: var(--black);
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    border-radius: var(--radius-pill);
+  }
+
+  .tier__head { margin-bottom: var(--s-4); }
+
+  .tier__name {
+    font-size: 1.4rem;
+    color: var(--white);
+    margin-bottom: 0.35rem;
+  }
+
+  .tier__price {
+    font-family: var(--font-mono);
+    font-size: 2.5rem;
+    font-weight: 700;
+    letter-spacing: -0.05em;
+    line-height: 1;
+    color: var(--gold);
+    margin-bottom: var(--s-3);
+  }
+
+  .tier__tagline {
+    color: var(--silver);
+    font-size: 0.98rem;
+    line-height: 1.5;
+  }
+
+  .tier__quick,
+  .tier__features {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    margin-bottom: var(--s-4);
+  }
+
+  .tier__quick li,
+  .tier__features li {
+    position: relative;
+    padding-left: 1.5rem;
+    font-size: 0.96rem;
+    color: var(--silver-light);
+    line-height: 1.5;
+  }
+
+  .tier__quick li::before,
+  .tier__features li::before {
+    content: '✓';
+    position: absolute;
+    left: 0;
+    color: var(--gold);
+    font-family: var(--font-mono);
+  }
+
+  .tier__spec {
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+    padding-block: var(--s-3);
+    margin-bottom: var(--s-3);
+    border-block: 1px solid var(--line-dark);
+  }
+
+  .tier__spec > div {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--s-3);
+    align-items: baseline;
+  }
+
+  .tier__spec dt {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--silver);
+    flex-shrink: 0;
+  }
+
+  .tier__spec dd {
+    text-align: right;
+    font-size: 0.92rem;
+    color: var(--silver-light);
+    line-height: 1.4;
+  }
+
+  .tier__like {
+    margin-top: auto;
+    padding-top: var(--s-3);
+    font-size: 0.9rem;
+    color: var(--silver);
+  }
+
+  .tier__like a {
+    color: var(--gold);
+    text-decoration: none;
+    border-bottom: 1px solid var(--gold-line);
+    padding-bottom: 1px;
+  }
+
+  .tier__like a:hover { border-bottom-color: var(--gold); }
+
+  .tier__cta { margin-top: var(--s-4); width: 100%; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .tier:hover { transform: none; }
+  }
+</style>
