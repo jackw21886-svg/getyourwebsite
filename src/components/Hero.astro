@@ -1,6 +1,6 @@
 ---
 /**
- * The scroll-driven hero: a flight past a black hole.
+ * The scroll-driven hero: a website assembles itself, then launches.
  *
  * How it works
  * ------------
@@ -9,29 +9,34 @@
  * "pin", done in CSS rather than with a scroll library, which keeps it
  * jank-free and means there is no layout shift if JS is slow.
  *
- * src/scripts/hero.js reads how far through .hero we are (0 → 1) and drives a
- * single full-screen WebGL shader. It also fades the two text beats.
+ * src/scripts/hero.js reads how far through .hero we are (0 → 1), draws the
+ * scene on the canvas, and cross-fades the four copy beats below.
+ *
+ * Where the copy sits, and why
+ * ----------------------------
+ * Nothing in the scene is ever allowed behind or across the text:
+ *
+ *   open    centred   the scene scatters fragments into a ring *around* it
+ *   build   bottom    the mockup assembles in the upper two-thirds
+ *   launch  bottom    the mockup is flying up and out of the top
+ *   close   centred   everything has left the frame; this lands on clean black
  *
  * If JS fails, is still loading, or the visitor prefers reduced motion, the
- * markup below already renders a complete hero — headline, sub and both CTAs —
- * over a CSS-drawn version of the same scene. Nothing here depends on the
- * canvas.
+ * markup already renders a complete hero — headline, sub, both CTAs and a
+ * CSS drawing of the assembled site — with nothing overlapping.
  */
 import { url } from '../data/url.js';
 ---
 
 <section class="hero" data-hero aria-label="Introduction">
   <div class="hero__stage">
-    <!-- Drawn before the shader loads, and left in place under reduced motion -->
-    <div class="hero__static" aria-hidden="true">
-      <span class="hero__static-disk"></span>
-      <span class="hero__static-core"></span>
-    </div>
+    <!-- Star field. Painted before the canvas arrives, kept under reduced motion. -->
+    <div class="hero__static" aria-hidden="true"></div>
 
     <canvas class="hero__canvas" data-hero-canvas></canvas>
 
-    <!-- Stage 1 ---------------------------------------------------------- -->
-    <div class="hero__panel hero__panel--open" data-hero-panel="open">
+    <!-- Beat 1 — the drift ----------------------------------------------- -->
+    <div class="hero__beat hero__beat--center" data-beat="open">
       <div class="shell">
         <p class="hero__eyebrow">Websites for local business</p>
         <h1 class="hero__title">
@@ -43,8 +48,24 @@ import { url } from '../data/url.js';
       </div>
     </div>
 
-    <!-- Stage 3 ---------------------------------------------------------- -->
-    <div class="hero__panel hero__panel--close" data-hero-panel="close">
+    <!-- Beat 2 — the assembly -------------------------------------------- -->
+    <div class="hero__beat hero__beat--bottom" data-beat="build">
+      <div class="shell">
+        <p class="hero__line">We design it. We build it.</p>
+        <p class="hero__caption">Every piece made for your business.</p>
+      </div>
+    </div>
+
+    <!-- Beat 3 — the launch ---------------------------------------------- -->
+    <div class="hero__beat hero__beat--bottom" data-beat="launch">
+      <div class="shell">
+        <p class="hero__line">Then we launch it.</p>
+        <p class="hero__caption">Live on the web, in your name.</p>
+      </div>
+    </div>
+
+    <!-- Beat 4 — the finale, on clean black ------------------------------ -->
+    <div class="hero__beat hero__beat--center" data-beat="close">
       <div class="shell">
         <h2 class="hero__closing">Above and beyond.</h2>
         <div class="btn-row btn-row--center hero__ctas">
@@ -52,6 +73,18 @@ import { url } from '../data/url.js';
           <a class="btn btn--ghost btn--lg" href={url('/work')}>See our work</a>
         </div>
       </div>
+    </div>
+
+    <!-- A CSS drawing of the assembled site. Only ever shown when the canvas
+         isn't running: no JS, or reduced motion. Sits below the copy in flow,
+         so it can't overlap it. -->
+    <div class="hero__mock" aria-hidden="true">
+      <span class="hero__mock-chrome"></span>
+      <span class="hero__mock-nav"></span>
+      <span class="hero__mock-img"></span>
+      <span class="hero__mock-line hero__mock-line--a"></span>
+      <span class="hero__mock-line hero__mock-line--b"></span>
+      <span class="hero__mock-btn"></span>
     </div>
 
     <!-- Scroll hint ------------------------------------------------------ -->
@@ -87,17 +120,13 @@ import { url } from '../data/url.js';
     display: block;
     z-index: 1;
     opacity: 0;
-    transition: opacity 800ms var(--ease);
+    transition: opacity 700ms var(--ease);
   }
 
-  /* hero.js adds this to .hero once the shader has drawn its first frame. */
   .hero.is-live .hero__canvas { opacity: 1; }
   .hero.is-live .hero__static { opacity: 0; }
 
-  /* ── Static fallback ──────────────────────────────────────────────────
-     A CSS drawing of the same scene: star field, a tilted gold accretion
-     ring, and the dark core inside it. Palette only — no other colours
-     appear anywhere in the hero. */
+  /* Star field ----------------------------------------------------------- */
 
   .hero__static {
     position: absolute;
@@ -106,91 +135,70 @@ import { url } from '../data/url.js';
     background:
       radial-gradient(1.6px 1.6px at 12% 18%, rgba(255, 255, 255, 0.85), transparent),
       radial-gradient(1.2px 1.2px at 27% 62%, rgba(230, 231, 235, 0.6), transparent),
-      radial-gradient(1.8px 1.8px at 63% 12%, rgba(245, 194, 75, 0.7), transparent),
+      radial-gradient(1.8px 1.8px at 63% 12%, rgba(245, 194, 75, 0.65), transparent),
       radial-gradient(1.1px 1.1px at 78% 44%, rgba(255, 255, 255, 0.6), transparent),
       radial-gradient(1.4px 1.4px at 88% 74%, rgba(230, 231, 235, 0.5), transparent),
       radial-gradient(1px 1px at 42% 86%, rgba(255, 255, 255, 0.45), transparent),
-      radial-gradient(1.5px 1.5px at 8% 74%, rgba(245, 194, 75, 0.45), transparent),
+      radial-gradient(1.5px 1.5px at 8% 74%, rgba(245, 194, 75, 0.4), transparent),
       radial-gradient(1.1px 1.1px at 53% 34%, rgba(255, 255, 255, 0.5), transparent),
       radial-gradient(1.3px 1.3px at 34% 8%, rgba(230, 231, 235, 0.55), transparent),
       radial-gradient(1px 1px at 70% 92%, rgba(255, 255, 255, 0.4), transparent),
-      /* vignette */
-      radial-gradient(ellipse 90% 80% at 50% 50%, transparent 30%, rgba(0, 0, 0, 0.75) 100%),
+      radial-gradient(ellipse 90% 80% at 50% 50%, transparent 30%, rgba(0, 0, 0, 0.7) 100%),
       var(--black);
     background-size: 760px 760px, 760px 760px, 760px 760px, 760px 760px, 760px 760px,
       760px 760px, 760px 760px, 760px 760px, 760px 760px, 760px 760px, 100% 100%, 100% 100%;
-    transition: opacity 800ms var(--ease);
+    transition: opacity 700ms var(--ease);
   }
 
-  /* The accretion disk: a circle squashed and tilted into an ellipse. */
-  .hero__static-disk {
-    position: absolute;
-    top: 50%;
-    left: 62%;
-    width: min(52vw, 620px);
-    aspect-ratio: 1;
-    transform: translate(-50%, -50%) rotate(-16deg) scaleY(0.3);
-    border-radius: 50%;
-    border: 2.5px solid var(--gold);
-    box-shadow:
-      0 0 70px 6px rgba(245, 194, 75, 0.4),
-      inset 0 0 60px 10px rgba(245, 194, 75, 0.28);
-  }
+  /* Copy beats ----------------------------------------------------------- */
 
-  /* The event horizon, with the photon ring hugging its edge. */
-  .hero__static-core {
-    position: absolute;
-    top: 50%;
-    left: 62%;
-    width: min(17vw, 200px);
-    aspect-ratio: 1;
-    transform: translate(-50%, -50%);
-    border-radius: 50%;
-    background: var(--black);
-    box-shadow:
-      0 0 0 2px rgba(245, 194, 75, 0.95),
-      0 0 46px 12px rgba(245, 194, 75, 0.3);
-  }
-
-  /* Text panels ---------------------------------------------------------- */
-
-  .hero__panel {
+  .hero__beat {
     position: absolute;
     inset: 0;
     z-index: 2;
     display: flex;
     flex-direction: column;
-    justify-content: center;
     text-align: center;
     pointer-events: none;
+    opacity: 0;
   }
 
-  /* Interactive bits inside a panel still need to be clickable. */
-  .hero__panel a { pointer-events: auto; }
+  .hero__beat--center { justify-content: center; }
 
-  /* A soft scrim behind the text. The camera moves, so we can't rely on the
-     disk staying out from behind the headline — this guarantees contrast
-     without darkening the whole scene. */
-  .hero__panel::before {
+  .hero__beat--bottom {
+    justify-content: flex-end;
+    padding-bottom: clamp(3rem, 9vh, 6.5rem);
+  }
+
+  /* The opening beat is the only one visible before JS takes over. */
+  .hero__beat--center[data-beat='open'] { opacity: 1; }
+
+  .hero__beat a { pointer-events: auto; }
+
+  /* A soft scrim, on the beats that have scene elements near them. The
+     closing beat deliberately has none: by then the frame is empty, and a
+     scrim there would be covering nothing. */
+  .hero__beat[data-beat='open']::before,
+  .hero__beat[data-beat='build']::before,
+  .hero__beat[data-beat='launch']::before {
     content: '';
     position: absolute;
     inset: 0;
     z-index: -1;
     background: radial-gradient(
-      ellipse 70% 46% at 50% 46%,
-      rgba(10, 10, 12, 0.74) 0%,
-      rgba(10, 10, 12, 0.44) 45%,
-      transparent 78%
+      ellipse 66% 42% at 50% var(--scrim-y, 46%),
+      rgba(10, 10, 12, 0.72) 0%,
+      rgba(10, 10, 12, 0.4) 46%,
+      transparent 76%
     );
     pointer-events: none;
   }
 
-  .hero__panel--close { opacity: 0; }
+  .hero__beat--bottom::before { --scrim-y: 82%; }
 
-  /* Without JS the closing panel would sit on top of the opening one.
-     Only show it once the scene is live and hero.js controls the fades. */
-  html.no-js .hero__panel--close,
-  .hero:not(.is-live) .hero__panel--close { display: none; }
+  /* Without JS only the opening beat should show — the others would stack. */
+  html.no-js .hero__beat:not([data-beat='open']),
+  .hero:not(.is-live) .hero__beat:not([data-beat='open']) { display: none; }
 
   .hero__eyebrow {
     font-family: var(--font-mono);
@@ -221,6 +229,26 @@ import { url } from '../data/url.js';
     text-shadow: 0 1px 24px rgba(0, 0, 0, 0.7);
   }
 
+  /* The two mid-scroll beats: smaller than the headline, so they read as
+     narration over the action rather than competing with it. */
+  .hero__line {
+    font-family: var(--font-display);
+    font-size: clamp(1.6rem, 1.1rem + 2.2vw, 3rem);
+    font-weight: 600;
+    letter-spacing: -0.035em;
+    line-height: 1.05;
+    color: var(--white);
+    text-shadow: 0 2px 32px rgba(0, 0, 0, 0.75);
+  }
+
+  .hero__caption {
+    margin-top: var(--s-2);
+    font-size: var(--t-small);
+    letter-spacing: 0.02em;
+    color: var(--silver);
+    text-shadow: 0 1px 20px rgba(0, 0, 0, 0.8);
+  }
+
   .hero__closing {
     font-size: var(--t-display);
     font-weight: 600;
@@ -228,10 +256,13 @@ import { url } from '../data/url.js';
     letter-spacing: -0.045em;
     color: var(--white);
     margin-bottom: var(--s-5);
-    text-shadow: 0 2px 40px rgba(0, 0, 0, 0.6);
   }
 
   .hero__ctas { justify-content: center; }
+
+  /* Static mockup -------------------------------------------------------- */
+
+  .hero__mock { display: none; }
 
   /* Scroll hint ---------------------------------------------------------- */
 
@@ -267,50 +298,110 @@ import { url } from '../data/url.js';
     100% { transform: scaleY(1); opacity: 0; }
   }
 
-  /* Reduced motion: collapse to a single still screen ---------------------- */
+  /* ── No JS / reduced motion ────────────────────────────────────────────
+     One still screen: headline, sub, both CTAs, and a CSS drawing of the
+     assembled site underneath. Everything is in flow, so nothing can end up
+     behind the text. */
 
   @media (prefers-reduced-motion: reduce) {
-    .hero { height: 100vh; height: 100svh; }
-    .hero__stage { position: relative; }
+    .hero { height: auto; min-height: 100vh; min-height: 100svh; }
+    .hero__stage { position: relative; height: auto; min-height: 100vh; min-height: 100svh; }
     .hero__canvas { display: none; }
     .hero__hint { display: none; }
     .hero__static { opacity: 1 !important; }
-
-    /* Push the disk off to the side so it sits behind the text rather than
-       under it. */
-    .hero__static-disk,
-    .hero__static-core { left: 78%; top: 62%; }
-
-    /* Show the closing CTAs beneath the headline instead of on their own beat.
-       These stay position:relative rather than static — z-index only applies to
-       positioned elements, and without it .hero__static (which is absolutely
-       positioned) paints straight over the headline. */
-    .hero__panel--close {
-      display: flex !important;
-      position: relative;
-      z-index: 2;
-      opacity: 1 !important;
-      margin-top: var(--s-5);
-      flex: 0 0 auto;
-    }
-
-    .hero__panel--close .hero__closing { display: none; }
-
-    .hero__panel--open {
-      position: relative;
-      z-index: 2;
-      flex: 0 0 auto;
-    }
-
-    /* Both panels are in flow now, so their full-bleed scrims would stack.
-       One is enough. */
-    .hero__panel--close::before { display: none; }
 
     .hero__stage {
       display: flex;
       flex-direction: column;
       justify-content: center;
-      padding-block: var(--s-8) var(--s-6);
+      align-items: center;
+      padding-block: calc(72px + var(--s-7)) var(--s-7);
+    }
+
+    /* The mid-scroll narration has no animation to narrate. */
+    .hero__beat[data-beat='build'],
+    .hero__beat[data-beat='launch'] { display: none !important; }
+
+    /* position:relative, not static — z-index only applies to positioned
+       elements, and .hero__static is absolutely positioned, so without this
+       the star field paints straight over the headline. */
+    .hero__beat {
+      position: relative;
+      z-index: 2;
+      inset: auto;
+      display: flex !important;
+      opacity: 1 !important;
+      flex: 0 0 auto;
+      width: 100%;
+      padding-bottom: 0;
+    }
+
+    .hero__beat[data-beat='close'] { margin-top: var(--s-5); }
+    .hero__beat[data-beat='close'] .hero__closing { display: none; }
+
+    /* One scrim is plenty when both beats are stacked in flow. */
+    .hero__beat[data-beat='close']::before { display: none; }
+
+    /* The mockup, drawn in CSS, beneath the CTAs. */
+    .hero__mock {
+      position: relative;
+      z-index: 2;
+      display: block;
+      width: min(90%, 30rem);
+      aspect-ratio: 16 / 10;
+      margin-top: var(--s-7);
+      border: 1px solid rgba(169, 173, 182, 0.5);
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.022);
+    }
+
+    .hero__mock span { position: absolute; display: block; }
+
+    .hero__mock-chrome {
+      inset: 0 0 auto 0;
+      height: 10%;
+      background: rgba(169, 173, 182, 0.08);
+      border-bottom: 1px solid rgba(169, 173, 182, 0.25);
+      border-radius: 11px 11px 0 0;
+    }
+
+    .hero__mock-nav {
+      top: 16%;
+      left: 4%;
+      right: 4%;
+      height: 8%;
+      border: 1px solid rgba(245, 194, 75, 0.45);
+      background: rgba(245, 194, 75, 0.1);
+      border-radius: 5px;
+    }
+
+    .hero__mock-img {
+      top: 30%;
+      left: 4%;
+      right: 4%;
+      height: 30%;
+      border: 1px solid rgba(169, 173, 182, 0.38);
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: 6px;
+    }
+
+    .hero__mock-line {
+      left: 4%;
+      height: 4.5%;
+      background: rgba(255, 255, 255, 0.8);
+      border-radius: 3px;
+    }
+
+    .hero__mock-line--a { top: 66%; width: 52%; }
+    .hero__mock-line--b { top: 74%; width: 36%; }
+
+    .hero__mock-btn {
+      top: 84%;
+      left: 4%;
+      width: 22%;
+      height: 7%;
+      background: var(--gold);
+      border-radius: 99px;
     }
   }
 </style>

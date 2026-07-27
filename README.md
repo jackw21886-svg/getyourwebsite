@@ -4,8 +4,8 @@ The marketing site for GetYourWebsite — websites for local businesses, built b
 high school students.
 
 Seven pages (Home, Our Work, Demo, Pricing, Benefits, Why Us, Contact) plus a
-404, a scroll-driven Earth-to-Moon hero, six live mock client sites, and an
-interactive demo of our real client portal.
+404, a scroll-driven hero where a website assembles itself and launches, six
+live mock client sites, and an interactive demo of our real client portal.
 
 ---
 
@@ -126,7 +126,7 @@ a button inline, or the site drifts.
 
 Sizes are `.btn--sm`, nothing (medium), and `.btn--lg`.
 
-The hover and press effects rhyme with the hero: a dark "event horizon" ring
+The hover and press effects are space-themed: a dark "event horizon" ring
 tightens inward on hover, a lensing sweep crosses the secondary buttons, and
 pressing collapses a ring inward instead of the usual outward ripple. All of it
 is decoration — `src/scripts/buttons.js` never touches the click, and none of
@@ -135,16 +135,31 @@ feedback on their own.
 
 ### The hero
 
-`src/scripts/hero.js` is one full-screen WebGL fragment shader — stars,
-gravitational lensing, the accretion disk and the film grain are all computed
-per pixel, with no textures and no 3D library.
+The animation is the pitch: fragments of a website drift in space, assemble
+themselves into a mockup, and launch. `src/scripts/hero.js` draws it on a 2D
+canvas — no 3D library, no textures, no images.
 
-To retune the animation, edit the `KEYS` array at the top of that file: each
-entry says where the black hole sits, how big it looks, how hard space bends
-and how bright the disk is at that point in the scroll. You shouldn't need to
-touch the shader itself. The one rule: **no stretch of the scroll should be
-visually empty** — there should always be either the disk or a dense star
-field carrying the frame.
+Two things to edit:
+
+- **`LAYOUT`** — the assembled site. Each entry is one piece, positioned in
+  normalised coordinates (`-0.5` to `0.5` across the mockup) so it scales with
+  the viewport. `g` is the assembly group: lower numbers fly in first, which
+  is what makes the build legible.
+- **`BEATS`** — the scroll windows for the four lines of copy.
+
+Two rules the scene must never break, both from design review:
+
+1. **Nothing sits behind or crosses the copy.** The opening beat scatters
+   fragments into a ring *around* the headline, the middle beats put the copy
+   at the bottom with the mockup above it, and by the finale everything has
+   physically left the frame. The `clearOfCopy()` helper enforces the first of
+   those by measuring the real headline box and pushing any overlapping piece
+   outward, and there's an automated test for all three (see "Verifying").
+2. **No stretch of the scroll is visually empty.** There is always the mockup,
+   the debris field, or both, in motion.
+
+On desktop the scene also drifts gently with the mouse, so it feels alive
+before you scroll.
 
 ---
 
@@ -256,6 +271,7 @@ Search the project for `[EDIT]` to find them all. In priority order:
 - **There is no approve button in the demo** because there isn't one in the real
   client portal. Approval happens on our side and versions only appear once
   they're approved. `/demo` says so explicitly.
-- **The hero needs WebGL2.** Anything without it — or anyone with reduced
-  motion turned on — gets the CSS version of the same scene, which is already
-  in the markup. Nothing is downloaded for them.
+- **Anyone with reduced motion turned on** gets a still version of the same
+  idea: the headline, both CTAs and a CSS drawing of the assembled site, all
+  in flow so nothing overlaps. It's in the markup already, so it also covers
+  no-JS and any browser without canvas.

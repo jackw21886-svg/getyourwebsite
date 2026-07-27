@@ -317,8 +317,8 @@ a {
    Sizes are .btn--sm / (default) / .btn--lg. Never hand-roll a button; if you
    need a new variant, add it here so every one on the site stays in step.
 
-   The micro-interactions are black-hole themed, to rhyme with the hero:
-   a dark "event horizon" ring tightens inward on hover, a lensing sweep
+   The micro-interactions are space-themed: a dark "event horizon" ring
+   tightens inward on hover, a lensing sweep
    crosses the secondary buttons, and pressing collapses a ring inward
    instead of the usual outward ripple. All of it is decoration layered on
    top — none of it delays or blocks the click. */

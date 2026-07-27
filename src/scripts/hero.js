@@ -1,93 +1,138 @@
 /**
- * The home page hero: a scroll-driven flight past a black hole.
+ * The home page hero: a website assembles itself out of drifting fragments,
+ * then launches.
  *
- * Why raw WebGL and not Three.js
- * ------------------------------
- * The whole scene is one full-screen fragment shader — stars, lensing, the
- * accretion disk and the grain are all computed per pixel. There is no
- * geometry, no textures and no scene graph, so a 3D library would have been
- * ~170KB of download doing nothing. What's left is: compile a shader, set a
- * handful of uniforms, draw one triangle.
+ * The animation is the pitch — we design it, we build it, we launch it — so
+ * every frame should be saying something about getting a website made, not
+ * just looking like space.
+ *
+ * Why Canvas 2D
+ * -------------
+ * The scene is flat UI parts — bars, slabs, pills, wireframe blocks — moving
+ * in a shallow depth field. Depth is faked with scale, opacity and parallax
+ * rate, which reads convincingly and costs nothing. A 3D library would be
+ * ~170KB to draw rectangles, and a shader can't do rounded corners and crisp
+ * edges nearly as easily. This keeps the whole site's JS under 25KB.
  *
  * How it fits together
  * --------------------
- *   KEYS          the choreography — where the black hole is and how big it
- *                 looks at each point in the scroll. Tune the animation here,
- *                 not in the shader.
- *   FRAGMENT      the drawing. Reads the uniforms KEYS produces.
- *   frame()       per animation frame: read scroll → damp it → set uniforms →
- *                 draw → fade the text panels.
+ *   LAYOUT     where each piece of the assembled site sits. Edit this to
+ *              change what gets built.
+ *   BEATS      the scroll windows for each stage.
+ *   scatter()  where each piece starts, out in the debris field.
+ *   frame()    per animation frame: read scroll → damp it → place every piece
+ *              → draw → fade the copy.
  *
- * Nothing in this file runs under prefers-reduced-motion, or if WebGL is
- * missing, or if the shader fails to compile. The static hero in Hero.astro is
- * always in the markup and is what those visitors see.
+ * Two rules this scene must never break, both from design review:
+ *   1. Nothing may sit behind or cross the copy. The opening beat scatters
+ *      fragments into a ring *around* the headline; the middle beats put the
+ *      copy at the bottom with the site above it; and by the closing beat
+ *      every object has physically left the frame, so the finale is on clean
+ *      black with nothing to occlude it.
+ *   2. Every scroll position has several things moving. There is no stretch
+ *      where a single object drifts in an empty frame.
+ *
+ * Nothing here runs under prefers-reduced-motion, or without canvas. The
+ * static hero in Hero.astro is always in the markup and is what those
+ * visitors see.
  */
 
 const heroEl = document.querySelector('[data-hero]');
 const canvas = document.querySelector('[data-hero-canvas]');
-const panelOpen = document.querySelector('[data-hero-panel="open"]');
-const panelClose = document.querySelector('[data-hero-panel="close"]');
 const hint = document.querySelector('[data-hero-hint]');
 
 const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const isSmall = window.matchMedia('(max-width: 820px)').matches;
+const canHover = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+
+// ── Palette ────────────────────────────────────────────────────────────────
+// The only colours in the scene. Anything else is a bug.
+const GOLD = '245, 194, 75';
+const SILVER = '169, 173, 182';
+const WHITE = '255, 255, 255';
+
+// ── Copy beats ─────────────────────────────────────────────────────────────
+// [fadeInStart, fadeInEnd, fadeOutStart, fadeOutEnd]; null means "already
+// there" / "stays". These windows are what guarantee only one beat is ever
+// on screen at a time.
+const BEATS = {
+  open: [null, null, 0.16, 0.26],
+  build: [0.3, 0.38, 0.56, 0.63],
+  launch: [0.66, 0.72, 0.8, 0.85],
+  close: [0.86, 0.93, null, null],
+};
+
+// The assembly runs between these two points in the scroll.
+const BUILD_FROM = 0.26;
+const BUILD_TO = 0.68;
+// …and the launch between these.
+const LAUNCH_FROM = 0.68;
+const LAUNCH_TO = 0.87;
 
 /**
- * Choreography. Each key is a moment in the scroll:
+ * The assembled website, in normalised site coordinates: x and y both run
+ * -0.5 → 0.5 across the mockup, so the whole layout scales with the viewport.
  *
- *   at    progress through the hero, 0 → 1
- *   bh    where the black hole sits on screen. (0,0) is the middle; y is in
- *         [-0.5, 0.5] and x is the same scale, so on a wide screen x runs
- *         past ±0.5 at the edges.
- *   rs    apparent radius of the event horizon, in the same units. This is
- *         what sells "getting closer" — everything else scales off it.
- *   lens  how hard space bends. Peaks on the close approach and releases at
- *         the end as we slingshot away.
- *   disk  brightness of the accretion disk.
- *   par   how far the star layers have drifted. Near layers move more than
- *         far ones, which is what gives the field depth.
- *
- * The one rule when retuning: no stretch of the scroll should be visually
- * empty. There should always be either the disk or a dense star field
- * carrying the frame.
+ * `g` is the assembly group — pieces with a lower group number fly in first,
+ * which is what makes the build legible: frame, then chrome, then nav, then
+ * the hero block, then the words, then the buttons.
  */
-const KEYS = [
-  { at: 0.0,  bh: [0.40, 0.10],   rs: 0.034, lens: 0.85, disk: 0.80, par: 0.0 },
-  { at: 0.20, bh: [0.34, 0.08],   rs: 0.052, lens: 1.0,  disk: 0.95, par: 0.05 },
-  { at: 0.42, bh: [0.18, 0.03],   rs: 0.088, lens: 1.25, disk: 1.12, par: 0.15 },
-  { at: 0.64, bh: [0.0, -0.01],   rs: 0.120, lens: 1.55, disk: 1.10, par: 0.30 },
-  { at: 0.82, bh: [-0.30, -0.10], rs: 0.145, lens: 1.30, disk: 1.00, par: 0.50 },
-  { at: 1.0,  bh: [-0.88, -0.38], rs: 0.100, lens: 0.30, disk: 0.45, par: 0.76 },
+const LAYOUT = [
+  // group 0 — the browser frame itself
+  { k: 'frame', x: 0, y: 0, w: 1, h: 1, g: 0 },
+
+  // group 1 — window chrome
+  { k: 'fill', x: 0, y: -0.45, w: 1, h: 0.1, g: 1, c: SILVER, a: 0.07 },
+  { k: 'dot', x: -0.44, y: -0.45, w: 0.018, h: 0.018, g: 1, c: SILVER, a: 0.5 },
+  { k: 'dot', x: -0.4, y: -0.45, w: 0.018, h: 0.018, g: 1, c: SILVER, a: 0.5 },
+  { k: 'dot', x: -0.36, y: -0.45, w: 0.018, h: 0.018, g: 1, c: SILVER, a: 0.5 },
+
+  // group 2 — the gold nav bar
+  { k: 'nav', x: 0, y: -0.335, w: 0.92, h: 0.075, g: 2 },
+  { k: 'pill', x: -0.38, y: -0.335, w: 0.1, h: 0.032, g: 2, c: GOLD, a: 0.95, glow: 1 },
+  { k: 'pill', x: 0.14, y: -0.335, w: 0.07, h: 0.018, g: 2, c: SILVER, a: 0.55 },
+  { k: 'pill', x: 0.25, y: -0.335, w: 0.07, h: 0.018, g: 2, c: SILVER, a: 0.55 },
+  { k: 'pill', x: 0.36, y: -0.335, w: 0.07, h: 0.018, g: 2, c: SILVER, a: 0.55 },
+
+  // group 3 — the hero image block
+  { k: 'image', x: 0, y: -0.145, w: 0.92, h: 0.26, g: 3 },
+
+  // group 4 — headline slabs
+  { k: 'fill', x: -0.2, y: 0.045, w: 0.52, h: 0.04, g: 4, c: WHITE, a: 0.82, r: 0.5 },
+  { k: 'fill', x: -0.28, y: 0.105, w: 0.36, h: 0.04, g: 4, c: WHITE, a: 0.82, r: 0.5 },
+
+  // group 5 — body copy slabs
+  { k: 'fill', x: -0.16, y: 0.168, w: 0.6, h: 0.019, g: 5, c: SILVER, a: 0.5, r: 0.5 },
+  { k: 'fill', x: -0.19, y: 0.205, w: 0.54, h: 0.019, g: 5, c: SILVER, a: 0.5, r: 0.5 },
+
+  // group 6 — buttons
+  { k: 'pill', x: -0.32, y: 0.29, w: 0.2, h: 0.055, g: 6, c: GOLD, a: 0.95, glow: 1.4 },
+  { k: 'ghost', x: -0.075, y: 0.29, w: 0.17, h: 0.055, g: 6 },
+
+  // group 7 — the card row
+  { k: 'card', x: -0.31, y: 0.415, w: 0.28, h: 0.11, g: 7 },
+  { k: 'card', x: 0, y: 0.415, w: 0.28, h: 0.11, g: 7 },
+  { k: 'card', x: 0.31, y: 0.415, w: 0.28, h: 0.11, g: 7 },
 ];
 
-/** Fade windows for the two text beats, in progress units. */
-const OPEN_FADE = [0.15, 0.27];
-const CLOSE_FADE = [0.82, 0.92];
-const HINT_FADE = [0.02, 0.09];
+const GROUPS = 8;
 
-// ── maths helpers ──────────────────────────────────────────────────────────
+// ── maths ──────────────────────────────────────────────────────────────────
 
 const clamp01 = (v) => (v < 0 ? 0 : v > 1 ? 1 : v);
 const lerp = (a, b, t) => a + (b - a) * t;
 const range = (v, a, b) => clamp01((v - a) / (b - a));
-const smooth = (t) => t * t * (3 - 2 * t);
 
-/** Interpolate KEYS at progress p. */
-function sample(p) {
-  let i = 0;
-  while (i < KEYS.length - 2 && p > KEYS[i + 1].at) i++;
+const easeOutExpo = (t) => (t >= 1 ? 1 : 1 - Math.pow(2, -10 * t));
+const easeInCubic = (t) => t * t * t;
+const easeInOut = (t) => t * t * (3 - 2 * t);
 
-  const a = KEYS[i];
-  const b = KEYS[i + 1];
-  const t = smooth(range(p, a.at, b.at));
-
-  return {
-    bx: lerp(a.bh[0], b.bh[0], t),
-    by: lerp(a.bh[1], b.bh[1], t),
-    rs: lerp(a.rs, b.rs, t),
-    lens: lerp(a.lens, b.lens, t),
-    disk: lerp(a.disk, b.disk, t),
-    par: lerp(a.par, b.par, t),
+/** Deterministic pseudo-random, so the scene is identical on every load. */
+function rng(seed) {
+  let s = seed;
+  return () => {
+    s = (s * 1103515245 + 12345) % 2147483648;
+    return s / 2147483648;
   };
 }
 
@@ -99,324 +144,593 @@ function readProgress() {
   return clamp01(-rect.top / scrollable);
 }
 
-// ── shaders ────────────────────────────────────────────────────────────────
-
-const VERTEX = `#version 300 es
-// One triangle big enough to cover the screen. Cheaper than a quad and needs
-// no vertex buffer — gl_VertexID does the work.
-void main() {
-  vec2 p = vec2((gl_VertexID << 1) & 2, gl_VertexID & 2);
-  gl_Position = vec4(p * 2.0 - 1.0, 0.0, 1.0);
-}`;
-
-const FRAGMENT = `#version 300 es
-precision highp float;
-
-out vec4 fragColor;
-
-uniform vec2  uRes;
-uniform float uTime;
-uniform vec2  uBh;     // black hole centre, screen units
-uniform float uRs;     // event horizon radius
-uniform float uLens;   // lensing strength
-uniform float uDisk;   // disk brightness
-uniform float uPar;    // parallax drift
-
-// Palette. These are the only colours in the scene — the site's gold, white
-// and silver. Nothing else is allowed in here.
-const vec3 GOLD   = vec3(0.961, 0.761, 0.294);  // #F5C24B
-const vec3 SILVER = vec3(0.663, 0.678, 0.714);  // #A9ADB6
-const vec3 WHITE  = vec3(1.0);
-
-float hash21(vec2 p) {
-  p = fract(p * vec2(123.34, 456.21));
-  p += dot(p, p + 45.32);
-  return fract(p.x * p.y);
+/** Opacity for a beat window at progress p. */
+function beatAlpha([inA, inB, outA, outB], p) {
+  const fadeIn = inA === null ? 1 : range(p, inA, inB);
+  const fadeOut = outA === null ? 0 : range(p, outA, outB);
+  return fadeIn * (1 - fadeOut);
 }
-
-/**
- * One depth layer of stars.
- *
- * The field is a hashed grid: each cell either holds a star or doesn't, and
- * the hash also decides its offset within the cell, its size, its brightness
- * and whether it's one of the rare gold ones.
- */
-vec3 starLayer(vec2 uv, float scale, float bright, float twinkle) {
-  vec2 gv = uv * scale;
-  vec2 id = floor(gv);
-  vec2 f = fract(gv) - 0.5;
-
-  float h = hash21(id);
-  float on = step(0.70, h);                       // ~30% of cells hold a star
-
-  vec2 off = vec2(hash21(id + 1.3), hash21(id + 7.7)) - 0.5;
-  float d = length(f - off * 0.72);
-
-  float size = mix(0.010, 0.032, hash21(id + 3.1));
-  float s = smoothstep(size, 0.0, d);
-
-  // A tight halo so the brighter stars read as light rather than as dots.
-  // Keep it small — overdo this and the whole field turns to fuzz.
-  s += smoothstep(size * 3.2, 0.0, d) * 0.10;
-
-  float gold = step(0.93, hash21(id + 9.4));
-  vec3 tint = mix(mix(SILVER, WHITE, hash21(id + 5.2)), GOLD, gold);
-
-  float tw = 1.0 - twinkle * 0.35 * (0.5 + 0.5 * sin(uTime * 1.7 + h * 42.0));
-
-  return tint * s * bright * tw * on;
-}
-
-void main() {
-  // Screen coords, aspect-corrected: y runs -0.5 → 0.5 top to bottom.
-  vec2 p = (gl_FragCoord.xy - 0.5 * uRes) / uRes.y;
-
-  vec2 d = p - uBh;
-  float r = max(length(d), 1e-4);
-  vec2 dir = d / r;
-
-  // ── Gravitational lensing ────────────────────────────────────────────
-  // Light from behind the hole is bent toward us, so the background appears
-  // dragged outward from the horizon. Sampling the star field at a point
-  // pushed away from the centre reproduces that: near the horizon we end up
-  // reading stars from far away, which compresses them into a bright ring.
-  // Falls off as 1/r² so it's violent up close and invisible further out.
-  float defl = uLens * uRs * uRs / (r * r);
-  defl = min(defl, 2.5);                          // keep it from exploding
-  vec2 bent = p + dir * defl;
-
-  // ── Star field ───────────────────────────────────────────────────────
-  // Three depth layers. The near layer drifts most, the far layer barely
-  // moves — that difference is the whole illusion of depth.
-  vec2 drift = vec2(uPar, uPar * 0.22) + vec2(uTime * 0.004, 0.0);
-
-  vec3 col = vec3(0.0);
-  col += starLayer(bent + drift * 1.00, 7.5,  0.85, 1.0);   // near
-  col += starLayer(bent + drift * 0.52, 14.0, 0.55, 0.7);   // mid
-#if LAYERS > 2
-  col += starLayer(bent + drift * 0.24, 26.0, 0.34, 0.4);   // far
-#endif
-
-  // ── Accretion disk ───────────────────────────────────────────────────
-  // A tilted ring: squashing y before measuring the radius turns the circle
-  // into the ellipse you'd see from just above the disk plane.
-  const float TILT = 0.30;
-  float e = length(vec2(d.x, d.y / TILT));
-
-  // Keep the annulus THIN. A thick band reads as a flat ochre donut; a thin,
-  // hot one reads as a disk of matter seen nearly edge-on.
-  float rIn = uRs * 2.3;
-  float rOut = uRs * 3.15;
-
-  float band = smoothstep(rIn, rIn * 1.07, e) * (1.0 - smoothstep(rOut * 0.86, rOut, e));
-
-  // Structure in the disk. Without this it's a smooth gradient and reads as
-  // an airbrushed donut; with it, it reads as matter actually moving.
-  float ang = atan(d.y / TILT, d.x);
-  band *= 0.72 + 0.28 * sin(ang * 7.0 + e / max(uRs * 0.30, 1e-4) - uTime * 0.85);
-
-  // Doppler beaming: the side rotating toward us is brighter and hotter.
-  float dop = 0.4 + 0.9 * smoothstep(0.4, -0.4, dir.x);
-
-  // The inner edge is hottest, so it washes toward white.
-  float hot = smoothstep(rIn * 1.7, rIn, e);
-  vec3 diskCol = mix(GOLD, mix(GOLD, WHITE, 0.85), hot * 0.85);
-
-  col += diskCol * band * dop * uDisk * 1.9;
-
-  // The far side of the disk, lensed up and over the horizon.
-  //
-  // Two details make this read correctly instead of looking like a second,
-  // separate ring: it has to hug the shadow closely, and it has to be
-  // strongest directly above and below it — fading out to the left and right
-  // where the direct band already crosses. That's what produces the
-  // arcs-over-the-top silhouette rather than a planet with rings.
-  float halo = smoothstep(uRs * 1.18, uRs * 1.30, r) * (1.0 - smoothstep(uRs * 1.46, uRs * 1.70, r));
-  halo *= 0.25 + 0.95 * smoothstep(0.12, 0.72, abs(dir.y));
-  col += mix(GOLD, WHITE, 0.3) * halo * uDisk * 1.5;
-
-  // ── Photon ring ──────────────────────────────────────────────────────
-  // The thin, very bright circle right at the edge of the shadow. Its width
-  // is held in absolute screen units rather than scaled off uRs, so it stays
-  // a crisp line as the hole grows instead of thickening into a band.
-  float ringR = uRs * 1.09;
-  float ringW = clamp(uRs * 0.03, 0.0011, 0.0030);
-  float ring = smoothstep(ringW * 2.4, ringW * 0.5, abs(r - ringR));
-  col += mix(GOLD, WHITE, 0.35) * ring * (0.7 + uDisk * 0.8);
-
-  // ── Bloom ────────────────────────────────────────────────────────────
-  // Two additive lobes — one tight around the ring, one wide and soft —
-  // instead of a second render pass.
-  //
-  // The radii are CLAMPED rather than scaled straight off uRs. That matters:
-  // glow area grows with the square of its radius, so an unclamped version
-  // floods the entire frame with gold on the close approach and drowns both
-  // the lensed stars and the headline.
-  float gTight = min(uRs * 1.8, 0.15);
-  float gWide = min(uRs * 3.6, 0.30);
-  float tight = 0.34 / (1.0 + pow(r / gTight, 3.0));
-  float wide = 0.20 / (1.0 + pow(e / gWide, 2.2));
-  col += GOLD * uDisk * (tight * 0.42 + wide * 0.22);
-
-  // ── Event horizon ────────────────────────────────────────────────────
-  // Nothing comes out. Everything drawn so far gets cut away inside it.
-  col *= smoothstep(uRs * 0.94, uRs * 1.06, r);
-
-  // ── Grade ────────────────────────────────────────────────────────────
-  // Soft shoulder so the hot core rolls off instead of clipping to a flat blob.
-  col = col / (1.0 + col * 0.45);
-
-  // Vignette: keeps the eye centred and helps the headline read.
-  col *= 1.0 - 0.36 * smoothstep(0.36, 1.05, length(p));
-
-  // Film grain. Small, but it's the difference between "render" and "shot".
-  float g = hash21(gl_FragCoord.xy + fract(uTime * 0.35) * 431.0);
-  col += (g - 0.5) * 0.028;
-
-  fragColor = vec4(max(col, 0.0), 1.0);
-}`;
 
 // ── boot ───────────────────────────────────────────────────────────────────
-
-function compile(gl, type, source) {
-  const sh = gl.createShader(type);
-  gl.shaderSource(sh, source);
-  gl.compileShader(sh);
-  if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) {
-    console.warn('[hero] shader failed to compile:', gl.getShaderInfoLog(sh));
-    return null;
-  }
-  return sh;
-}
 
 function start() {
   if (!heroEl || !canvas || prefersReduced) return;
 
-  const gl = canvas.getContext('webgl2', {
-    alpha: false,
-    antialias: false, // we're drawing one triangle; there are no edges to alias
-    depth: false,
-    stencil: false,
-    powerPreference: 'high-performance',
-  });
+  const ctx = canvas.getContext('2d', { alpha: false });
+  if (!ctx) return;
 
-  // No WebGL2? Leave the static hero in place. It's already on screen.
-  if (!gl) return;
-
-  // Mobile drops the far star layer — it's the least visible and the most
-  // per-pixel work.
-  const source = FRAGMENT.replace('#version 300 es', `#version 300 es\n#define LAYERS ${isSmall ? 2 : 3}`);
-
-  const vs = compile(gl, gl.VERTEX_SHADER, VERTEX);
-  const fs = compile(gl, gl.FRAGMENT_SHADER, source);
-  if (!vs || !fs) return;
-
-  const prog = gl.createProgram();
-  gl.attachShader(prog, vs);
-  gl.attachShader(prog, fs);
-  gl.linkProgram(prog);
-  if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) {
-    console.warn('[hero] program failed to link:', gl.getProgramInfoLog(prog));
-    return;
-  }
-  gl.useProgram(prog);
-
-  const u = {
-    res: gl.getUniformLocation(prog, 'uRes'),
-    time: gl.getUniformLocation(prog, 'uTime'),
-    bh: gl.getUniformLocation(prog, 'uBh'),
-    rs: gl.getUniformLocation(prog, 'uRs'),
-    lens: gl.getUniformLocation(prog, 'uLens'),
-    disk: gl.getUniformLocation(prog, 'uDisk'),
-    par: gl.getUniformLocation(prog, 'uPar'),
+  const panels = {
+    open: heroEl.querySelector('[data-beat="open"]'),
+    build: heroEl.querySelector('[data-beat="build"]'),
+    launch: heroEl.querySelector('[data-beat="launch"]'),
+    close: heroEl.querySelector('[data-beat="close"]'),
   };
 
-  // A full-screen fragment shader is fill-rate bound, so pixel count is the
-  // whole performance story. Capping the ratio below the device's native one
-  // is invisible on a soft, glowing scene and roughly halves the work.
-  const DPR_CAP = isSmall ? 1.5 : 1.75;
+  // -- reusable sprites ----------------------------------------------------
+  // A radial-gradient blob, pre-rendered once and then stretched to whatever
+  // needs a glow. Far cheaper than shadowBlur, and softer-looking.
+  function makeGlow(rgb) {
+    const c = document.createElement('canvas');
+    c.width = c.height = 128;
+    const g = c.getContext('2d');
+    const grad = g.createRadialGradient(64, 64, 0, 64, 64, 64);
+    grad.addColorStop(0, `rgba(${rgb},0.85)`);
+    grad.addColorStop(0.4, `rgba(${rgb},0.28)`);
+    grad.addColorStop(1, `rgba(${rgb},0)`);
+    g.fillStyle = grad;
+    g.fillRect(0, 0, 128, 128);
+    return c;
+  }
+
+  const glowGold = makeGlow(GOLD);
+  const glowWhite = makeGlow(WHITE);
+
+  // Film grain, as one tile drawn at a random offset each frame.
+  const grain = document.createElement('canvas');
+  grain.width = grain.height = 256;
+  {
+    const g = grain.getContext('2d');
+    const img = g.createImageData(256, 256);
+    const r = rng(99);
+    for (let i = 0; i < img.data.length; i += 4) {
+      const v = r() * 255;
+      img.data[i] = img.data[i + 1] = img.data[i + 2] = v;
+      img.data[i + 3] = 255;
+    }
+    g.putImageData(img, 0, 0);
+  }
+
+  // -- the scene -----------------------------------------------------------
+
+  const rand = rng(20260727);
+
+  /**
+   * Where a piece waits before the build starts: out in a ring, and further
+   * away than the site plane.
+   *
+   * `z` is always > 1. That matters — a piece at z < 1 would draw LARGER
+   * scattered than assembled, which reads as debris flying at the camera
+   * instead of parts gathering from a distance, and swamps the frame.
+   */
+  function scatter(i, n) {
+    const angle = (i / n) * Math.PI * 2 + rand() * 0.8;
+    return {
+      ax: Math.cos(angle) * (0.72 + rand() * 0.5),
+      ay: Math.sin(angle) * (0.66 + rand() * 0.5),
+      rot: (rand() - 0.5) * 1.5,
+      spin: (rand() - 0.5) * 0.5,
+      z: 1.55 + rand() * 1.85,
+      bob: rand() * Math.PI * 2,
+    };
+  }
+
+  const pieces = LAYOUT.map((p, i) => ({ ...p, ...scatter(i, LAYOUT.length) }));
+
+  /**
+   * Debris that never joins the build. Its whole job is to make sure no
+   * frame is ever just one object in empty space.
+   */
+  const DEBRIS = Array.from({ length: 16 }, (_, i) => {
+    const kinds = ['pill', 'bar', 'sq', 'line'];
+    const angle = (i / 16) * Math.PI * 2 + rand() * 0.7;
+    return {
+      k: kinds[Math.floor(rand() * kinds.length)],
+      ax: Math.cos(angle) * (0.78 + rand() * 0.55),
+      ay: Math.sin(angle) * (0.7 + rand() * 0.5),
+      w: 0.05 + rand() * 0.13,
+      h: 0.01 + rand() * 0.032,
+      rot: (rand() - 0.5) * 2.2,
+      spin: (rand() - 0.5) * 0.35,
+      z: 1.25 + rand() * 1.75,
+      bob: rand() * Math.PI * 2,
+      gold: rand() > 0.66,
+      drift: 0.4 + rand() * 0.9,
+    };
+  });
+
+  /** Three parallax star layers — near stars move most. */
+  const STARS = [
+    { n: isSmall ? 34 : 60, z: 0.55, size: 1.7, a: 0.85 },
+    { n: isSmall ? 44 : 80, z: 1.0, size: 1.2, a: 0.6 },
+    { n: isSmall ? 50 : 96, z: 1.9, size: 0.9, a: 0.4 },
+  ].map((layer) => ({
+    ...layer,
+    pts: Array.from({ length: layer.n }, () => ({
+      x: rand() * 2 - 1,
+      y: rand() * 2 - 1,
+      gold: rand() > 0.9,
+      tw: rand() * Math.PI * 2,
+    })),
+  }));
+
+  // -- sizing --------------------------------------------------------------
+
+  let W = 0;
+  let H = 0;
+  let SW = 0;
+  let SH = 0;
+  let siteCX = 0;
+  let siteCY = 0;
+  const DPR_CAP = 1.75;
 
   function resize() {
     const ratio = Math.min(window.devicePixelRatio || 1, DPR_CAP);
-    const w = Math.floor(canvas.clientWidth * ratio);
-    const h = Math.floor(canvas.clientHeight * ratio);
-    if (canvas.width === w && canvas.height === h) return;
-    canvas.width = w;
-    canvas.height = h;
-    gl.viewport(0, 0, w, h);
-    gl.uniform2f(u.res, w, h);
+    const cw = canvas.clientWidth;
+    const ch = canvas.clientHeight;
+    const w = Math.floor(cw * ratio);
+    const h = Math.floor(ch * ratio);
+
+    if (canvas.width !== w || canvas.height !== h) {
+      canvas.width = w;
+      canvas.height = h;
+    }
+    ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+
+    W = cw;
+    H = ch;
+
+    // The mockup sits above the middle, leaving the lower third clear for the
+    // copy beats that run during the build and the launch.
+    SW = Math.min(W * (isSmall ? 0.86 : 0.52), isSmall ? 430 : 720);
+    SH = Math.min(SW * (isSmall ? 0.8 : 0.62), H * 0.5);
+    siteCX = W / 2;
+    siteCY = H * (isSmall ? 0.37 : 0.4);
+  }
+
+  /**
+   * The rectangle the opening copy occupies, in units of half the stage —
+   * so 1.0 means "reaches the edge". Measured from the DOM rather than
+   * guessed, so it stays correct when the type scale or the wording changes.
+   */
+  const keep = { x: 0.8, y: 0.45 };
+
+  function measureKeepOut() {
+    const block = panels.open?.querySelector('.shell');
+    if (!block || !W || !H) return;
+    const r = block.getBoundingClientRect();
+    const c = canvas.getBoundingClientRect();
+    const cx = c.left + W / 2;
+    const cy = c.top + H / 2;
+    keep.x = Math.max(Math.abs(r.left - cx), Math.abs(r.right - cx)) / (W / 2);
+    keep.y = Math.max(Math.abs(r.top - cy), Math.abs(r.bottom - cy)) / (H / 2);
   }
 
   resize();
-  window.addEventListener('resize', resize, { passive: true });
+  measureKeepOut();
+  window.addEventListener('resize', () => {
+    resize();
+    measureKeepOut();
+  }, { passive: true });
 
-  // Damped progress. The shader follows this rather than the raw scroll
-  // position, so the camera carries a little weight instead of snapping to
-  // the scrollbar.
+  /**
+   * Push a scattered position radially outward until its bounding box clears
+   * the copy. This is what actually guarantees the rule rather than hoping
+   * the authored positions happen to miss — it accounts for each piece's own
+   * size, and it only ever moves things further out, so the ring holds.
+   *
+   * Returns a multiplier for the scatter position.
+   */
+  function clearOfCopy(nx, ny, halfWn, halfHn) {
+    const mx2 = keep.x + halfWn + 0.05;
+    const my2 = keep.y + halfHn + 0.05;
+    const k = Math.max(Math.abs(nx) / mx2, Math.abs(ny) / my2);
+    return k > 0 && k < 1 ? 1 / k : 1;
+  }
+
+  // -- mouse parallax ------------------------------------------------------
+  // Desktop only. Enough to make the scene feel alive when you're not
+  // scrolling, small enough that it never reads as drift.
+  let mx = 0;
+  let my = 0;
+  let mtx = 0;
+  let mty = 0;
+
+  if (canHover) {
+    window.addEventListener(
+      'pointermove',
+      (e) => {
+        mtx = (e.clientX / window.innerWidth) * 2 - 1;
+        mty = (e.clientY / window.innerHeight) * 2 - 1;
+      },
+      { passive: true }
+    );
+  }
+
+  // -- drawing helpers -----------------------------------------------------
+
+  function roundRect(x, y, w, h, r) {
+    const rr = Math.min(r, Math.abs(w) / 2, Math.abs(h) / 2);
+    ctx.beginPath();
+    ctx.moveTo(x + rr, y);
+    ctx.arcTo(x + w, y, x + w, y + h, rr);
+    ctx.arcTo(x + w, y + h, x, y + h, rr);
+    ctx.arcTo(x, y + h, x, y, rr);
+    ctx.arcTo(x, y, x + w, y, rr);
+    ctx.closePath();
+  }
+
+  function glow(sprite, cx, cy, w, h, alpha) {
+    if (alpha <= 0.01) return;
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.globalAlpha = alpha;
+    ctx.drawImage(sprite, cx - w / 2, cy - h / 2, w, h);
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.globalAlpha = 1;
+  }
+
+  /** Draw one assembled-site piece in its own local space. */
+  function drawPiece(p, w, h, alpha, scale) {
+    const x = -w / 2;
+    const y = -h / 2;
+    const a = alpha;
+
+    switch (p.k) {
+      case 'frame':
+        ctx.fillStyle = `rgba(${WHITE},${0.022 * a})`;
+        roundRect(x, y, w, h, 12 * scale);
+        ctx.fill();
+        ctx.strokeStyle = `rgba(${SILVER},${0.5 * a})`;
+        ctx.lineWidth = 1.4;
+        ctx.stroke();
+        break;
+
+      case 'nav':
+        ctx.fillStyle = `rgba(${GOLD},${0.1 * a})`;
+        roundRect(x, y, w, h, 6 * scale);
+        ctx.fill();
+        ctx.strokeStyle = `rgba(${GOLD},${0.45 * a})`;
+        ctx.lineWidth = 1.1;
+        ctx.stroke();
+        break;
+
+      case 'image':
+        ctx.fillStyle = `rgba(${WHITE},${0.03 * a})`;
+        roundRect(x, y, w, h, 7 * scale);
+        ctx.fill();
+        ctx.strokeStyle = `rgba(${SILVER},${0.4 * a})`;
+        ctx.lineWidth = 1.1;
+        ctx.stroke();
+        // the classic "image goes here" cross
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.lineTo(x + w, y + h);
+        ctx.moveTo(x + w, y);
+        ctx.lineTo(x, y + h);
+        ctx.strokeStyle = `rgba(${SILVER},${0.16 * a})`;
+        ctx.stroke();
+        break;
+
+      case 'card':
+        ctx.fillStyle = `rgba(${WHITE},${0.025 * a})`;
+        roundRect(x, y, w, h, 6 * scale);
+        ctx.fill();
+        ctx.strokeStyle = `rgba(${SILVER},${0.32 * a})`;
+        ctx.lineWidth = 1;
+        ctx.stroke();
+        break;
+
+      case 'ghost':
+        ctx.strokeStyle = `rgba(${SILVER},${0.62 * a})`;
+        ctx.lineWidth = 1.2;
+        roundRect(x, y, w, h, h / 2);
+        ctx.stroke();
+        break;
+
+      case 'dot':
+        ctx.fillStyle = `rgba(${p.c},${p.a * a})`;
+        ctx.beginPath();
+        ctx.arc(0, 0, w / 2, 0, Math.PI * 2);
+        ctx.fill();
+        break;
+
+      case 'pill':
+        ctx.fillStyle = `rgba(${p.c},${p.a * a})`;
+        roundRect(x, y, w, h, h / 2);
+        ctx.fill();
+        break;
+
+      default: // 'fill'
+        ctx.fillStyle = `rgba(${p.c},${p.a * a})`;
+        roundRect(x, y, w, h, (p.r ?? 0.3) * h);
+        ctx.fill();
+    }
+  }
+
+  // -- the loop ------------------------------------------------------------
+
   let shown = readProgress();
-  let running = true;
+  let running = false;
   let drawn = false;
   const t0 = performance.now();
+  let last = t0;
 
-  // Don't burn a WebGL loop once the hero has scrolled away.
+  function ensureRunning() {
+    if (running) return;
+    running = true;
+    requestAnimationFrame(frame);
+  }
+
+  // Pause the loop once the hero has scrolled away — but never in a way that
+  // can strand a half-finished frame on screen.
+  //
+  // Two things matter here. Take the LAST entry, not the first: an
+  // IntersectionObserver callback can be handed several queued entries, and
+  // destructuring `[entry]` reads the oldest one, so a stale "not visible"
+  // could stop the loop while the hero was in full view. And listen to scroll
+  // as a safety net, so even if the observer misses an edge the scene can
+  // always restart rather than freezing mid-launch.
   const io = new IntersectionObserver(
-    ([entry]) => {
-      running = entry.isIntersecting;
-      if (running) requestAnimationFrame(frame);
+    (entries) => {
+      const visible = entries[entries.length - 1].isIntersecting;
+      if (visible) ensureRunning();
+      else running = false;
     },
     { threshold: 0 }
   );
   io.observe(heroEl);
 
-  function setPanels(p) {
-    panelOpen.style.opacity = String(1 - range(p, OPEN_FADE[0], OPEN_FADE[1]));
-    panelClose.style.opacity = String(range(p, CLOSE_FADE[0], CLOSE_FADE[1]));
-    if (hint) hint.style.opacity = String(1 - range(p, HINT_FADE[0], HINT_FADE[1]));
+  window.addEventListener(
+    'scroll',
+    () => {
+      const r = heroEl.getBoundingClientRect();
+      if (r.bottom > 0 && r.top < window.innerHeight) ensureRunning();
+    },
+    { passive: true }
+  );
 
-    // Keep faded-out panels out of the tab order and off the a11y tree.
-    const openHidden = p > OPEN_FADE[1];
-    const closeHidden = p < CLOSE_FADE[0];
-    panelOpen.inert = openHidden;
-    panelOpen.setAttribute('aria-hidden', String(openHidden));
-    panelClose.inert = closeHidden;
-    panelClose.setAttribute('aria-hidden', String(closeHidden));
+  function setBeats(p) {
+    for (const [name, win] of Object.entries(BEATS)) {
+      const el = panels[name];
+      if (!el) continue;
+      const a = beatAlpha(win, p);
+      el.style.opacity = String(a);
+      const off = a < 0.02;
+      el.inert = off;
+      el.setAttribute('aria-hidden', String(off));
+    }
+    if (hint) hint.style.opacity = String(1 - range(p, 0.02, 0.09));
   }
 
   function frame(now) {
     if (!running) return;
 
     resize();
+    const time = (now - t0) / 1000;
+
+    // Frame-rate independent smoothing. A plain `x += (target - x) * 0.1`
+    // settles twice as slowly at 30fps as at 60fps, so the scene would lag
+    // noticeably on a weaker device — the exact machines that can least
+    // afford it. Deriving the factor from elapsed time keeps the feel
+    // identical everywhere.
+    const dt = Math.min((now - last) / 1000, 0.1);
+    last = now;
+    const smoothing = (rate) => 1 - Math.pow(1 - rate, dt * 60);
 
     const target = readProgress();
-    // Critically damped enough to feel weighty without feeling laggy.
-    shown += (target - shown) * 0.11;
+    // Scroll inertia: the scene trails the scrollbar slightly so the camera
+    // has weight. The copy does NOT — text lagging your thumb feels broken.
+    shown += (target - shown) * smoothing(0.12);
     if (Math.abs(target - shown) < 0.0002) shown = target;
+    const p = shown;
 
-    const s = sample(shown);
+    const mSmooth = smoothing(0.07);
+    mx += (mtx - mx) * mSmooth;
+    my += (mty - my) * mSmooth;
 
-    // KEYS are authored for a wide screen. Screen units are scaled by HEIGHT,
-    // so a phone in portrait only has about ±0.23 of horizontal room where a
-    // laptop has ±0.8 — without this the black hole sits half off the right
-    // edge on mobile. Squeeze x toward the centre as the viewport narrows.
-    const aspect = canvas.width / Math.max(canvas.height, 1);
-    const xScale = Math.min(1, aspect / 1.55);
+    // Background
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = '#0a0a0c';
+    ctx.fillRect(0, 0, W, H);
 
-    gl.uniform1f(u.time, (now - t0) / 1000);
-    // Lift it clear of the headline on tall screens, where text fills the
-    // middle of the frame. (+y is up.)
-    const yLift = (1 - xScale) * 0.18;
+    // ── Stars ───────────────────────────────────────────────────────────
+    // They drift slowly through the whole scroll, and faster during the
+    // launch, so the finale still has motion in it.
+    const starDrift = p * 130 + time * 2.5;
+    for (const layer of STARS) {
+      const par = 1 / layer.z;
+      for (const s of layer.pts) {
+        const px = ((((s.x * 0.5 + 0.5) * W + mx * 26 * par) % W) + W) % W;
+        const py =
+          (((((s.y * 0.5 + 0.5) * H - starDrift * par + my * 20 * par) % H) + H) % H);
+        const tw = 0.75 + 0.25 * Math.sin(time * 1.4 + s.tw);
+        ctx.fillStyle = `rgba(${s.gold ? GOLD : WHITE},${layer.a * tw})`;
+        ctx.beginPath();
+        ctx.arc(px, py, layer.size, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
 
-    gl.uniform2f(u.bh, s.bx * xScale, s.by + yLift);
-    gl.uniform1f(u.rs, s.rs);
-    gl.uniform1f(u.lens, s.lens);
-    gl.uniform1f(u.disk, s.disk);
-    gl.uniform1f(u.par, s.par);
+    // ── Assembly / launch state ─────────────────────────────────────────
+    const build = range(p, BUILD_FROM, BUILD_TO);
+    const launch = range(p, LAUNCH_FROM, LAUNCH_TO);
+    const launchE = easeInCubic(launch);
 
-    gl.drawArrays(gl.TRIANGLES, 0, 3);
+    // How far the whole mockup has risen, and how much it's stretched by
+    // the speed. By launch = 1 it is comfortably off the top of the frame.
+    // Tuned so the mockup is still half in frame at ~80% of the launch — you
+    // want to watch it go, not find it already gone — and fully clear by the
+    // end of the window, well before the closing copy arrives.
+    const riseY = -launchE * (H + SH) * 0.62;
+    const stretch = 1 + launchE * 2.6;
+    const siteFade = 1 - range(launch, 0.72, 1);
 
-    // Panels follow the raw scroll, not the damped value — text lagging
-    // behind your thumb feels broken in a way a camera doesn't.
-    setPanels(target);
+    // Ignition: a glow gathers under the mockup just before it goes.
+    const ignite = range(p, LAUNCH_FROM - 0.05, LAUNCH_FROM + 0.04) * (1 - range(launch, 0.5, 0.9));
+
+    // ── Debris ──────────────────────────────────────────────────────────
+    // Always drifting; swept upward and out during the launch.
+    for (const d of DEBRIS) {
+      const par = 1 / d.z;
+      const sweep = easeInCubic(range(p, LAUNCH_FROM + 0.02, LAUNCH_TO + 0.04)) * d.drift;
+      // Debris hangs around a little past the mockup, so the launch stretch
+      // still has movement in it rather than emptying out early.
+      const alpha = (1 - range(p, LAUNCH_FROM + 0.11, LAUNCH_TO + 0.02)) * (0.5 / d.z);
+      if (alpha <= 0.01) continue;
+
+      const bob = Math.sin(time * 0.5 + d.bob) * 10;
+      const w = d.w * SW * par;
+      const h = d.h * SW * par;
+
+      const push = clearOfCopy(d.ax, d.ay, w / W, h / H);
+      const x = W / 2 + d.ax * push * (W / 2) + mx * 30 * par;
+      const y =
+        H / 2 + d.ay * push * (H / 2) + bob + my * 24 * par - sweep * (H + 200) * 1.2;
+
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(d.rot + time * d.spin * 0.12);
+      const col = d.gold ? GOLD : SILVER;
+
+      if (d.k === 'line') {
+        ctx.strokeStyle = `rgba(${col},${alpha})`;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(-w / 2, 0);
+        ctx.lineTo(w / 2, 0);
+        ctx.stroke();
+      } else if (d.k === 'sq') {
+        ctx.strokeStyle = `rgba(${col},${alpha * 0.9})`;
+        ctx.lineWidth = 1;
+        roundRect(-w / 2, -w / 2, w, w, 3);
+        ctx.stroke();
+      } else {
+        ctx.fillStyle = `rgba(${col},${alpha})`;
+        roundRect(-w / 2, -h / 2, w, h, d.k === 'pill' ? h / 2 : 2);
+        ctx.fill();
+      }
+      ctx.restore();
+
+      if (d.gold) glow(glowGold, x, y, w * 5, h * 9, alpha * 0.35);
+    }
+
+    // ── The launch trail ────────────────────────────────────────────────
+    // Drawn before the mockup so the mockup rides on top of it.
+    if (launch > 0 && siteFade > 0) {
+      const tipY = siteCY + riseY + SH * 0.35;
+      const len = launchE * H * 1.9;
+
+      // The plume is a stack of soft sprites that taper as they fall behind,
+      // rather than a filled rectangle — a rect gives the trail hard vertical
+      // edges, which instantly reads as a shape instead of light.
+      const steps = 7;
+      for (let i = 0; i < steps; i++) {
+        const f = i / (steps - 1);
+        glow(
+          glowGold,
+          siteCX,
+          tipY + len * f * 0.92,
+          SW * (0.62 - 0.34 * f),
+          len * 0.5,
+          0.2 * siteFade * (1 - f * 0.75)
+        );
+      }
+
+      // A bright core just behind the mockup. Without it the trail reads as a
+      // vague haze rather than something moving fast.
+      glow(glowWhite, siteCX, tipY + len * 0.06, SW * 0.16, len * 0.34, 0.5 * siteFade);
+      glow(glowGold, siteCX, tipY + len * 0.2, SW * 0.24, len * 0.7, 0.45 * siteFade);
+    }
+
+    if (ignite > 0.01) {
+      glow(glowGold, siteCX, siteCY + SH * 0.42, SW * 1.6, SH * 1.1, ignite * 0.55);
+    }
+
+    // ── The mockup ──────────────────────────────────────────────────────
+    // Far pieces first so nearer ones land on top while they're still flying.
+    const ordered = pieces
+      .map((p2, i) => ({ p2, i }))
+      .sort((a, b) => b.p2.z - a.p2.z);
+
+    for (const { p2, i } of ordered) {
+      // Per-piece stagger: group 0 starts immediately, group 7 last, and all
+      // of them finish together at build = 1.
+      const off = (p2.g / GROUPS) * 0.55;
+      const t = easeOutExpo(clamp01((build - off) / (1 - off)));
+      if (siteFade <= 0.01) continue;
+
+      const par = 1 / lerp(p2.z, 1, t); // depth resolves to the site plane
+      const bob = Math.sin(time * 0.6 + p2.bob) * 9 * (1 - t);
+
+      // Scattered position → assembled position. Note the scatter position is
+      // NOT scaled by depth: depth shows through size, opacity and parallax
+      // rate, and keeping the spread in screen space is what lets the
+      // keep-out below be exact.
+      const push = clearOfCopy(
+        p2.ax,
+        p2.ay,
+        (p2.w * SW * par) / W,
+        (p2.h * (p2.k === 'dot' ? SW : SH) * par) / H
+      );
+      const sx = W / 2 + p2.ax * push * (W / 2);
+      const sy = H / 2 + p2.ay * push * (H / 2) + bob;
+      const tx = siteCX + p2.x * SW;
+      const ty = siteCY + p2.y * SH;
+
+      const x = lerp(sx, tx, t) + mx * lerp(34, 14, t) * par;
+      const y = lerp(sy, ty, t) + my * lerp(26, 11, t) * par + riseY;
+
+      const rot = p2.rot * (1 - t) + time * p2.spin * 0.1 * (1 - t);
+      // A whisper of overshoot as each piece lands — the magnetic snap.
+      const snap = 1 + Math.sin(clamp01(t) * Math.PI) * 0.05 * (1 - t);
+      const scale = lerp(par, 1, t) * snap;
+
+      const w = p2.w * SW * scale;
+      const h = p2.h * (p2.k === 'dot' ? SW : SH) * scale;
+      const alpha = lerp(0.3 + 0.34 / p2.z, 1, t) * siteFade;
+
+      ctx.save();
+      ctx.translate(x, y);
+      if (rot) ctx.rotate(rot);
+      if (stretch !== 1) ctx.scale(1, stretch);
+      drawPiece(p2, w, h, alpha, scale);
+      ctx.restore();
+
+      if (p2.glow) {
+        glow(glowGold, x, y, w * 3.2, h * 5 * stretch, 0.4 * p2.glow * alpha);
+      }
+    }
+
+    // ── Grain ───────────────────────────────────────────────────────────
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.globalAlpha = 0.028;
+    const gx = -Math.floor(rand() * 256);
+    const gy = -Math.floor(rand() * 256);
+    for (let x = gx; x < W; x += 256) {
+      for (let y = gy; y < H; y += 256) ctx.drawImage(grain, x, y);
+    }
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.globalAlpha = 1;
+
+    // ── Vignette ────────────────────────────────────────────────────────
+    const vg = ctx.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.28, W / 2, H / 2, Math.max(W, H) * 0.72);
+    vg.addColorStop(0, 'rgba(10,10,12,0)');
+    vg.addColorStop(1, 'rgba(10,10,12,0.72)');
+    ctx.fillStyle = vg;
+    ctx.fillRect(0, 0, W, H);
+
+    // Copy follows the raw scroll, not the damped scene.
+    setBeats(target);
 
     if (!drawn) {
       drawn = true;
@@ -426,7 +740,7 @@ function start() {
     requestAnimationFrame(frame);
   }
 
-  requestAnimationFrame(frame);
+  ensureRunning();
 }
 
 start();
