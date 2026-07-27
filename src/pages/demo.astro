@@ -1,0 +1,172 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import DemoSandbox from '../components/DemoSandbox.astro';
+import { url } from '../data/url.js';
+---
+
+<BaseLayout
+  title="Demo"
+  description="Try the GetYourWebsite client portal for yourself. Open a website version, click any part of it, and send us a change request — with sample data, no sign-up."
+>
+  <section class="section section--dark has-stars has-glow section--tight">
+    <div class="shell">
+      <div class="section-head" data-reveal>
+        <p class="eyebrow">The client demo</p>
+        <h1>This is what working with us feels like.</h1>
+        <p class="lead">
+          Every client gets a private portal. Your free preview lives in one tab
+          and your real website in the other. When you want something changed you
+          don't write an email describing which paragraph — you click the
+          paragraph.
+        </p>
+        <p class="lead">
+          Below is that portal, running on sample data for a bakery. Nothing you
+          do here is saved or sent anywhere, and reloading starts it over.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section--dark section--tight" style="padding-top:0">
+    <div class="shell">
+      <ol class="try" data-reveal>
+        <li><span>1</span> Open the <strong>My website</strong> tab</li>
+        <li><span>2</span> Hit <strong>Request changes</strong> on any version</li>
+        <li><span>3</span> Click a heading or photo in the preview and type what to change</li>
+        <li><span>4</span> Send it, and see exactly what we'd receive</li>
+      </ol>
+
+      <DemoSandbox />
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="shell-narrow">
+      <div class="section-head" data-reveal>
+        <p class="eyebrow">Honestly, though</p>
+        <h2>What's different from the real thing</h2>
+        <p class="lead">
+          The layout, the wording and the change-request format above are lifted
+          from our actual client app rather than redrawn, so what you just used
+          is what you'd get. Three things are deliberately not real here:
+        </p>
+      </div>
+
+      <ul class="diffs" data-reveal-group>
+        <li data-reveal>
+          <strong>There's no sign-in.</strong>
+          The real portal starts at a login screen — we set your account up and
+          email you a link to choose a password. The demo drops you straight in
+          as "Rosa".
+        </li>
+        <li data-reveal>
+          <strong>Nothing is saved or sent.</strong>
+          Your change requests land in the panel below the demo instead of in our
+          inbox, and everything resets when you reload.
+        </li>
+        <li data-reveal>
+          <strong>The versions are the same page.</strong>
+          Version 1, 2 and 3 all load our bakery concept with slightly different
+          colours, so you can see that revisions change something. In a real
+          project each version is a genuinely different build of your site.
+        </li>
+      </ul>
+
+      <p class="approve-note" data-reveal>
+        One thing you might expect and won't find: an "approve" button. Approving
+        a version happens on our side today, and versions only appear in your
+        portal once they're approved — so we haven't invented a button here that
+        doesn't exist in the product.
+      </p>
+    </div>
+  </section>
+
+  <section class="section section--dark has-stars has-glow">
+    <div class="shell-narrow" style="text-align:center" data-reveal>
+      <h2>Want this for your business?</h2>
+      <p class="lead" style="margin-inline:auto">
+        The portal comes with every project — including the free mockup. Tell us
+        about your business and we'll get started.
+      </p>
+      <div class="btn-row btn-row--center" style="margin-top:var(--s-5)">
+        <a class="btn btn--gold btn--lg" href={url('/contact')}>Request a free mockup →</a>
+        <a class="btn btn--ghost btn--lg" href={url('/work')}>See our work</a>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  /* "Try this" strip ------------------------------------------------------ */
+
+  .try {
+    display: grid;
+    gap: var(--s-3);
+    padding: var(--s-4) var(--s-5);
+    border: 1px solid var(--line-dark);
+    border-radius: var(--radius-lg);
+    background: var(--panel);
+  }
+
+  .try li {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    color: var(--silver);
+    font-size: 0.95rem;
+  }
+
+  .try strong { color: var(--white); font-weight: 600; }
+
+  .try span {
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--gold);
+    color: var(--black);
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    font-weight: 700;
+  }
+
+  /* Differences ----------------------------------------------------------- */
+
+  .diffs {
+    display: flex;
+    flex-direction: column;
+    gap: var(--s-4);
+  }
+
+  .diffs li {
+    padding-left: var(--s-4);
+    border-left: 2px solid var(--gold);
+    color: var(--ink-soft);
+  }
+
+  .diffs strong {
+    display: block;
+    font-family: var(--font-display);
+    font-size: 1.1rem;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    color: var(--black);
+    margin-bottom: 0.2rem;
+  }
+
+  .approve-note {
+    margin-top: var(--s-5);
+    padding: var(--s-4);
+    border-radius: var(--radius);
+    background: #fafafb;
+    border: 1px solid var(--line-light);
+    color: var(--ink-soft);
+    font-size: 0.98rem;
+  }
+
+  @media (min-width: 820px) {
+    .try { grid-template-columns: repeat(2, 1fr); gap: var(--s-3) var(--s-5); }
+  }
+</style>

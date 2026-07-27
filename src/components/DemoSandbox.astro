@@ -1,0 +1,864 @@
+---
+/**
+ * A sandboxed lookalike of the real GetYourWebsite client portal.
+ *
+ * Source of truth: GetYourWebsite-now/GetYourWebsiteAdmin, branch `development`,
+ * the `client/` app. Specifically:
+ *   client/src/layouts/Dashboard.jsx      the header, the two tabs
+ *   client/src/pages/MockSiteTab.jsx      the "Free preview" tab
+ *   client/src/pages/RealSiteTab.jsx      the "My website" tab + version list
+ *   client/src/components/ReviseSitePanel.jsx  the change-request workspace
+ *   client/src/clientRevision.js          friendly labels + the prompt format
+ *   client/src/index.css                  every token and class name below
+ *
+ * The layout, class names, copy and state names are copied from that app so
+ * this is an honest preview rather than an impression of one. What is different
+ * here, on purpose:
+ *   - No backend, no auth, no network. All state is in memory (src/scripts/demo.js)
+ *     and resets on reload or on "Reset demo".
+ *   - The login and set-password screens are skipped; you arrive signed in.
+ *   - Sending a change request shows the real success banner, but obviously
+ *     doesn't email anyone.
+ *
+ * The portal's own palette (dark slate + mint) is intentionally NOT our
+ * white/black/silver/gold. It's a different product and it should look like one.
+ */
+---
+
+<div class="sandbox" data-sandbox>
+  <!-- Persistent banner, ours rather than the portal's -->
+  <p class="sandbox__banner">
+    <span class="sandbox__dot" aria-hidden="true"></span>
+    Live demo with sample data — this is exactly what you get as a GetYourWebsite client.
+    <button type="button" class="sandbox__reset" data-reset>Reset demo</button>
+  </p>
+
+  <div class="sandbox__frame">
+    <!-- ── The portal ──────────────────────────────────────────────────── -->
+    <div class="client-dashboard" data-portal>
+      <header class="client-header">
+        <div class="client-header-brand">
+          <span class="client-logo">GetYourWebsite</span>
+          <span class="client-tagline">Your account</span>
+        </div>
+
+        <nav class="client-nav" aria-label="Portal sections">
+          <button type="button" class="client-nav-tab active" data-tab="mock-site">Free preview</button>
+          <button type="button" class="client-nav-tab" data-tab="real-site">My website</button>
+        </nav>
+
+        <div class="client-header-actions">
+          <span class="client-user-chip">Hi, Rosa</span>
+          <button type="button" class="client-btn-ghost" data-signout>Sign out</button>
+        </div>
+      </header>
+
+      <main class="client-main" data-main>
+        <!-- Free preview tab ------------------------------------------- -->
+        <div class="portal-tab mock-site-tab" data-panel="mock-site">
+          <div class="portal-tab-header">
+            <div>
+              <h1>Free preview</h1>
+              <p class="portal-tab-lead">A free sample website for your business. No payment needed.</p>
+            </div>
+            <button type="button" class="client-btn-soft" data-check="mock">Check again</button>
+          </div>
+
+          <div class="portal-panel">
+            <span class="portal-status">Ready</span>
+            <h2>Rosa's Bakery</h2>
+            <p class="portal-copy">
+              Your free preview is ready. Tap the button below to open it in a new tab.
+            </p>
+            <p class="portal-meta" data-mock-date>Finished March 4, 2025</p>
+            <button type="button" class="portal-cta" data-open-mock>Open preview</button>
+          </div>
+        </div>
+
+        <!-- My website tab --------------------------------------------- -->
+        <div class="portal-tab real-site-tab" data-panel="real-site" hidden>
+          <div class="portal-tab-header">
+            <div>
+              <h1>My website</h1>
+              <p class="portal-tab-lead">
+                When your real website is approved, you can open it here and ask for changes.
+              </p>
+            </div>
+            <button type="button" class="client-btn-soft" data-check="site">Check again</button>
+          </div>
+
+          <div class="portal-alert portal-alert-success" data-success hidden></div>
+
+          <div class="portal-panel">
+            <span class="portal-status">Ready</span>
+            <h2>Rosa's Bakery</h2>
+            <p class="portal-copy">
+              Your website is approved. Open the latest version, or request changes to any
+              approved version below.
+            </p>
+            <p class="portal-meta" data-latest-version>Version 3</p>
+            <p class="portal-meta" data-latest-approved>Approved June 18, 2025</p>
+            <div class="portal-cta-row">
+              <button type="button" class="portal-cta" data-open-site>Open my website</button>
+              <button type="button" class="client-btn-soft" data-revise-latest>Request changes</button>
+            </div>
+          </div>
+
+          <section class="portal-version-list">
+            <h3 class="portal-version-list-title">Approved versions</h3>
+            <ul class="portal-version-items" data-versions></ul>
+          </section>
+        </div>
+      </main>
+    </div>
+
+    <!-- ── Change-request workspace (overlay) ──────────────────────────── -->
+    <div class="client-revise-overlay" data-revise hidden>
+      <div
+        class="client-revise-shell"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="client-revise-title"
+      >
+        <section class="client-revise-preview">
+          <header class="client-revise-preview-header">
+            <div>
+              <h2 id="client-revise-title">
+                Rosa's Bakery
+                <span class="client-revise-version-pill" data-revise-version>Version 3</span>
+              </h2>
+              <p class="client-revise-hint">
+                Click something on the website to leave a note. Yellow outlines are menu links —
+                click those to switch pages.
+              </p>
+            </div>
+            <div class="client-revise-preview-actions">
+              <button type="button" class="client-btn-soft" data-refresh>Refresh</button>
+              <button type="button" class="client-btn-ghost" data-close aria-label="Close">✕</button>
+            </div>
+          </header>
+
+          <div class="client-revise-preview-body">
+            <iframe class="client-revise-frame" data-frame title="Rosa's Bakery revision preview"></iframe>
+          </div>
+        </section>
+
+        <aside class="client-revise-sidebar">
+          <div class="client-revise-sidebar-header">
+            <h3>Request changes</h3>
+            <p>
+              Tell us what to change. You can write general notes, notes for this page, or click
+              parts of the site.
+            </p>
+            <span class="client-revise-page-pill" data-page-pill>Home page</span>
+          </div>
+
+          <form class="client-revise-sidebar-body" data-revise-form>
+            <label class="client-revise-field">
+              <span>Changes for the whole website</span>
+              <textarea
+                class="client-revise-textarea"
+                data-overall
+                placeholder="Example: use more yellow, make everything bolder, more modern, more contrast."
+                rows="4"></textarea>
+            </label>
+
+            <label class="client-revise-field">
+              <span>Changes for this page only</span>
+              <textarea
+                class="client-revise-textarea"
+                data-page-edits
+                placeholder="Example: move the phone number higher, shorten the intro text."
+                rows="3"></textarea>
+            </label>
+
+            <div data-notes-host>
+              <div class="client-revise-empty" data-notes-empty>
+                No items selected on this page yet. Click anything on the left to add a note.
+              </div>
+              <div class="client-revise-notes" data-notes hidden></div>
+            </div>
+
+            <div class="client-revise-preview-box" data-prompt-box hidden>
+              <span>What we'll send</span>
+              <pre data-prompt></pre>
+            </div>
+
+            <div class="client-revise-actions">
+              <button type="submit" class="portal-cta client-revise-submit" data-send disabled>
+                Send change request
+              </button>
+              <button type="button" class="client-btn-soft" data-cancel>Cancel</button>
+            </div>
+          </form>
+        </aside>
+      </div>
+    </div>
+  </div>
+
+  <!-- Our narration, deliberately outside the portal chrome so it can't be
+       mistaken for part of the product. -->
+  <div class="sandbox__log" data-log hidden>
+    <h3>What we'd receive</h3>
+    <p>
+      Everything you send in the demo lands here instead of in our inbox. This is
+      the exact text the real portal would deliver to us.
+    </p>
+    <ol data-log-items></ol>
+  </div>
+</div>
+
+<style is:global>
+  /* ══════════════════════════════════════════════════════════════════════
+     Portal styles.
+
+     Ported from client/src/index.css on the `development` branch, trimmed to
+     the classes this demo actually uses. Kept under the .sandbox scope so the
+     portal's dark-slate/mint theme can't leak into our white/black/gold site.
+
+     If the real portal's design changes, this is the block to update.
+     ══════════════════════════════════════════════════════════════════════ */
+
+  .sandbox {
+    --bg: #0b0d10;
+    --bg-soft: #12161c;
+    --surface: #161b22;
+    --ink: #f4f6f8;
+    --ink-soft: #c8d0d8;
+    --muted: #8b96a4;
+    --line: #2a323c;
+    --line-strong: #3a4552;
+    --accent: #3dd6a5;
+    --accent-hover: #62e0b6;
+    --accent-ink: #061410;
+    --accent-soft: rgba(61, 214, 165, 0.12);
+    --p-radius: 10px;
+    --p-font: 'Space Grotesk', 'Outfit', system-ui, sans-serif;
+    --p-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+  }
+
+  .sandbox * { box-sizing: border-box; }
+
+  .sandbox__frame {
+    position: relative;
+    height: min(84vh, 860px);
+    min-height: 560px;
+    overflow: hidden;
+    border: 1px solid var(--line-dark);
+    border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+    background: var(--bg);
+    font-family: var(--p-font);
+    color: var(--ink);
+  }
+
+  .sandbox__frame button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit; }
+
+  /* Dashboard shell ------------------------------------------------------ */
+
+  .sandbox .client-dashboard {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+
+  .sandbox .client-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1rem 1.75rem;
+    background: rgba(11, 13, 16, 0.92);
+    border-bottom: 1px solid var(--line);
+    flex-shrink: 0;
+  }
+
+  .sandbox .client-header-brand { display: flex; flex-direction: column; gap: 0.05rem; min-width: 0; }
+
+  .sandbox .client-logo {
+    font-weight: 800;
+    font-size: 1.35rem;
+    letter-spacing: -0.055em;
+    color: var(--ink);
+  }
+
+  .sandbox .client-tagline { font-size: 0.8rem; font-weight: 600; color: var(--muted); }
+
+  .sandbox .client-nav {
+    display: flex;
+    gap: 0.3rem;
+    padding: 0.25rem;
+    background: var(--bg-soft);
+    border: 1px solid var(--line);
+    border-radius: var(--p-radius);
+  }
+
+  .sandbox .client-nav-tab {
+    padding: 0.55rem 1.1rem;
+    font-size: 0.95rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: var(--muted);
+    border-radius: 7px;
+    transition: color 0.15s ease, background 0.15s ease;
+  }
+
+  .sandbox .client-nav-tab:hover { color: var(--ink); background: rgba(255, 255, 255, 0.04); }
+  .sandbox .client-nav-tab.active { color: var(--accent-ink); background: var(--accent); }
+
+  .sandbox .client-header-actions { display: flex; align-items: center; gap: 0.75rem; flex-shrink: 0; }
+  .sandbox .client-user-chip { font-size: 0.95rem; font-weight: 700; color: var(--ink-soft); }
+
+  .sandbox .client-btn-ghost {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--muted);
+    border-radius: 7px;
+    transition: color 0.15s ease, background 0.15s ease;
+  }
+
+  .sandbox .client-btn-ghost:hover { color: var(--ink); background: rgba(255, 255, 255, 0.06); }
+
+  .sandbox .client-btn-soft {
+    padding: 0.6rem 1rem;
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: var(--ink);
+    background: var(--bg-soft);
+    border: 1px solid var(--line-strong);
+    border-radius: var(--p-radius);
+    transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+    flex-shrink: 0;
+  }
+
+  .sandbox .client-btn-soft:hover:not(:disabled) {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: var(--accent-soft);
+  }
+
+  .sandbox .client-btn-soft:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .sandbox .client-main { flex: 1; overflow-y: auto; padding: 2.4rem 1.5rem 3rem; }
+
+  /* Portal content ------------------------------------------------------- */
+
+  .sandbox .portal-tab { max-width: 640px; margin: 0 auto; animation: sandbox-page-in 0.4s ease-out; }
+  .sandbox .portal-tab[hidden] { display: none; }
+
+  .sandbox .portal-tab-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1.25rem;
+    margin-bottom: 1.6rem;
+  }
+
+  .sandbox .portal-tab-header h1 {
+    font-family: var(--p-font);
+    font-size: 2.35rem;
+    font-weight: 800;
+    letter-spacing: -0.06em;
+    margin: 0 0 0.45rem;
+    color: var(--ink);
+    line-height: 1.05;
+  }
+
+  .sandbox .portal-tab-lead {
+    color: var(--muted);
+    font-size: 1.1rem;
+    font-weight: 500;
+    line-height: 1.55;
+    max-width: 34rem;
+  }
+
+  .sandbox .portal-alert {
+    padding: 0.9rem 1.05rem;
+    border-radius: var(--p-radius);
+    font-size: 0.98rem;
+    font-weight: 600;
+    margin-bottom: 1.15rem;
+  }
+
+  .sandbox .portal-alert[hidden] { display: none; }
+
+  .sandbox .portal-alert-success {
+    background: var(--accent-soft);
+    border: 1px solid rgba(61, 214, 165, 0.35);
+    color: var(--accent);
+  }
+
+  .sandbox .portal-cta-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 1.6rem;
+    align-items: center;
+  }
+
+  .sandbox .portal-cta-row .portal-cta { margin-top: 0; }
+
+  .sandbox .portal-version-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    justify-content: flex-end;
+  }
+
+  .sandbox .portal-panel {
+    padding: 2.1rem 1.85rem;
+    border-radius: var(--p-radius);
+    border: 1px solid var(--line);
+    background: var(--surface);
+    box-shadow: var(--p-shadow);
+  }
+
+  .sandbox .portal-status {
+    display: inline-block;
+    margin-bottom: 0.9rem;
+    font-size: 0.8rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+
+  .sandbox .portal-status.is-wait { color: #f0c674; }
+
+  .sandbox .portal-panel h2 {
+    font-family: var(--p-font);
+    font-size: 1.85rem;
+    font-weight: 800;
+    letter-spacing: -0.055em;
+    margin: 0 0 0.7rem;
+    line-height: 1.1;
+    color: var(--ink);
+  }
+
+  .sandbox .portal-copy {
+    color: var(--ink-soft);
+    font-size: 1.1rem;
+    font-weight: 500;
+    line-height: 1.6;
+    max-width: 34rem;
+  }
+
+  .sandbox .portal-meta { margin-top: 0.9rem; font-size: 0.95rem; font-weight: 600; color: var(--muted); }
+
+  .sandbox .portal-cta {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 1.6rem;
+    padding: 1rem 1.5rem;
+    min-width: 13rem;
+    font-size: 1.1rem;
+    font-weight: 800;
+    letter-spacing: -0.025em;
+    color: var(--accent-ink);
+    background: var(--accent);
+    border-radius: var(--p-radius);
+    transition: background 0.15s ease, transform 0.15s ease;
+  }
+
+  .sandbox .portal-cta:hover:not(:disabled) { background: var(--accent-hover); transform: translateY(-1px); }
+  .sandbox .portal-cta:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
+
+  .sandbox .portal-version-list {
+    margin-top: 1.25rem;
+    padding: 1.3rem 1.4rem;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--p-radius);
+    box-shadow: var(--p-shadow);
+  }
+
+  .sandbox .portal-version-list-title { margin: 0 0 0.95rem; font-size: 1.05rem; font-weight: 800; color: var(--ink); }
+
+  .sandbox .portal-version-items {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+  }
+
+  .sandbox .portal-version-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.9rem 1rem;
+    border: 1px solid var(--line);
+    border-radius: var(--p-radius);
+    background: var(--bg-soft);
+  }
+
+  .sandbox .portal-version-name { font-size: 1rem; font-weight: 800; color: var(--ink); }
+
+  @keyframes sandbox-page-in {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: none; }
+  }
+
+  /* Revision workspace --------------------------------------------------- */
+
+  .sandbox .client-revise-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 30;
+    display: flex;
+    background: rgba(0, 0, 0, 0.72);
+    animation: sandbox-page-in 0.25s ease-out;
+  }
+
+  .sandbox .client-revise-overlay[hidden] { display: none; }
+
+  .sandbox .client-revise-shell { display: flex; flex-direction: column; width: 100%; height: 100%; min-height: 0; }
+
+  .sandbox .client-revise-preview {
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    background: #0f1217;
+    border-right: 1px solid var(--line);
+  }
+
+  .sandbox .client-revise-preview-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--line);
+    background: rgba(11, 13, 16, 0.96);
+    flex-shrink: 0;
+  }
+
+  .sandbox .client-revise-preview-header h2 {
+    margin: 0;
+    font-family: var(--p-font);
+    font-size: 1.2rem;
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    color: var(--ink);
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    flex-wrap: wrap;
+  }
+
+  .sandbox .client-revise-version-pill,
+  .sandbox .client-revise-page-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.2rem 0.55rem;
+    border-radius: 6px;
+    background: var(--accent-soft);
+    border: 1px solid rgba(61, 214, 165, 0.28);
+    color: var(--accent);
+    font-size: 0.75rem;
+    font-weight: 800;
+  }
+
+  .sandbox .client-revise-hint {
+    margin: 0.45rem 0 0;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--muted);
+    max-width: 40rem;
+  }
+
+  .sandbox .client-revise-preview-actions { display: flex; align-items: center; gap: 0.5rem; flex-shrink: 0; }
+  .sandbox .client-revise-preview-body { flex: 1; min-height: 0; position: relative; background: #fff; }
+  .sandbox .client-revise-frame { width: 100%; height: 100%; border: none; display: block; background: #fff; }
+
+  .sandbox .client-revise-sidebar {
+    width: 100%;
+    max-height: 46%;
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    background: var(--surface);
+    border-top: 1px solid var(--line);
+  }
+
+  .sandbox .client-revise-sidebar-header { padding: 1.25rem 1.25rem 1rem; border-bottom: 1px solid var(--line); flex-shrink: 0; }
+
+  .sandbox .client-revise-sidebar-header h3 {
+    margin: 0;
+    font-family: var(--p-font);
+    font-size: 1.25rem;
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    color: var(--ink);
+  }
+
+  .sandbox .client-revise-sidebar-header p {
+    margin: 0.4rem 0 0.75rem;
+    font-size: 0.92rem;
+    font-weight: 500;
+    color: var(--muted);
+    line-height: 1.45;
+  }
+
+  .sandbox .client-revise-sidebar-body {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 1.15rem 1.25rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .sandbox .client-revise-field { display: flex; flex-direction: column; gap: 0.4rem; }
+  .sandbox .client-revise-field > span { font-size: 0.9rem; font-weight: 800; color: var(--ink-soft); }
+
+  .sandbox .client-revise-textarea {
+    width: 100%;
+    padding: 0.8rem 0.9rem;
+    background: var(--bg-soft);
+    border: 1px solid var(--line);
+    border-radius: var(--p-radius);
+    color: var(--ink);
+    font: inherit;
+    font-size: 0.95rem;
+    font-weight: 500;
+    resize: vertical;
+    min-height: 4.5rem;
+  }
+
+  .sandbox .client-revise-textarea:focus { outline: none; border-color: var(--accent); }
+
+  .sandbox .client-revise-empty {
+    padding: 0.9rem 1rem;
+    border-radius: var(--p-radius);
+    border: 1px dashed var(--line-strong);
+    background: var(--bg-soft);
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--muted);
+    line-height: 1.45;
+  }
+
+  .sandbox .client-revise-empty[hidden],
+  .sandbox .client-revise-notes[hidden],
+  .sandbox .client-revise-preview-box[hidden] { display: none; }
+
+  .sandbox .client-revise-notes { display: flex; flex-direction: column; gap: 0.75rem; }
+  .sandbox .client-revise-note-wrap.active .client-revise-note { border-color: rgba(61, 214, 165, 0.55); }
+
+  .sandbox .client-revise-note {
+    padding: 0.8rem;
+    border-radius: var(--p-radius);
+    border: 1px solid var(--line);
+    background: var(--bg-soft);
+  }
+
+  .sandbox .client-revise-note-header { display: flex; align-items: flex-start; gap: 0.6rem; margin-bottom: 0.6rem; }
+
+  .sandbox .client-revise-note-index {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.4rem;
+    height: 1.4rem;
+    border-radius: 6px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-size: 0.75rem;
+    font-weight: 800;
+    flex-shrink: 0;
+  }
+
+  .sandbox .client-revise-note-meta { flex: 1; min-width: 0; }
+
+  .sandbox .client-revise-note-label {
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: var(--ink);
+    line-height: 1.35;
+    word-break: break-word;
+  }
+
+  .sandbox .client-revise-note-remove {
+    flex-shrink: 0;
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 6px;
+    color: var(--muted);
+    font-size: 0.8rem;
+    font-weight: 700;
+  }
+
+  .sandbox .client-revise-note-remove:hover { background: rgba(155, 44, 44, 0.22); color: #ff8e8e; }
+
+  .sandbox .client-revise-preview-box { border-top: 1px solid var(--line); padding-top: 0.85rem; }
+
+  .sandbox .client-revise-preview-box > span {
+    display: block;
+    margin-bottom: 0.45rem;
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .sandbox .client-revise-preview-box pre {
+    margin: 0;
+    padding: 0.8rem;
+    border-radius: var(--p-radius);
+    background: var(--bg);
+    border: 1px solid var(--line);
+    color: var(--ink-soft);
+    font-size: 0.82rem;
+    line-height: 1.45;
+    white-space: pre-wrap;
+    word-break: break-word;
+    max-height: 10rem;
+    overflow: auto;
+  }
+
+  .sandbox .client-revise-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+    margin-top: auto;
+    padding-top: 0.35rem;
+  }
+
+  .sandbox .client-revise-submit { width: 100%; min-width: 0; }
+
+  /* On a real desktop the workspace is side-by-side, as in the product. */
+  @media (min-width: 900px) {
+    .sandbox .client-revise-shell { flex-direction: row; }
+    .sandbox .client-revise-sidebar {
+      width: min(420px, 40%);
+      max-height: none;
+      height: 100%;
+      border-top: 0;
+      border-left: 1px solid var(--line);
+      box-shadow: -16px 0 40px rgba(0, 0, 0, 0.35);
+    }
+  }
+
+  @media (max-width: 700px) {
+    .sandbox .client-header { flex-wrap: wrap; padding: 0.85rem 1rem; gap: 0.6rem; }
+    .sandbox .client-nav { order: 3; width: 100%; justify-content: center; }
+    .sandbox .client-user-chip { display: none; }
+    .sandbox .client-main { padding: 1.4rem 1rem 2rem; }
+    .sandbox .portal-tab-header { flex-direction: column; align-items: stretch; }
+    .sandbox .portal-tab-header h1 { font-size: 1.75rem; }
+    .sandbox .portal-panel { padding: 1.5rem 1.25rem; }
+    .sandbox .portal-panel h2 { font-size: 1.4rem; }
+    .sandbox .portal-cta { width: 100%; }
+  }
+</style>
+
+<style>
+  /* Our own wrapper chrome — deliberately in the site's palette so it reads as
+     "a demo embedded in our site", not as part of the portal. */
+
+  .sandbox { margin-top: var(--s-5); }
+
+  .sandbox__banner {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.7rem;
+    padding: 0.85rem 1.2rem;
+    background: var(--gold);
+    color: var(--black);
+    font-size: 0.92rem;
+    font-weight: 500;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  }
+
+  .sandbox__dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--black);
+    flex-shrink: 0;
+    animation: sandbox-pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes sandbox-pulse {
+    0%, 100% { opacity: 0.35; }
+    50% { opacity: 1; }
+  }
+
+  .sandbox__reset {
+    margin-left: auto;
+    padding: 0.35rem 0.9rem;
+    border: 1px solid rgba(10, 10, 12, 0.35);
+    border-radius: var(--radius-pill);
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--black);
+    transition: background var(--dur) var(--ease);
+  }
+
+  .sandbox__reset:hover { background: rgba(10, 10, 12, 0.1); }
+
+  /* Narration log --------------------------------------------------------- */
+
+  .sandbox__log {
+    margin-top: var(--s-5);
+    padding: var(--s-5);
+    border: 1px solid var(--line-dark);
+    border-radius: var(--radius-lg);
+    background: var(--panel);
+  }
+
+  .sandbox__log[hidden] { display: none; }
+
+  .sandbox__log h3 { color: var(--white); margin-bottom: var(--s-2); }
+  .sandbox__log > p { color: var(--silver); font-size: 0.95rem; max-width: 44rem; }
+
+  .sandbox__log ol {
+    display: flex;
+    flex-direction: column;
+    gap: var(--s-3);
+    margin-top: var(--s-4);
+  }
+
+  .sandbox__log li {
+    padding: var(--s-3) var(--s-4);
+    border-radius: var(--radius);
+    border: 1px solid var(--line-dark);
+    background: var(--black);
+  }
+
+  .sandbox__log time {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 0.5rem;
+  }
+
+  .sandbox__log pre {
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+    line-height: 1.5;
+    color: var(--silver-light);
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .sandbox__dot { animation: none; opacity: 1; }
+  }
+</style>
+
+<script>
+  import '../scripts/demo.js';
+</script>
