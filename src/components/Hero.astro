@@ -1,0 +1,276 @@
+---
+/**
+ * The scroll-driven hero: Earth → Moon → deep space.
+ *
+ * How it works
+ * ------------
+ * The outer .hero is ~350vh tall. Inside it, .hero__stage is position:sticky
+ * so it parks at the top of the viewport for the whole scroll — that's the
+ * "pin", done in CSS rather than with a scroll library, which keeps it
+ * jank-free and means there is no layout shift if JS is slow.
+ *
+ * src/scripts/hero.js reads how far through .hero we are (0 → 1) and drives a
+ * Three.js camera along a set of waypoints. It also fades the two text panels.
+ *
+ * If JS fails, is still loading, or the visitor prefers reduced motion, the
+ * markup below already renders a complete static hero — headline, sub and both
+ * CTAs — over a CSS star field. Nothing here depends on the canvas.
+ */
+import { url } from '../data/url.js';
+---
+
+<section class="hero" data-hero aria-label="Introduction">
+  <div class="hero__stage">
+    <!-- Painted before Three.js loads and left visible under reduced motion -->
+    <div class="hero__static" aria-hidden="true"></div>
+
+    <canvas class="hero__canvas" data-hero-canvas></canvas>
+
+    <!-- Stage 1 ---------------------------------------------------------- -->
+    <div class="hero__panel hero__panel--open" data-hero-panel="open">
+      <div class="shell">
+        <p class="hero__eyebrow">Websites for local business</p>
+        <h1 class="hero__title">
+          Websites that are<br /><span class="hero__title-gold">out of this world.</span>
+        </h1>
+        <p class="hero__sub">
+          Custom sites for local businesses — built by students who go above and beyond.
+        </p>
+      </div>
+    </div>
+
+    <!-- Stage 3 ---------------------------------------------------------- -->
+    <div class="hero__panel hero__panel--close" data-hero-panel="close">
+      <div class="shell">
+        <h2 class="hero__closing">Above and beyond.</h2>
+        <div class="btn-row btn-row--center hero__ctas">
+          <a class="btn btn--gold btn--lg" href={url('/contact')}>Request a free mockup</a>
+          <a class="btn btn--ghost btn--lg" href={url('/work')}>See our work</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Scroll hint ------------------------------------------------------ -->
+    <div class="hero__hint" data-hero-hint aria-hidden="true">
+      <span>Scroll</span>
+      <span class="hero__hint-line"></span>
+    </div>
+  </div>
+</section>
+
+<style>
+  .hero {
+    position: relative;
+    /* 350vh of scroll to play the whole sequence through. */
+    height: 350vh;
+    background: var(--black);
+  }
+
+  .hero__stage {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    height: 100svh; /* avoids the mobile URL-bar jump */
+    overflow: hidden;
+    isolation: isolate;
+  }
+
+  .hero__canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+    z-index: 1;
+    opacity: 0;
+    transition: opacity 700ms var(--ease);
+  }
+
+  /* hero.js adds this to .hero once the scene has drawn its first frame. */
+  .hero.is-live .hero__canvas { opacity: 1; }
+  .hero.is-live .hero__static { opacity: 0; }
+
+  /* Static fallback: a black sky, a gold-rimmed planet arc and some stars. */
+  .hero__static {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    background:
+      radial-gradient(1.5px 1.5px at 15% 22%, rgba(255, 255, 255, 0.7), transparent),
+      radial-gradient(1.2px 1.2px at 68% 14%, rgba(255, 255, 255, 0.55), transparent),
+      radial-gradient(1.6px 1.6px at 82% 44%, rgba(245, 194, 75, 0.6), transparent),
+      radial-gradient(1.1px 1.1px at 32% 58%, rgba(255, 255, 255, 0.5), transparent),
+      radial-gradient(1.3px 1.3px at 52% 30%, rgba(255, 255, 255, 0.45), transparent),
+      radial-gradient(1px 1px at 90% 70%, rgba(255, 255, 255, 0.4), transparent),
+      radial-gradient(ellipse 120% 70% at 50% 128%, #14203a 0%, #0a0a0c 62%),
+      var(--black);
+    transition: opacity 700ms var(--ease);
+  }
+
+  /* The planet's atmosphere rim, curving across the bottom of the fallback. */
+  .hero__static::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    bottom: -78vh;
+    width: 190vw;
+    height: 190vw;
+    max-width: 1900px;
+    max-height: 1900px;
+    transform: translateX(-50%);
+    border-radius: 50%;
+    background: radial-gradient(circle at 50% 8%, #2a4c86 0%, #12203c 38%, #070b14 62%);
+    box-shadow:
+      0 0 90px 18px rgba(120, 170, 255, 0.22),
+      inset 0 6px 40px rgba(180, 214, 255, 0.32);
+  }
+
+  /* Text panels ---------------------------------------------------------- */
+
+  .hero__panel {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    text-align: center;
+    pointer-events: none;
+  }
+
+  /* Interactive bits inside a panel still need to be clickable. */
+  .hero__panel a { pointer-events: auto; }
+
+  /* A soft scrim behind the text. The camera moves, so we can't rely on the
+     planet staying out from behind the headline — this guarantees contrast
+     without darkening the whole scene. */
+  .hero__panel::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: radial-gradient(
+      ellipse 70% 46% at 50% 46%,
+      rgba(10, 10, 12, 0.72) 0%,
+      rgba(10, 10, 12, 0.42) 45%,
+      transparent 78%
+    );
+    pointer-events: none;
+  }
+
+  .hero__panel--close { opacity: 0; }
+
+  /* Without JS the closing panel would sit on top of the opening one.
+     Only show it once the scene is live and hero.js controls the fades. */
+  html.no-js .hero__panel--close,
+  .hero:not(.is-live) .hero__panel--close { display: none; }
+
+  .hero__eyebrow {
+    font-family: var(--font-mono);
+    font-size: var(--t-label);
+    font-weight: 500;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: var(--s-4);
+  }
+
+  .hero__title {
+    font-size: var(--t-display);
+    font-weight: 600;
+    line-height: 0.98;
+    letter-spacing: -0.045em;
+    color: var(--white);
+    text-shadow: 0 2px 40px rgba(0, 0, 0, 0.6);
+  }
+
+  .hero__title-gold { color: var(--gold); }
+
+  .hero__sub {
+    max-width: 34rem;
+    margin: var(--s-4) auto 0;
+    font-size: var(--t-lead);
+    color: var(--silver-light);
+    text-shadow: 0 1px 24px rgba(0, 0, 0, 0.7);
+  }
+
+  .hero__closing {
+    font-size: var(--t-display);
+    font-weight: 600;
+    line-height: 1;
+    letter-spacing: -0.045em;
+    color: var(--white);
+    margin-bottom: var(--s-5);
+    text-shadow: 0 2px 40px rgba(0, 0, 0, 0.6);
+  }
+
+  .hero__ctas { justify-content: center; }
+
+  /* Scroll hint ---------------------------------------------------------- */
+
+  .hero__hint {
+    position: absolute;
+    left: 50%;
+    bottom: clamp(1.5rem, 4vh, 3rem);
+    z-index: 3;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.7rem;
+    transform: translateX(-50%);
+    font-family: var(--font-mono);
+    font-size: var(--t-label);
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--silver);
+    transition: opacity 400ms var(--ease);
+  }
+
+  .hero__hint-line {
+    width: 1px;
+    height: 42px;
+    background: linear-gradient(180deg, var(--gold), transparent);
+    transform-origin: top;
+    animation: hint-drop 2s var(--ease) infinite;
+  }
+
+  @keyframes hint-drop {
+    0%   { transform: scaleY(0); opacity: 0; }
+    35%  { transform: scaleY(1); opacity: 1; }
+    100% { transform: scaleY(1); opacity: 0; }
+  }
+
+  /* Reduced motion: collapse to a single still screen ---------------------- */
+
+  @media (prefers-reduced-motion: reduce) {
+    .hero { height: 100vh; height: 100svh; }
+    .hero__stage { position: relative; }
+    .hero__canvas { display: none; }
+    .hero__hint { display: none; }
+    .hero__static { opacity: 1 !important; }
+
+    /* Show the closing CTAs beneath the headline instead of on their own beat */
+    .hero__panel--close {
+      display: flex !important;
+      position: static;
+      opacity: 1 !important;
+      margin-top: var(--s-5);
+      flex: 0 0 auto;
+    }
+
+    .hero__panel--close .hero__closing { display: none; }
+
+    .hero__panel--open { position: static; flex: 0 0 auto; }
+
+    .hero__stage {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding-block: var(--s-8) var(--s-6);
+    }
+  }
+</style>
+
+<script>
+  import '../scripts/hero.js';
+</script>
