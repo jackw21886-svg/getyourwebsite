@@ -53,7 +53,8 @@ src/
   styles/
     global.css     the whole design system: colours, type, spacing, components
   scripts/
-    hero.js        the Three.js hero scene
+    hero.js        the WebGL black-hole hero
+    buttons.js     the button press interaction
     reveal.js      the scroll-reveal animation
     demo.js        the demo sandbox
 
@@ -65,7 +66,6 @@ public/            copied to the site as-is, no build step
   landscaping.html
   restaurant.html
   shots/           screenshots used on the Our Work cards
-  textures/        NASA Earth and Moon imagery for the hero
   og.png           the social sharing card
   favicon.svg
 ```
@@ -111,6 +111,40 @@ and figures, all from Google Fonts.
 
 Sections alternate: `.section` for white, `.section--dark` for black. Add
 `.has-stars` for the star texture and `.has-glow` for the gold halo.
+
+### Buttons
+
+There is one button system, defined once in `global.css`. Use it — don't style
+a button inline, or the site drifts.
+
+| Class | Use |
+| --- | --- |
+| `.btn .btn--gold` | primary. One per screen; it's the thing we want clicked. |
+| `.btn .btn--ghost` | secondary, on a dark background |
+| `.btn .btn--outline` | secondary, on a light background |
+| `.link-arrow` | tertiary — a text link with a gold arrow |
+
+Sizes are `.btn--sm`, nothing (medium), and `.btn--lg`.
+
+The hover and press effects rhyme with the hero: a dark "event horizon" ring
+tightens inward on hover, a lensing sweep crosses the secondary buttons, and
+pressing collapses a ring inward instead of the usual outward ripple. All of it
+is decoration — `src/scripts/buttons.js` never touches the click, and none of
+it runs under reduced motion, where the colour and focus changes carry the
+feedback on their own.
+
+### The hero
+
+`src/scripts/hero.js` is one full-screen WebGL fragment shader — stars,
+gravitational lensing, the accretion disk and the film grain are all computed
+per pixel, with no textures and no 3D library.
+
+To retune the animation, edit the `KEYS` array at the top of that file: each
+entry says where the black hole sits, how big it looks, how hard space bends
+and how bright the disk is at that point in the scroll. You shouldn't need to
+touch the shader itself. The one rule: **no stretch of the scroll should be
+visually empty** — there should always be either the disk or a dense star
+field carrying the frame.
 
 ---
 
@@ -222,12 +256,6 @@ Search the project for `[EDIT]` to find them all. In priority order:
 - **There is no approve button in the demo** because there isn't one in the real
   client portal. Approval happens on our side and versions only appear once
   they're approved. `/demo` says so explicitly.
-- **NASA imagery** (Blue Marble, LROC) is public domain; the footer credits it.
-
----
-
-## Credits
-
-Earth and Moon textures from [NASA Visible Earth](https://visibleearth.nasa.gov/)
-and the [NASA Scientific Visualization Studio](https://svs.gsfc.nasa.gov/4720/),
-both public domain.
+- **The hero needs WebGL2.** Anything without it — or anyone with reduced
+  motion turned on — gets the CSS version of the same scene, which is already
+  in the markup. Nothing is downloaded for them.

@@ -306,71 +306,205 @@ a {
 
 /* ── 5. Components ─────────────────────────────────────────────────────── */
 
-/* Buttons ---------------------------------------------------------------- */
+/* Buttons ----------------------------------------------------------------
+   One system, three levels, used everywhere on the site:
+
+     .btn--gold      primary. One per screen — it's the thing we want clicked.
+     .btn--ghost     secondary on a dark background.
+     .btn--outline   secondary on a light background.
+     .link-arrow     tertiary — a text link with a gold arrow.
+
+   Sizes are .btn--sm / (default) / .btn--lg. Never hand-roll a button; if you
+   need a new variant, add it here so every one on the site stays in step.
+
+   The micro-interactions are black-hole themed, to rhyme with the hero:
+   a dark "event horizon" ring tightens inward on hover, a lensing sweep
+   crosses the secondary buttons, and pressing collapses a ring inward
+   instead of the usual outward ripple. All of it is decoration layered on
+   top — none of it delays or blocks the click. */
 
 .btn {
+  position: relative;
+  isolation: isolate;     /* so the ::before/::after layers sit behind the label */
+  overflow: hidden;       /* clips the press ripple to the button's shape */
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.6rem;
-  min-height: 48px;                /* comfortable touch target */
-  padding: 0.85rem 1.6rem;
+  gap: 0.55rem;
+  min-height: var(--btn-h);
+  padding: 0 var(--btn-px);
   font-family: var(--font-body);
-  font-size: 1rem;
+  font-size: var(--btn-fs);
   font-weight: 600;
-  letter-spacing: -0.01em;
-  border-radius: var(--radius-pill);
+  letter-spacing: -0.012em;
+  line-height: 1;
+  border: 1px solid transparent;
+  border-radius: var(--btn-radius);
   text-decoration: none;
-  cursor: pointer;
   white-space: nowrap;
-  transition: transform var(--dur) var(--ease), background var(--dur) var(--ease),
-    color var(--dur) var(--ease), border-color var(--dur) var(--ease),
-    box-shadow var(--dur) var(--ease);
+  cursor: pointer;
+  -webkit-user-select: none;
+  user-select: none;
+  transition: transform 180ms var(--ease), background 200ms var(--ease),
+    color 200ms var(--ease), border-color 200ms var(--ease), box-shadow 220ms var(--ease);
 }
 
-.btn:hover { transform: translateY(-2px); }
-.btn:active { transform: translateY(0); }
+/* Default size (md) */
+.btn {
+  --btn-h: 48px;
+  --btn-px: 1.55rem;
+  --btn-fs: 1rem;
+  --btn-radius: 12px;
+}
 
-/* The gold button. This is the one that matters — use exactly one per screen. */
+.btn--sm { --btn-h: 40px; --btn-px: 1.1rem; --btn-fs: 0.9rem; --btn-radius: 10px; }
+.btn--lg { --btn-h: 56px; --btn-px: 2rem; --btn-fs: 1.05rem; --btn-radius: 14px; }
+
+/* The event-horizon ring. Sits inside the button and tightens toward the
+   edge on hover. On the gold button it's dark — an actual horizon inside the
+   glowing disk. */
+.btn::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: 8px;
+  border: 1px solid transparent;
+  border-radius: calc(var(--btn-radius) - 5px);
+  opacity: 0;
+  pointer-events: none;
+  transition: inset 260ms var(--ease), opacity 260ms var(--ease),
+    border-color 260ms var(--ease);
+}
+
+.btn:hover::before { inset: 3.5px; opacity: 1; }
+
+/* Primary --------------------------------------------------------------- */
+
 .btn--gold {
-  background: var(--gold);
   color: var(--black);
-  border: 1px solid var(--gold);
+  /* A gradient plus an inner highlight, so it reads as a lit surface rather
+     than a flat fill. */
+  background: linear-gradient(180deg, #ffd873 0%, var(--gold) 46%, #e8ad2e 100%);
+  border-color: #dda226;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.6),
+    inset 0 -1px 0 rgba(10, 10, 12, 0.08),
+    0 1px 2px rgba(10, 10, 12, 0.22),
+    0 8px 20px -8px rgba(245, 194, 75, 0.5);
 }
 
 .btn--gold:hover {
-  background: #ffd469;
-  box-shadow: var(--shadow-gold);
+  transform: translateY(-1px);
+  background: linear-gradient(180deg, #ffe08d 0%, #f8cb5e 46%, var(--gold) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.75),
+    0 2px 4px rgba(10, 10, 12, 0.2),
+    0 14px 34px -10px rgba(245, 194, 75, 0.75);
 }
 
-/* Ghost button on a dark background */
+.btn--gold:hover::before { border-color: rgba(10, 10, 12, 0.26); }
+
+.btn--gold:active {
+  transform: translateY(0) scale(0.985);
+  box-shadow:
+    inset 0 2px 5px rgba(10, 10, 12, 0.28),
+    0 1px 2px rgba(10, 10, 12, 0.2);
+}
+
+/* Secondary on dark ------------------------------------------------------ */
+
 .btn--ghost {
-  background: transparent;
   color: var(--white);
-  border: 1px solid rgba(230, 231, 235, 0.28);
+  background: rgba(230, 231, 235, 0.045);
+  border-color: rgba(230, 231, 235, 0.24);
 }
 
 .btn--ghost:hover {
-  border-color: var(--gold);
+  transform: translateY(-1px);
   color: var(--gold);
-  background: var(--gold-soft);
+  border-color: var(--gold);
+  background: rgba(245, 194, 75, 0.09);
+  box-shadow: 0 10px 26px -12px rgba(245, 194, 75, 0.5);
 }
 
-/* Ghost button on a white background */
+.btn--ghost:hover::before { border-color: rgba(245, 194, 75, 0.4); }
+.btn--ghost:active { transform: translateY(0) scale(0.985); }
+
+/* Secondary on light ----------------------------------------------------- */
+
 .btn--outline {
-  background: transparent;
   color: var(--black);
-  border: 1px solid rgba(10, 10, 12, 0.22);
+  background: transparent;
+  border-color: rgba(10, 10, 12, 0.2);
 }
 
 .btn--outline:hover {
-  border-color: var(--black);
-  background: var(--black);
-  color: var(--white);
+  transform: translateY(-1px);
+  border-color: var(--gold-deep);
+  background: var(--gold-soft);
+  box-shadow: 0 10px 24px -14px rgba(10, 10, 12, 0.45);
 }
 
-.btn--lg { min-height: 56px; padding: 1.05rem 2rem; font-size: 1.05rem; }
-.btn--sm { min-height: 40px; padding: 0.55rem 1.1rem; font-size: 0.9rem; }
+.btn--outline:hover::before { border-color: rgba(122, 91, 14, 0.35); }
+.btn--outline:active { transform: translateY(0) scale(0.985); }
+
+/* Lensing sweep, secondary buttons only. A band of light crossing the
+   surface as the pointer arrives. */
+.btn--ghost::after,
+.btn--outline::after {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  background: linear-gradient(
+    100deg,
+    transparent 34%,
+    rgba(245, 194, 75, 0.26) 50%,
+    transparent 66%
+  );
+  transform: translateX(-115%);
+  pointer-events: none;
+}
+
+.btn--ghost:hover::after,
+.btn--outline:hover::after {
+  transform: translateX(115%);
+  transition: transform 620ms var(--ease);
+}
+
+/* Press ripple. Created by src/scripts/buttons.js at the pointer position,
+   then collapses inward rather than expanding out — matter crossing the
+   horizon rather than a stone hitting a pond. */
+.btn__ripple {
+  position: absolute;
+  z-index: -1;
+  border-radius: 50%;
+  pointer-events: none;
+  background: radial-gradient(circle, transparent 52%, currentColor 70%, transparent 86%);
+  animation: btn-collapse 480ms var(--ease) forwards;
+}
+
+@keyframes btn-collapse {
+  from { transform: translate(-50%, -50%) scale(1); opacity: 0.5; }
+  to   { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+}
+
+/* Focus. Two rings — a dark one and a gold one — so that whichever
+   background the button is sitting on, one of them is clearly visible.
+   A gold-only ring would disappear against the gold button itself. */
+.btn:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 3px;
+  box-shadow: 0 0 0 1.5px var(--black), 0 0 0 6px rgba(245, 194, 75, 0.28);
+}
+
+.btn:disabled,
+.btn[aria-disabled='true'] {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
 
 .btn-row {
   display: flex;
@@ -380,25 +514,32 @@ a {
 
 .btn-row--center { justify-content: center; }
 
-/* A text link with a gold arrow that nudges on hover */
+/* Tertiary: a text link with a gold arrow that slides on hover. Same family
+   as the buttons — the arrow is already gold, the label joins it. */
 .link-arrow {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
   font-weight: 600;
   text-decoration: none;
-  color: var(--gold-deep);
-  transition: gap var(--dur) var(--ease);
+  color: var(--black);
+  transition: color 200ms var(--ease);
 }
 
-.section--dark .link-arrow { color: var(--gold); }
-.link-arrow:hover { gap: 0.85rem; }
+.section--dark .link-arrow { color: var(--silver-light); }
 
 .link-arrow::after {
   content: '→';
   font-family: var(--font-mono);
-  transition: transform var(--dur) var(--ease);
+  color: var(--gold-deep);
+  transition: transform 200ms var(--ease), color 200ms var(--ease);
 }
+
+.section--dark .link-arrow::after { color: var(--gold); }
+
+.link-arrow:hover { color: var(--gold-deep); }
+.section--dark .link-arrow:hover { color: var(--gold); }
+.link-arrow:hover::after { transform: translateX(4px); }
 
 /* Cards ------------------------------------------------------------------ */
 
@@ -664,6 +805,14 @@ html.no-js [data-reveal] {
     transform: none !important;
   }
 
+  /* Buttons keep their colour, border and focus feedback — only the
+     decorative motion goes. */
   .btn:hover { transform: none; }
+  .btn:active { transform: none; }
+  .btn::before { transition: opacity 0.01ms, border-color 0.01ms; inset: 3.5px; }
+  .btn--ghost::after,
+  .btn--outline::after { display: none; }
+  .btn__ripple { display: none; }
+  .link-arrow:hover::after { transform: none; }
   .card:hover { transform: none; }
 }

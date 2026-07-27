@@ -26,17 +26,4 @@ export default defineConfig({
     // (/work, /pricing, …) resolve on every static host, including GitHub Pages.
     format: 'directory',
   },
-  vite: {
-    build: {
-      // Three.js is big. Keep it in its own chunk so it only downloads on the
-      // home page, where the hero actually needs it.
-      rollupOptions: {
-        output: {
-          manualChunks: {
-            three: ['three'],
-          },
-        },
-      },
-    },
-  },
 });

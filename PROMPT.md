@@ -42,6 +42,8 @@ Colors — white, black, silver, and gold only:
 
 Feel: modern and techy. Dark space-themed sections (black with subtle star fields) alternating with clean white content sections, silver for quiet detail, gold for the moments that matter. Generous spacing, big confident type, subtle scroll-reveal animations on content (fade/slide, nothing bouncy). Choose the typography fresh: pick a modern, techy heading/body pairing from the ui-ux-pro-max font database — nothing is carried over from the old site.
 
+Buttons are a signature element: one shared button system (primary gold, secondary/ghost, nav CTA) with premium styling, complete states (hover / active / focus-visible / disabled), and quick space-themed micro-interactions — gravitational-pull glow or a tightening gold "event-horizon" ring on hover, an inward-collapsing ripple on press (~150–300ms, never delaying the click, reduced-motion safe).
+
 ## Site structure
 
 Pages: **Home** (`/`), **Our Work** (`/work`), **Demo** (`/demo`), **Pricing** (`/pricing`), **Benefits** (`/benefits`), **Why Us** (`/why-us` — "What makes us different"), **Contact** (`/contact` — inquiries / free mockup requests). Plus an on-theme 404 ("Lost in space").
@@ -50,21 +52,21 @@ Shared sticky nav on every page: logo/wordmark left; links to Our Work, Demo, Pr
 
 ## Page 1 — Home
 
-### The hero: scroll-driven Earth → Moon → deep space animation
+### The hero: scroll-driven abstract tech animation *(updated after round-1 feedback — no Earth/Moon)*
 
-This is the first thing every visitor sees and the signature of the site. It is **driven by scrolling** (scrubbed to scroll position — it does not autoplay):
+This is the first thing every visitor sees and the signature of the site. It is **driven by scrolling** (scrubbed to scroll position — it does not autoplay). No literal planets or photoreal space imagery — the visuals are **abstract and techy**, in the site palette (black space, silver structure, gold accents):
 
-- A pinned, full-viewport hero spanning roughly 300–400vh of scroll distance.
-- **Stage 1 (0%):** close on Earth — a beautiful planet with an atmosphere glow against black. Headline fades in: "Websites that are out of this world." plus a one-line sub ("Custom sites for local businesses — built by students who go above and beyond."). A subtle "scroll" hint invites the first scroll.
-- **Stage 2 (~35%):** scrolling pulls the camera back — Earth shrinks, the Moon slides into frame, and the camera sweeps around the Moon.
-- **Stage 3 (~70–100%):** past the Moon into deep space — a star field, with the closing line "Above and beyond." and two CTAs: gold **"Request a free mockup"** → `/contact`, ghost **"See our work"** → `/work`. Then the hero unpins and the page continues into the sections below.
+- A pinned, full-viewport hero spanning roughly 300–400vh of scroll distance, in ~3 stages.
+- **Stage 1 (0%):** an atmospheric opening — e.g. scattered silver particles / faint wireframe on black. Headline fades in: "Websites that are out of this world." plus a one-line sub ("Custom sites for local businesses — built by students who go above and beyond."). A subtle "scroll" hint invites the first scroll.
+- **Stage 2 (~35%):** scroll drives transformation — particles assemble into a structured network/grid, or a wireframe tunnel accelerates into light-speed streaks, or elements bend around a dark central mass with a thin gold ring (abstract black-hole motif that pairs with the button animations).
+- **Stage 3 (~70–100%):** the motion resolves into a calm, clean final frame — starfield or settled composition — with the closing line "Above and beyond." and two CTAs: gold **"Request a free mockup"** → `/contact`, ghost **"See our work"** → `/work`. Then the hero unpins and the page continues into the sections below.
 
-Implementation is your judgment call: Three.js textured spheres + particle starfield, a pre-rendered frame sequence scrubbed on canvas, or layered parallax — whatever you can make look premium. Requirements, not suggestions:
+Implementation is your judgment call: canvas/WebGL particle systems, Three.js line geometry, or layered SVG/CSS — whatever you can make look premium. Requirements, not suggestions:
 
 - Smooth on a mid-range laptop and a recent phone; no jank, no layout shift.
-- `prefers-reduced-motion`: swap to a static space-scene hero with the headline and CTAs.
-- Mobile gets a lighter version (fewer particles, smaller textures) if needed for frame rate.
-- Lazy-load heavy assets; keep the hero payload lean. Use free, properly licensed imagery (NASA imagery is public domain — credit in the footer if required).
+- `prefers-reduced-motion`: swap to a static styled hero with the headline and CTAs.
+- Mobile gets a lighter version (fewer particles) if needed for frame rate.
+- Lazy-load heavy assets; keep the hero payload lean. No photo textures needed — everything can be generated geometry/particles.
 
 ### Below the hero: one teaser section for every other main page
 

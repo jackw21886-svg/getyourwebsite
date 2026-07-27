@@ -1,6 +1,6 @@
 ---
 /**
- * The scroll-driven hero: Earth → Moon → deep space.
+ * The scroll-driven hero: a flight past a black hole.
  *
  * How it works
  * ------------
@@ -10,19 +10,23 @@
  * jank-free and means there is no layout shift if JS is slow.
  *
  * src/scripts/hero.js reads how far through .hero we are (0 → 1) and drives a
- * Three.js camera along a set of waypoints. It also fades the two text panels.
+ * single full-screen WebGL shader. It also fades the two text beats.
  *
  * If JS fails, is still loading, or the visitor prefers reduced motion, the
- * markup below already renders a complete static hero — headline, sub and both
- * CTAs — over a CSS star field. Nothing here depends on the canvas.
+ * markup below already renders a complete hero — headline, sub and both CTAs —
+ * over a CSS-drawn version of the same scene. Nothing here depends on the
+ * canvas.
  */
 import { url } from '../data/url.js';
 ---
 
 <section class="hero" data-hero aria-label="Introduction">
   <div class="hero__stage">
-    <!-- Painted before Three.js loads and left visible under reduced motion -->
-    <div class="hero__static" aria-hidden="true"></div>
+    <!-- Drawn before the shader loads, and left in place under reduced motion -->
+    <div class="hero__static" aria-hidden="true">
+      <span class="hero__static-disk"></span>
+      <span class="hero__static-core"></span>
+    </div>
 
     <canvas class="hero__canvas" data-hero-canvas></canvas>
 
@@ -83,46 +87,69 @@ import { url } from '../data/url.js';
     display: block;
     z-index: 1;
     opacity: 0;
-    transition: opacity 700ms var(--ease);
+    transition: opacity 800ms var(--ease);
   }
 
-  /* hero.js adds this to .hero once the scene has drawn its first frame. */
+  /* hero.js adds this to .hero once the shader has drawn its first frame. */
   .hero.is-live .hero__canvas { opacity: 1; }
   .hero.is-live .hero__static { opacity: 0; }
 
-  /* Static fallback: a black sky, a gold-rimmed planet arc and some stars. */
+  /* ── Static fallback ──────────────────────────────────────────────────
+     A CSS drawing of the same scene: star field, a tilted gold accretion
+     ring, and the dark core inside it. Palette only — no other colours
+     appear anywhere in the hero. */
+
   .hero__static {
     position: absolute;
     inset: 0;
     z-index: 0;
     background:
-      radial-gradient(1.5px 1.5px at 15% 22%, rgba(255, 255, 255, 0.7), transparent),
-      radial-gradient(1.2px 1.2px at 68% 14%, rgba(255, 255, 255, 0.55), transparent),
-      radial-gradient(1.6px 1.6px at 82% 44%, rgba(245, 194, 75, 0.6), transparent),
-      radial-gradient(1.1px 1.1px at 32% 58%, rgba(255, 255, 255, 0.5), transparent),
-      radial-gradient(1.3px 1.3px at 52% 30%, rgba(255, 255, 255, 0.45), transparent),
-      radial-gradient(1px 1px at 90% 70%, rgba(255, 255, 255, 0.4), transparent),
-      radial-gradient(ellipse 120% 70% at 50% 128%, #14203a 0%, #0a0a0c 62%),
+      radial-gradient(1.6px 1.6px at 12% 18%, rgba(255, 255, 255, 0.85), transparent),
+      radial-gradient(1.2px 1.2px at 27% 62%, rgba(230, 231, 235, 0.6), transparent),
+      radial-gradient(1.8px 1.8px at 63% 12%, rgba(245, 194, 75, 0.7), transparent),
+      radial-gradient(1.1px 1.1px at 78% 44%, rgba(255, 255, 255, 0.6), transparent),
+      radial-gradient(1.4px 1.4px at 88% 74%, rgba(230, 231, 235, 0.5), transparent),
+      radial-gradient(1px 1px at 42% 86%, rgba(255, 255, 255, 0.45), transparent),
+      radial-gradient(1.5px 1.5px at 8% 74%, rgba(245, 194, 75, 0.45), transparent),
+      radial-gradient(1.1px 1.1px at 53% 34%, rgba(255, 255, 255, 0.5), transparent),
+      radial-gradient(1.3px 1.3px at 34% 8%, rgba(230, 231, 235, 0.55), transparent),
+      radial-gradient(1px 1px at 70% 92%, rgba(255, 255, 255, 0.4), transparent),
+      /* vignette */
+      radial-gradient(ellipse 90% 80% at 50% 50%, transparent 30%, rgba(0, 0, 0, 0.75) 100%),
       var(--black);
-    transition: opacity 700ms var(--ease);
+    background-size: 760px 760px, 760px 760px, 760px 760px, 760px 760px, 760px 760px,
+      760px 760px, 760px 760px, 760px 760px, 760px 760px, 760px 760px, 100% 100%, 100% 100%;
+    transition: opacity 800ms var(--ease);
   }
 
-  /* The planet's atmosphere rim, curving across the bottom of the fallback. */
-  .hero__static::after {
-    content: '';
+  /* The accretion disk: a circle squashed and tilted into an ellipse. */
+  .hero__static-disk {
     position: absolute;
-    left: 50%;
-    bottom: -78vh;
-    width: 190vw;
-    height: 190vw;
-    max-width: 1900px;
-    max-height: 1900px;
-    transform: translateX(-50%);
+    top: 50%;
+    left: 62%;
+    width: min(52vw, 620px);
+    aspect-ratio: 1;
+    transform: translate(-50%, -50%) rotate(-16deg) scaleY(0.3);
     border-radius: 50%;
-    background: radial-gradient(circle at 50% 8%, #2a4c86 0%, #12203c 38%, #070b14 62%);
+    border: 2.5px solid var(--gold);
     box-shadow:
-      0 0 90px 18px rgba(120, 170, 255, 0.22),
-      inset 0 6px 40px rgba(180, 214, 255, 0.32);
+      0 0 70px 6px rgba(245, 194, 75, 0.4),
+      inset 0 0 60px 10px rgba(245, 194, 75, 0.28);
+  }
+
+  /* The event horizon, with the photon ring hugging its edge. */
+  .hero__static-core {
+    position: absolute;
+    top: 50%;
+    left: 62%;
+    width: min(17vw, 200px);
+    aspect-ratio: 1;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    background: var(--black);
+    box-shadow:
+      0 0 0 2px rgba(245, 194, 75, 0.95),
+      0 0 46px 12px rgba(245, 194, 75, 0.3);
   }
 
   /* Text panels ---------------------------------------------------------- */
@@ -142,7 +169,7 @@ import { url } from '../data/url.js';
   .hero__panel a { pointer-events: auto; }
 
   /* A soft scrim behind the text. The camera moves, so we can't rely on the
-     planet staying out from behind the headline — this guarantees contrast
+     disk staying out from behind the headline — this guarantees contrast
      without darkening the whole scene. */
   .hero__panel::before {
     content: '';
@@ -151,8 +178,8 @@ import { url } from '../data/url.js';
     z-index: -1;
     background: radial-gradient(
       ellipse 70% 46% at 50% 46%,
-      rgba(10, 10, 12, 0.72) 0%,
-      rgba(10, 10, 12, 0.42) 45%,
+      rgba(10, 10, 12, 0.74) 0%,
+      rgba(10, 10, 12, 0.44) 45%,
       transparent 78%
     );
     pointer-events: none;
@@ -249,10 +276,19 @@ import { url } from '../data/url.js';
     .hero__hint { display: none; }
     .hero__static { opacity: 1 !important; }
 
-    /* Show the closing CTAs beneath the headline instead of on their own beat */
+    /* Push the disk off to the side so it sits behind the text rather than
+       under it. */
+    .hero__static-disk,
+    .hero__static-core { left: 78%; top: 62%; }
+
+    /* Show the closing CTAs beneath the headline instead of on their own beat.
+       These stay position:relative rather than static — z-index only applies to
+       positioned elements, and without it .hero__static (which is absolutely
+       positioned) paints straight over the headline. */
     .hero__panel--close {
       display: flex !important;
-      position: static;
+      position: relative;
+      z-index: 2;
       opacity: 1 !important;
       margin-top: var(--s-5);
       flex: 0 0 auto;
@@ -260,7 +296,15 @@ import { url } from '../data/url.js';
 
     .hero__panel--close .hero__closing { display: none; }
 
-    .hero__panel--open { position: static; flex: 0 0 auto; }
+    .hero__panel--open {
+      position: relative;
+      z-index: 2;
+      flex: 0 0 auto;
+    }
+
+    /* Both panels are in flow now, so their full-bleed scrims would stack.
+       One is enough. */
+    .hero__panel--close::before { display: none; }
 
     .hero__stage {
       display: flex;
