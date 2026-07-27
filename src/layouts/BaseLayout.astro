@@ -28,6 +28,10 @@ const fullTitle = title === 'GetYourWebsite'
 // Astro.site comes from SITE_URL in astro.config.mjs.
 const canonical = new URL(Astro.url.pathname, Astro.site ?? 'https://example.com');
 const ogImage = new URL(url('/og.png'), Astro.site ?? 'https://example.com');
+
+// Outfit (headings) / Work Sans (body) / JetBrains Mono (labels and figures).
+const FONT_CSS =
+  'https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Work+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap';
 ---
 
 <!doctype html>
@@ -61,10 +65,16 @@ const ogImage = new URL(url('/og.png'), Astro.site ?? 'https://example.com');
          Preconnect first so the font request starts as early as possible. -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!-- Load the font CSS without blocking the first paint: fetch it as a
+         print stylesheet (which browsers don't wait for), then switch it to
+         `all` once it has arrived. The <noscript> copy covers the rest. -->
     <link
       rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Work+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap"
+      href={FONT_CSS}
+      media="print"
+      onload="this.media='all'; this.onload=null;"
     />
+    <noscript><link rel="stylesheet" href={FONT_CSS} /></noscript>
 
     <!-- Swap .no-js for .js before first paint so [data-reveal] elements are
          hidden only when JS can actually reveal them again. -->

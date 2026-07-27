@@ -18,9 +18,17 @@ interface Props {
     blurb: string;
   };
   reveal?: boolean;
+  /**
+   * Heading level for the business name. On /work the cards sit directly under
+   * the page's h1, so they're h2; on the home page they sit under a section h2,
+   * so they're h3. Getting this wrong skips a level and fails accessibility
+   * checks, hence the prop rather than a hardcoded tag.
+   */
+  level?: 2 | 3;
 }
 
-const { project, reveal = false } = Astro.props;
+const { project, reveal = false, level = 3 } = Astro.props;
+const Heading = `h${level}`;
 ---
 
 <article class="project" data-reveal={reveal ? '' : undefined}>
@@ -37,7 +45,7 @@ const { project, reveal = false } = Astro.props;
 
   <div class="project__body">
     <span class="badge">{project.type}</span>
-    <h3>{project.name}</h3>
+    <Heading>{project.name}</Heading>
     <p>{project.blurb}</p>
 
     <a
@@ -98,7 +106,7 @@ const { project, reveal = false } = Astro.props;
     flex: 1;
   }
 
-  .project__body h3 { margin-top: 0.2rem; }
+  .project__body :is(h2, h3) { margin-top: 0.2rem; font-size: var(--t-h3); }
 
   .project__body p {
     color: var(--ink-soft);
@@ -115,7 +123,7 @@ const { project, reveal = false } = Astro.props;
   }
 
   :global(.section--dark) .project__shot { border-bottom-color: var(--line-dark); }
-  :global(.section--dark) .project__body h3 { color: var(--white); }
+  :global(.section--dark) .project__body :is(h2, h3) { color: var(--white); }
   :global(.section--dark) .project__body p { color: var(--silver); }
 
   @media (prefers-reduced-motion: reduce) {
