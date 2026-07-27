@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" /><meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Redline Auto Repair — Honest work, straight answers</title>
+<meta name="description" content="Family-run auto repair in Cedar Falls. Upfront pricing, same-week appointments, and a written estimate before we touch anything." />
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* Industrial grey + safety orange. Squared corners, heavy condensed
+     headings, a lot of contrast — it should feel like a workshop, not a spa. */
+  :root{
+    --steel:#1c2027;--steel-2:#282e37;--slate:#5a6472;--line:#39414c;
+    --paper:#f4f5f7;--ink:#171a1f;--orange:#ea580c;--orange-d:#c2410c;--orange-l:#fb923c
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{background:var(--paper);color:var(--ink);font-family:'Barlow',sans-serif;line-height:1.65;-webkit-font-smoothing:antialiased}
+  h1,h2,h3,.cond{font-family:'Barlow Condensed',sans-serif;line-height:1.02;text-transform:uppercase;letter-spacing:.01em}
+  h1{font-size:clamp(44px,7.5vw,86px);font-weight:700}
+  h2{font-size:clamp(32px,4.4vw,52px);font-weight:700}
+  h3{font-size:22px;font-weight:600}
+  a{color:inherit;text-decoration:none}
+  img{display:block;max-width:100%}
+  ul,ol{list-style:none}
+  .wrap{max-width:1160px;margin:0 auto;padding:0 26px}
+  .btn{display:inline-block;font-weight:700;font-size:15px;letter-spacing:.04em;text-transform:uppercase;padding:15px 30px;transition:.2s;cursor:pointer;border:2px solid transparent}
+  .btn-fill{background:var(--orange);color:#fff}
+  .btn-fill:hover{background:var(--orange-d)}
+  .btn-out{border-color:currentColor}
+  .btn-out:hover{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+  .demo-bar{background:var(--ink);color:#c7ccd4;font-size:13px;text-align:center;padding:9px 16px;letter-spacing:.02em}
+  .demo-bar b{color:var(--orange-l)}
+
+  /* header */
+  header{background:var(--steel);color:#fff;position:sticky;top:0;z-index:50;border-bottom:3px solid var(--orange)}
+  nav{display:flex;align-items:center;gap:26px;min-height:76px}
+  .brand{font-family:'Barlow Condensed',sans-serif;font-size:30px;font-weight:700;text-transform:uppercase;letter-spacing:-.01em;margin-right:auto}
+  .brand span{color:var(--orange)}
+  .nav-links{display:none;gap:26px;font-weight:600;font-size:14px;letter-spacing:.06em;text-transform:uppercase}
+  .nav-links a{color:#c7ccd4;transition:.2s}
+  .nav-links a:hover{color:var(--orange-l)}
+  .call{font-family:'Barlow Condensed',sans-serif;font-size:24px;font-weight:700;color:#fff;white-space:nowrap}
+
+  /* hero */
+  .hero{background:var(--steel);color:#fff;padding:70px 0 0;position:relative;overflow:hidden}
+  /* diagonal hazard stripe, drawn in CSS */
+  .hero:before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(115deg,rgba(234,88,12,.05) 0 2px,transparent 2px 90px);pointer-events:none}
+  .hero-grid{display:grid;gap:38px;align-items:center;position:relative}
+  .kicker{display:inline-block;background:var(--orange);color:#fff;font-weight:700;font-size:12px;letter-spacing:.14em;text-transform:uppercase;padding:6px 12px;margin-bottom:20px}
+  .hero p.sub{color:#b9c0ca;font-size:19px;max-width:34em;margin:22px 0 30px}
+  .hero-cta{display:flex;flex-wrap:wrap;gap:14px}
+  .hero .btn-out{color:#fff}
+  .hero .btn-out:hover{background:#fff;color:var(--ink);border-color:#fff}
+  .hero-img img{height:400px;width:100%;object-fit:cover;filter:grayscale(.25) contrast(1.08)}
+  .hero-img{position:relative;border:3px solid var(--orange)}
+
+  /* trust strip */
+  .strip{background:var(--ink);color:#fff}
+  .strip ul{display:grid;grid-template-columns:1fr;gap:2px;background:var(--line)}
+  .strip li{background:var(--ink);padding:26px 24px;text-align:center}
+  .strip .n{font-family:'Barlow Condensed',sans-serif;font-size:40px;font-weight:700;color:var(--orange-l);line-height:1}
+  .strip .l{font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:#98a1ad;margin-top:6px}
+
+  section{padding:82px 0}
+  .head{max-width:44rem;margin-bottom:46px}
+  .head p{color:#5a6472;font-size:18px;margin-top:14px}
+
+  /* services */
+  .svc{display:grid;gap:2px;background:#dfe2e7;border:1px solid #dfe2e7}
+  .svc article{background:#fff;padding:32px 28px;transition:.2s}
+  .svc article:hover{background:var(--steel);color:#fff}
+  .svc .num{font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;letter-spacing:.14em;color:var(--orange);margin-bottom:14px}
+  .svc h3{margin-bottom:10px}
+  .svc p{color:#5a6472;font-size:15.5px}
+  .svc article:hover p{color:#b9c0ca}
+  .svc .price{margin-top:18px;font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:700}
+  .svc .price small{font-size:13px;font-family:'Barlow',sans-serif;font-weight:500;color:#5a6472;text-transform:none;letter-spacing:0}
+  .svc article:hover .price small{color:#98a1ad}
+
+  /* how it works */
+  .how{background:var(--steel-2);color:#fff}
+  .how .head p{color:#b9c0ca}
+  .steps{display:grid;gap:28px;counter-reset:s}
+  .steps li{border-top:2px solid var(--orange);padding-top:20px;counter-increment:s}
+  .steps li:before{content:"0" counter(s);font-family:'Barlow Condensed',sans-serif;font-size:34px;font-weight:700;color:var(--orange);display:block;line-height:1;margin-bottom:10px}
+  .steps h3{margin-bottom:8px}
+  .steps p{color:#b9c0ca;font-size:15.5px}
+
+  /* visit */
+  .visit-grid{display:grid;gap:38px;align-items:start}
+  .hours{border:1px solid #dfe2e7;background:#fff}
+  .hours li{display:flex;justify-content:space-between;gap:20px;padding:13px 22px;border-bottom:1px solid #eceef1;font-size:15.5px}
+  .hours li:last-child{border-bottom:0}
+  .hours li b{font-weight:600}
+  .hours .closed{color:#8a929e}
+  .visit-img img{height:330px;width:100%;object-fit:cover;filter:grayscale(.2)}
+  .addr{margin-top:22px;font-size:16px;color:#5a6472}
+  .addr b{color:var(--ink);display:block;font-size:18px;margin-bottom:4px}
+
+  /* cta */
+  .cta{background:var(--orange);color:#fff;text-align:center}
+  .cta p{font-size:19px;max-width:36em;margin:16px auto 28px;color:#fff2e8}
+  .cta .btn-out{color:#fff;border-color:#fff}
+  .cta .btn-out:hover{background:#fff;color:var(--orange-d);border-color:#fff}
+
+  footer{background:var(--ink);color:#98a1ad;padding:46px 0;font-size:14px}
+  .foot{display:flex;flex-wrap:wrap;gap:18px;justify-content:space-between;align-items:center}
+  .foot .brand{font-size:24px;color:#fff;margin:0}
+
+  @media(min-width:760px){
+    .strip ul{grid-template-columns:repeat(4,1fr)}
+    .svc{grid-template-columns:repeat(2,1fr)}
+    .steps{grid-template-columns:repeat(2,1fr)}
+  }
+  @media(min-width:960px){
+    .nav-links{display:flex}
+    .hero-grid{grid-template-columns:1.05fr .95fr;gap:56px}
+    .hero{padding:96px 0 0}
+    .svc{grid-template-columns:repeat(3,1fr)}
+    .steps{grid-template-columns:repeat(4,1fr)}
+    .visit-grid{grid-template-columns:1fr 1fr;gap:56px}
+  }
+  @media(prefers-reduced-motion:reduce){*{transition:none!important}html{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+
+<div class="demo-bar">Live demo by <b>GetYourWebsite</b> — this is a sample of what your site could look like.</div>
+
+<header><div class="wrap"><nav>
+  <div class="brand">Red<span>line</span></div>
+  <div class="nav-links">
+    <a href="#services">Services</a><a href="#how">How it works</a><a href="#visit">Visit</a><a href="#book">Book</a>
+  </div>
+  <a href="tel:+13195550142" class="call">(319) 555-0142</a>
+</nav></div></header>
+
+<main>
+<section class="hero">
+  <div class="wrap hero-grid">
+    <div>
+      <span class="kicker">Cedar Falls · Since 1998</span>
+      <h1>Honest work.<br>Straight answers.</h1>
+      <p class="sub">
+        You get a written estimate before we touch anything, and a phone call
+        before we change it. Twenty-six years in the same shop, on the same street.
+      </p>
+      <div class="hero-cta">
+        <a href="#book" class="btn btn-fill">Book an appointment</a>
+        <a href="#services" class="btn btn-out">See what we charge</a>
+      </div>
+    </div>
+    <div class="hero-img">
+      <img src="https://loremflickr.com/900/700/auto,repair,garage?lock=301" alt="A mechanic working under the hood of a car in the Redline workshop" loading="eager" width="900" height="700">
+    </div>
+  </div>
+</section>
+
+<section class="strip" style="padding:0">
+  <div class="wrap"><ul>
+    <li><div class="n">26</div><div class="l">Years open</div></li>
+    <li><div class="n">4.9</div><div class="l">Google rating</div></li>
+    <li><div class="n">3 day</div><div class="l">Average turnaround</div></li>
+    <li><div class="n">12 mo</div><div class="l">Warranty on parts</div></li>
+  </ul></div>
+</section>
+
+<section id="services">
+  <div class="wrap">
+    <div class="head">
+      <h2>What we do, what it costs</h2>
+      <p>Real starting prices — not "call for a quote". If your job is going to cost more than the number below, you'll hear it from us before we start.</p>
+    </div>
+    <div class="svc">
+      <article>
+        <div class="num">01</div><h3>Diagnostics</h3>
+        <p>Check-engine light, weird noise, something that just feels wrong. We find it and explain it in plain English.</p>
+        <div class="price">$89 <small>flat, waived if you book the repair</small></div>
+      </article>
+      <article>
+        <div class="num">02</div><h3>Brakes</h3>
+        <p>Pads, rotors, fluid, lines. Same-day on most makes if you're in before 10am.</p>
+        <div class="price">$180 <small>per axle, parts included</small></div>
+      </article>
+      <article>
+        <div class="num">03</div><h3>Oil &amp; filters</h3>
+        <p>Full synthetic, correct spec for your engine, and a genuine multi-point check — not an upsell sheet.</p>
+        <div class="price">$65 <small>most vehicles, 30 minutes</small></div>
+      </article>
+      <article>
+        <div class="num">04</div><h3>Tyres &amp; alignment</h3>
+        <p>Mounting, balancing, rotation and a four-wheel alignment on a laser rig.</p>
+        <div class="price">$120 <small>four-wheel alignment</small></div>
+      </article>
+      <article>
+        <div class="num">05</div><h3>Suspension &amp; steering</h3>
+        <p>Shocks, struts, bushings, control arms. The stuff that makes an old car feel new again.</p>
+        <div class="price">$240 <small>starting, per axle</small></div>
+      </article>
+      <article>
+        <div class="num">06</div><h3>Pre-purchase inspection</h3>
+        <p>Buying used? Bring it here first. 90 minutes, 120 checks, one honest verdict.</p>
+        <div class="price">$140 <small>written report same day</small></div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section class="how" id="how">
+  <div class="wrap">
+    <div class="head">
+      <h2>No surprises. Ever.</h2>
+      <p>The four steps every job goes through, whether it's an oil change or a transmission.</p>
+    </div>
+    <ol class="steps">
+      <li><h3>You call or book online</h3><p>Tell us what it's doing. We'll tell you if it sounds urgent.</p></li>
+      <li><h3>We look and we quote</h3><p>Written estimate, itemised, before a single bolt comes off.</p></li>
+      <li><h3>You approve the number</h3><p>If we find something else mid-job, work stops until you say go.</p></li>
+      <li><h3>You pick it up</h3><p>We walk you through what we did and hand you the old parts if you want them.</p></li>
+    </ol>
+  </div>
+</section>
+
+<section id="visit">
+  <div class="wrap">
+    <div class="head"><h2>Find us</h2></div>
+    <div class="visit-grid">
+      <div>
+        <ul class="hours">
+          <li><b>Monday – Friday</b><span>7:00am – 6:00pm</span></li>
+          <li><b>Saturday</b><span>8:00am – 2:00pm</span></li>
+          <li><b>Sunday</b><span class="closed">Closed</span></li>
+          <li><b>Emergency tow-in</b><span>24 hours</span></li>
+        </ul>
+        <p class="addr">
+          <b>Redline Auto Repair</b>
+          412 Foundry Street, Cedar Falls, IA 50613<br>
+          <a href="tel:+13195550142" style="color:var(--orange-d);font-weight:600">(319) 555-0142</a>
+          · service@redlineauto.example
+        </p>
+      </div>
+      <div class="visit-img">
+        <img src="https://loremflickr.com/800/660/mechanic,car,engine?lock=352" alt="The Redline workshop floor with two service bays" loading="lazy" width="800" height="660">
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="cta" id="book">
+  <div class="wrap">
+    <h2>Something not right with your car?</h2>
+    <p>Book a slot online and we'll confirm within the hour. Most weeks we can see you in two or three days.</p>
+    <div style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap">
+      <a href="tel:+13195550142" class="btn btn-out">Call (319) 555-0142</a>
+      <a href="#" class="btn" style="background:#fff;color:var(--orange-d)">Book online</a>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer><div class="wrap foot">
+  <div class="brand">Red<span style="color:var(--orange)">line</span></div>
+  <div>412 Foundry Street, Cedar Falls, IA · (319) 555-0142</div>
+  <div>Concept site by GetYourWebsite</div>
+</div></footer>
+
+</body>
+</html>

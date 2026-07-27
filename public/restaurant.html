@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" /><meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Vela Kitchen — Coastal plates, open fire, Wilmington</title>
+<meta name="description" content="A small coastal kitchen on Front Street. Wood-fired plates, a short menu that changes weekly, and dinner five nights a week." />
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;1,500&family=Karla:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* Editorial restaurant: near-black, bone white, one warm brass accent.
+     Big serif display, wide letterspaced labels, a real menu on the page
+     rather than a PDF. */
+  :root{
+    --night:#141210;--night-2:#1e1b18;--bone:#f6f2ea;--bone-2:#ebe4d8;
+    --ink:#221e1a;--muted:#6d635a;--brass:#b8873f;--brass-l:#d4a45c;--line:#e0d7c8
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{background:var(--bone);color:var(--ink);font-family:'Karla',sans-serif;line-height:1.7;-webkit-font-smoothing:antialiased}
+  h1,h2,h3,.serif{font-family:'Playfair Display',Georgia,serif;font-weight:500;line-height:1.1;letter-spacing:-.02em}
+  h1{font-size:clamp(44px,7vw,82px)}
+  h2{font-size:clamp(30px,4vw,48px)}
+  h3{font-size:20px;letter-spacing:-.01em}
+  a{color:inherit;text-decoration:none}
+  img{display:block;max-width:100%}
+  ul,ol{list-style:none}
+  .wrap{max-width:1120px;margin:0 auto;padding:0 26px}
+  .narrow{max-width:760px;margin:0 auto;padding:0 26px}
+  .btn{display:inline-block;font-weight:600;font-size:13px;letter-spacing:.13em;text-transform:uppercase;padding:15px 30px;transition:.25s;cursor:pointer;border:1px solid transparent}
+  .btn-fill{background:var(--brass);color:#fff}
+  .btn-fill:hover{background:#a2762f}
+  .btn-out{border-color:currentColor}
+  .btn-out:hover{background:currentColor}
+  .btn-out:hover span{color:var(--night)}
+  .demo-bar{background:var(--night);color:#a89e92;font-size:13px;text-align:center;padding:9px 16px}
+  .demo-bar b{color:var(--brass-l)}
+  .label{font-size:11.5px;font-weight:700;letter-spacing:.24em;text-transform:uppercase;color:var(--brass);display:block;margin-bottom:18px}
+
+  /* header */
+  header{background:var(--night);color:var(--bone);position:sticky;top:0;z-index:50}
+  nav{display:flex;align-items:center;gap:26px;min-height:80px}
+  .brand{font-family:'Playfair Display',serif;font-size:27px;letter-spacing:.1em;text-transform:uppercase;margin-right:auto}
+  .nav-links{display:none;gap:32px;font-size:12.5px;font-weight:600;letter-spacing:.14em;text-transform:uppercase}
+  .nav-links a{color:#a89e92;transition:.2s}
+  .nav-links a:hover{color:var(--brass-l)}
+
+  /* hero */
+  .hero{background:var(--night);color:var(--bone);position:relative;overflow:hidden;text-align:center;padding:78px 0 90px}
+  .hero:after{content:"";position:absolute;inset:auto 0 0;height:180px;background:linear-gradient(180deg,transparent,rgba(20,18,16,.85))}
+  .hero-img{position:relative;margin-bottom:44px}
+  .hero-img img{width:100%;height:340px;object-fit:cover;opacity:.62}
+  .hero-inner{position:relative;z-index:2}
+  .hero h1{margin-bottom:22px}
+  .hero h1 em{font-style:italic;color:var(--brass-l)}
+  .hero p{color:#bdb3a6;font-size:18.5px;max-width:30em;margin:0 auto 34px}
+  .hero-cta{display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
+  .hero .btn-out{color:var(--bone)}
+
+  section{padding:88px 0}
+  .head{max-width:40rem;margin-bottom:50px}
+  .head--c{margin-inline:auto;text-align:center}
+  .head p{color:var(--muted);font-size:18px;margin-top:14px}
+
+  /* menu */
+  .menu-block+.menu-block{margin-top:52px}
+  .menu-block>h3{font-size:12px;font-weight:700;letter-spacing:.24em;text-transform:uppercase;color:var(--brass);font-family:'Karla',sans-serif;padding-bottom:12px;border-bottom:1px solid var(--line);margin-bottom:8px}
+  .dish{display:flex;align-items:baseline;gap:14px;padding:17px 0;border-bottom:1px solid var(--line)}
+  .dish:last-child{border-bottom:0}
+  .dish .d{flex:1;min-width:0}
+  .dish .n{font-family:'Playfair Display',serif;font-size:20px;display:block}
+  .dish .desc{color:var(--muted);font-size:15px;line-height:1.55;margin-top:3px}
+  .dish .p{font-family:'Playfair Display',serif;font-size:19px;color:var(--brass);white-space:nowrap}
+  .v{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.1em;color:var(--muted);border:1px solid var(--line);padding:1px 6px;margin-left:8px;vertical-align:2px}
+
+  /* story */
+  .story{background:var(--bone-2)}
+  .story-grid{display:grid;gap:40px;align-items:center}
+  .story img{width:100%;height:420px;object-fit:cover}
+  .story p{color:var(--muted);font-size:17.5px}
+  .story p+p{margin-top:16px}
+
+  /* hours + book */
+  .book{background:var(--night);color:var(--bone)}
+  .book h2{color:#fff}
+  .book-grid{display:grid;gap:40px}
+  .hours li{display:flex;justify-content:space-between;gap:20px;padding:14px 0;border-bottom:1px solid rgba(246,242,234,.14);font-size:15.5px;color:#bdb3a6}
+  .hours li b{color:var(--bone);font-weight:600}
+  .hours li:last-child{border-bottom:0}
+  .closed{color:#7c7267}
+  .addr{font-size:16px;color:#bdb3a6;line-height:1.8}
+  .addr b{color:var(--bone);display:block;font-family:'Playfair Display',serif;font-size:21px;margin-bottom:8px;letter-spacing:0}
+  .addr a{color:var(--brass-l)}
+
+  footer{background:var(--night);color:#7c7267;padding:40px 0;font-size:13px;border-top:1px solid rgba(246,242,234,.12)}
+  .foot{display:flex;flex-wrap:wrap;gap:14px;justify-content:space-between}
+
+  @media(min-width:760px){
+    .menu-cols{display:grid;grid-template-columns:1fr 1fr;gap:0 60px;align-items:start}
+    .menu-cols .menu-block+.menu-block{margin-top:0}
+    .menu-cols .menu-block:nth-child(n+3){margin-top:52px}
+    .book-grid{grid-template-columns:1fr 1fr;gap:56px}
+  }
+  @media(min-width:980px){
+    .nav-links{display:flex}
+    .hero{padding:0 0 96px}
+    .hero-img img{height:520px}
+    .story-grid{grid-template-columns:.95fr 1.05fr;gap:64px}
+  }
+  @media(prefers-reduced-motion:reduce){*{transition:none!important}html{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+
+<div class="demo-bar">Live demo by <b>GetYourWebsite</b> — this is a sample of what your site could look like.</div>
+
+<header><div class="wrap"><nav>
+  <div class="brand">Vela</div>
+  <div class="nav-links">
+    <a href="#menu">Menu</a><a href="#story">The kitchen</a><a href="#visit">Hours</a><a href="#visit">Book</a>
+  </div>
+  <a href="#visit" class="btn btn-fill">Reserve</a>
+</nav></div></header>
+
+<main>
+<section class="hero">
+  <div class="hero-img">
+    <img src="https://loremflickr.com/1600/900/restaurant,interior,dining?lock=349" alt="A candlelit table set for dinner at Vela Kitchen" loading="eager" width="1600" height="900">
+  </div>
+  <div class="narrow hero-inner">
+    <span class="label">Front Street · Wilmington</span>
+    <h1>Coastal plates,<br><em>open fire.</em></h1>
+    <p>
+      Twenty-eight seats, one wood grill, and a menu that changes when the
+      boats do. Dinner Tuesday to Saturday.
+    </p>
+    <div class="hero-cta">
+      <a href="#visit" class="btn btn-fill">Reserve a table</a>
+      <a href="#menu" class="btn btn-out"><span>See this week's menu</span></a>
+    </div>
+  </div>
+</section>
+
+<section id="menu">
+  <div class="wrap">
+    <div class="head head--c">
+      <span class="label">Week of 21 July</span>
+      <h2>This week at Vela</h2>
+      <p>The menu is written on Monday and printed on Tuesday. If something ran out, it ran out — that's usually a good sign.</p>
+    </div>
+
+    <div class="menu-cols">
+      <div class="menu-block">
+        <h3>To start</h3>
+        <div class="dish"><div class="d"><span class="n">Grilled bread, cultured butter</span><span class="desc">Sourdough from Ninth Street, sea salt</span></div><span class="p">7</span></div>
+        <div class="dish"><div class="d"><span class="n">Oysters on ice<span class="v">GF</span></span><span class="desc">Masonboro Inlet, mignonette, lemon — half dozen</span></div><span class="p">19</span></div>
+        <div class="dish"><div class="d"><span class="n">Charred summer beans<span class="v">V</span></span><span class="desc">Almond, brown butter, tarragon</span></div><span class="p">14</span></div>
+        <div class="dish"><div class="d"><span class="n">Smoked fish rillette</span><span class="desc">Cured mullet, crème fraîche, pickled shallot</span></div><span class="p">16</span></div>
+      </div>
+
+      <div class="menu-block">
+        <h3>From the fire</h3>
+        <div class="dish"><div class="d"><span class="n">Whole flounder</span><span class="desc">Lemon, fennel, chili — for two</span></div><span class="p">54</span></div>
+        <div class="dish"><div class="d"><span class="n">Grilled swordfish<span class="v">GF</span></span><span class="desc">Salsa verde, blistered tomato, capers</span></div><span class="p">34</span></div>
+        <div class="dish"><div class="d"><span class="n">Dry-aged ribeye</span><span class="desc">Bone marrow butter, watercress — 14oz</span></div><span class="p">48</span></div>
+        <div class="dish"><div class="d"><span class="n">Fire-roasted cauliflower<span class="v">V</span></span><span class="desc">Tahini, date, dukkah, herbs</span></div><span class="p">24</span></div>
+      </div>
+
+      <div class="menu-block">
+        <h3>Alongside</h3>
+        <div class="dish"><div class="d"><span class="n">Ember potatoes</span><span class="desc">Rosemary, garlic, sea salt</span></div><span class="p">9</span></div>
+        <div class="dish"><div class="d"><span class="n">Little gem salad<span class="v">V</span></span><span class="desc">Buttermilk, dill, cucumber</span></div><span class="p">10</span></div>
+        <div class="dish"><div class="d"><span class="n">Grilled corn</span><span class="desc">Lime, chili, aged cheese</span></div><span class="p">9</span></div>
+      </div>
+
+      <div class="menu-block">
+        <h3>To finish</h3>
+        <div class="dish"><div class="d"><span class="n">Buttermilk panna cotta</span><span class="desc">Peach, thyme, honey</span></div><span class="p">11</span></div>
+        <div class="dish"><div class="d"><span class="n">Olive oil cake</span><span class="desc">Blackberry, crème fraîche</span></div><span class="p">11</span></div>
+        <div class="dish"><div class="d"><span class="n">Affogato</span><span class="desc">Espresso, vanilla, amaretto</span></div><span class="p">10</span></div>
+      </div>
+    </div>
+
+    <p style="text-align:center;color:var(--muted);font-size:14.5px;margin-top:44px">
+      <span class="v" style="margin:0 6px 0 0">V</span> vegetarian
+      <span class="v" style="margin:0 6px 0 18px">GF</span> gluten free ·
+      Please tell us about allergies when you book.
+    </p>
+  </div>
+</section>
+
+<section class="story" id="story">
+  <div class="wrap story-grid">
+    <img src="https://loremflickr.com/800/900/chef,cooking,restaurant?lock=347" alt="A chef working over an open wood grill" loading="lazy" width="800" height="900">
+    <div>
+      <span class="label">The kitchen</span>
+      <h2>One grill, one small room.</h2>
+      <p>
+        Vela opened in a former ship chandler's on Front Street in 2019 with
+        twenty-eight seats and no gas line. Everything that gets heat gets it
+        from oak and hickory.
+      </p>
+      <p>
+        We buy from four boats out of Masonboro and Wrightsville and two farms
+        up the Cape Fear. What they land on Monday is what you eat on Friday,
+        which is why the menu is short and why it moves.
+      </p>
+      <p>
+        There's no dress code, no tasting menu and no minimum spend. Come and
+        eat two things at the bar if that's the evening you want.
+      </p>
+    </div>
+  </div>
+</section>
+
+<section class="book" id="visit">
+  <div class="wrap">
+    <div class="head" style="margin-bottom:44px">
+      <span class="label">Find us</span>
+      <h2>Dinner, Tuesday to Saturday</h2>
+    </div>
+    <div class="book-grid">
+      <ul class="hours">
+        <li><b>Tuesday – Thursday</b><span>5:30pm – 10:00pm</span></li>
+        <li><b>Friday – Saturday</b><span>5:00pm – 11:00pm</span></li>
+        <li><b>Sunday</b><span class="closed">Closed</span></li>
+        <li><b>Monday</b><span class="closed">Closed</span></li>
+        <li><b>Bar walk-ins</b><span>Always — 8 seats</span></li>
+      </ul>
+      <div>
+        <p class="addr">
+          <b>Vela Kitchen</b>
+          214 South Front Street<br>
+          Wilmington, NC 28401<br>
+          <a href="tel:+19105550177">(910) 555-0177</a><br>
+          <a href="mailto:book@velakitchen.example">book@velakitchen.example</a>
+        </p>
+        <div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:28px">
+          <a href="#" class="btn btn-fill">Book a table</a>
+          <a href="tel:+19105550177" class="btn btn-out" style="color:var(--bone)"><span>Call us</span></a>
+        </div>
+        <p style="color:#7c7267;font-size:14px;margin-top:20px">
+          Parties of six or more, please call — we'll find a way to fit you in.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer><div class="wrap foot">
+  <div>Vela Kitchen · 214 S Front Street, Wilmington NC</div>
+  <div>Concept site by GetYourWebsite</div>
+</div></footer>
+
+</body>
+</html>

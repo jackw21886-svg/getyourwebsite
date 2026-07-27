@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" /><meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Cedar &amp; Stone Landscaping — Gardens that get better every year</title>
+<meta name="description" content="Design, build and seasonal care for gardens in the Hudson Valley. Free on-site consultation and a fixed quote within a week." />
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,500;0,600;1,500&family=Raleway:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* Deep forest green on warm cream, with a terracotta accent. Soft edges,
+     generous air, a serif for headings — it should feel like the garden, not
+     like a contractor's invoice. */
+  :root{
+    --forest:#1f3d2b;--forest-2:#2c5240;--moss:#6b8f6e;--sage:#e8ede4;
+    --cream:#faf8f2;--ink:#26302a;--muted:#5d6b61;--terra:#b4552f;--terra-d:#8f411f;--line:#e2e6dc
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{background:var(--cream);color:var(--ink);font-family:'Raleway',sans-serif;line-height:1.72;-webkit-font-smoothing:antialiased}
+  h1,h2,h3,.serif{font-family:'Lora',Georgia,serif;line-height:1.14;font-weight:600;letter-spacing:-.015em}
+  h1{font-size:clamp(38px,5.6vw,66px)}
+  h2{font-size:clamp(29px,3.6vw,44px)}
+  h3{font-size:21px}
+  a{color:inherit;text-decoration:none}
+  img{display:block;max-width:100%}
+  ul,ol{list-style:none}
+  .wrap{max-width:1140px;margin:0 auto;padding:0 26px}
+  .btn{display:inline-block;font-weight:600;font-size:15px;padding:14px 30px;border-radius:100px;transition:.25s;cursor:pointer;border:1.5px solid transparent}
+  .btn-fill{background:var(--terra);color:#fff}
+  .btn-fill:hover{background:var(--terra-d);transform:translateY(-2px)}
+  .btn-out{border-color:currentColor}
+  .btn-out:hover{background:var(--forest);color:var(--cream);border-color:var(--forest)}
+  .demo-bar{background:var(--forest);color:#c5d3c8;font-size:13px;text-align:center;padding:9px 16px}
+  .demo-bar b{color:#fff}
+  .eyebrow{font-size:12px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--terra);margin-bottom:16px;display:block}
+
+  /* header */
+  header{background:rgba(250,248,242,.94);backdrop-filter:blur(10px);position:sticky;top:0;z-index:50;border-bottom:1px solid var(--line)}
+  nav{display:flex;align-items:center;gap:26px;min-height:78px}
+  .brand{font-family:'Lora',serif;font-size:25px;font-weight:600;margin-right:auto;letter-spacing:-.02em}
+  .brand i{font-style:normal;color:var(--moss)}
+  .nav-links{display:none;gap:30px;font-weight:500;font-size:15px}
+  .nav-links a{color:var(--muted);transition:.2s}
+  .nav-links a:hover{color:var(--forest)}
+
+  /* hero */
+  .hero{padding:64px 0 78px}
+  .hero-grid{display:grid;gap:40px;align-items:center}
+  .hero p.sub{font-size:19px;color:var(--muted);max-width:33em;margin:22px 0 32px}
+  .hero-cta{display:flex;flex-wrap:wrap;gap:14px}
+  .hero-img{position:relative}
+  .hero-img img{width:100%;height:440px;object-fit:cover;border-radius:220px 220px 24px 24px;box-shadow:0 30px 60px rgba(31,61,43,.18)}
+  .leaf{position:absolute;bottom:-18px;left:-14px;background:var(--cream);border:1px solid var(--line);border-radius:18px;padding:16px 20px;box-shadow:0 14px 30px rgba(31,61,43,.1)}
+  .leaf b{font-family:'Lora',serif;font-size:26px;display:block;line-height:1}
+  .leaf span{font-size:12.5px;color:var(--muted);letter-spacing:.04em}
+
+  section{padding:82px 0}
+  .head{max-width:42rem;margin-bottom:48px}
+  .head p{color:var(--muted);font-size:18px;margin-top:14px}
+  .head--c{margin-inline:auto;text-align:center}
+
+  /* services */
+  .svc{display:grid;gap:22px}
+  .svc article{background:#fff;border:1px solid var(--line);border-radius:20px;overflow:hidden;transition:.25s}
+  .svc article:hover{transform:translateY(-4px);box-shadow:0 22px 44px rgba(31,61,43,.11);border-color:var(--moss)}
+  .svc img{height:190px;width:100%;object-fit:cover}
+  .svc .body{padding:24px 24px 28px}
+  .svc h3{margin-bottom:9px}
+  .svc p{color:var(--muted);font-size:15.5px}
+  .svc .from{margin-top:16px;font-family:'Lora',serif;font-size:17px;color:var(--forest)}
+
+  /* seasons */
+  .seasons{background:var(--forest);color:#e4ece6}
+  .seasons h2,.seasons h3{color:#fff}
+  .seasons .head p{color:#b6c8bc}
+  .season-grid{display:grid;gap:2px;background:rgba(255,255,255,.12);border-radius:20px;overflow:hidden}
+  .season-grid li{background:var(--forest);padding:30px 26px}
+  .season-grid .s{font-size:12px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:#9dc0a6;margin-bottom:12px}
+  .season-grid h3{margin-bottom:8px;font-size:19px}
+  .season-grid p{color:#b6c8bc;font-size:15px}
+
+  /* process */
+  .proc{display:grid;gap:30px;counter-reset:p}
+  .proc li{counter-increment:p;padding-left:62px;position:relative}
+  .proc li:before{content:counter(p);position:absolute;left:0;top:2px;width:44px;height:44px;border-radius:50%;background:var(--sage);color:var(--forest);font-family:'Lora',serif;font-size:19px;display:grid;place-items:center}
+  .proc h3{margin-bottom:6px}
+  .proc p{color:var(--muted);font-size:15.5px}
+
+  /* quote form */
+  .quote{background:var(--sage)}
+  .form{background:#fff;border:1px solid var(--line);border-radius:22px;padding:30px 28px;box-shadow:0 20px 44px rgba(31,61,43,.08)}
+  .row{display:grid;gap:16px;margin-bottom:16px}
+  label{display:block;font-size:13.5px;font-weight:600;margin-bottom:6px}
+  input,select,textarea{width:100%;font:inherit;font-size:15px;padding:12px 14px;border:1px solid #d5dccf;border-radius:12px;background:var(--cream);color:var(--ink)}
+  input:focus,select:focus,textarea:focus{outline:none;border-color:var(--moss);box-shadow:0 0 0 3px rgba(107,143,110,.18)}
+  textarea{min-height:96px;resize:vertical}
+  .form .btn-fill{width:100%;text-align:center;margin-top:6px}
+  .form small{display:block;margin-top:14px;color:var(--muted);font-size:13px;text-align:center}
+
+  /* testimonial */
+  .quote-card{max-width:44rem;margin:0 auto;text-align:center}
+  .quote-card blockquote{font-family:'Lora',serif;font-size:clamp(21px,2.5vw,29px);font-style:italic;line-height:1.42;color:var(--forest)}
+  .quote-card cite{display:block;margin-top:22px;font-style:normal;font-size:14.5px;color:var(--muted);letter-spacing:.03em}
+
+  footer{background:var(--forest);color:#a9bfb0;padding:52px 0;font-size:14.5px}
+  .foot{display:grid;gap:22px}
+  .foot .brand{color:#fff;margin:0}
+  .foot a{color:#c5d3c8}
+  .foot a:hover{color:#fff}
+
+  @media(min-width:720px){
+    .svc{grid-template-columns:repeat(2,1fr)}
+    .season-grid{grid-template-columns:repeat(2,1fr)}
+    .row.two{grid-template-columns:1fr 1fr}
+    .foot{grid-template-columns:1.4fr 1fr 1fr}
+  }
+  @media(min-width:980px){
+    .nav-links{display:flex}
+    .hero{padding:86px 0 96px}
+    .hero-grid{grid-template-columns:1.02fr .98fr;gap:60px}
+    .svc{grid-template-columns:repeat(3,1fr)}
+    .season-grid{grid-template-columns:repeat(4,1fr)}
+    .proc{grid-template-columns:repeat(2,1fr);gap:34px 44px}
+    .quote-grid{display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:center}
+  }
+  @media(prefers-reduced-motion:reduce){*{transition:none!important;transform:none!important}html{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+
+<div class="demo-bar">Live demo by <b>GetYourWebsite</b> — this is a sample of what your site could look like.</div>
+
+<header><div class="wrap"><nav>
+  <div class="brand">Cedar <i>&amp;</i> Stone</div>
+  <div class="nav-links">
+    <a href="#services">Services</a><a href="#seasons">Seasonal care</a><a href="#process">How we work</a><a href="#quote">Get a quote</a>
+  </div>
+  <a href="#quote" class="btn btn-fill">Free consultation</a>
+</nav></div></header>
+
+<main>
+<section class="hero">
+  <div class="wrap hero-grid">
+    <div>
+      <span class="eyebrow">Hudson Valley · Est. 2011</span>
+      <h1>Gardens that get better every year.</h1>
+      <p class="sub">
+        We design, build and look after outdoor spaces across the valley —
+        from a single overgrown border to a whole property. Everything starts
+        with a walk around your garden, and it's free.
+      </p>
+      <div class="hero-cta">
+        <a href="#quote" class="btn btn-fill">Book a free consultation</a>
+        <a href="#services" class="btn btn-out">What we do</a>
+      </div>
+    </div>
+    <div class="hero-img">
+      <img src="https://loremflickr.com/900/900/garden,landscaping,path?lock=311" alt="A stone path curving through a planted garden bed" loading="eager" width="900" height="900">
+      <div class="leaf"><b>340+</b><span>gardens since 2011</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="services">
+  <div class="wrap">
+    <div class="head">
+      <h2>Three ways we work with people</h2>
+      <p>Most clients start with one and grow into another. There's no contract holding you to any of it.</p>
+    </div>
+    <div class="svc">
+      <article>
+        <img src="https://loremflickr.com/700/500/garden,design,plan?lock=312" alt="A planted border with layered shrubs and perennials" loading="lazy" width="700" height="500">
+        <div class="body">
+          <h3>Design</h3>
+          <p>A proper plan for the whole space — planting, levels, light, drainage — drawn up so you can build it all at once or a bit at a time.</p>
+          <div class="from">From $850</div>
+        </div>
+      </article>
+      <article>
+        <img src="https://loremflickr.com/700/500/patio,stone,landscaping?lock=313" alt="A newly laid stone patio with seating" loading="lazy" width="700" height="500">
+        <div class="body">
+          <h3>Build</h3>
+          <p>Patios, paths, retaining walls, raised beds, fencing and planting. Our own crew — we don't subcontract the hard parts.</p>
+          <div class="from">Quoted per project</div>
+        </div>
+      </article>
+      <article>
+        <img src="https://loremflickr.com/700/500/hedge,trimming,gardener?lock=314" alt="A gardener trimming a hedge" loading="lazy" width="700" height="500">
+        <div class="body">
+          <h3>Maintenance</h3>
+          <p>Fortnightly or monthly visits: mowing, pruning, beds, leaves, and a proper tidy before winter.</p>
+          <div class="from">From $120 / visit</div>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section class="seasons" id="seasons">
+  <div class="wrap">
+    <div class="head">
+      <h2>A garden is a four-season job</h2>
+      <p>Here's what we're actually doing at your place through the year.</p>
+    </div>
+    <ul class="season-grid">
+      <li><div class="s">Spring</div><h3>Wake it up</h3><p>Beds cleared and mulched, first cut, hard pruning done before the growth starts.</p></li>
+      <li><div class="s">Summer</div><h3>Keep it sharp</h3><p>Regular mowing, edging, deadheading and watering through the dry weeks.</p></li>
+      <li><div class="s">Autumn</div><h3>Plant and clear</h3><p>The best planting window of the year, plus leaves, bulbs and lawn repair.</p></li>
+      <li><div class="s">Winter</div><h3>Build and prune</h3><p>Structural work, tree pruning and hardscaping while the beds are dormant.</p></li>
+    </ul>
+  </div>
+</section>
+
+<section id="process">
+  <div class="wrap">
+    <div class="head"><h2>How it goes</h2><p>Four steps, and you can stop after any of them.</p></div>
+    <ol class="proc">
+      <li><h3>We walk the garden together</h3><p>Free, about an hour, and you'll get honest advice even if you never hire us.</p></li>
+      <li><h3>A fixed quote within a week</h3><p>Itemised, with a plan drawing if you're doing a design. No hourly surprises.</p></li>
+      <li><h3>We build it</h3><p>You'll know which days we're on site and who's coming. We clear up every evening.</p></li>
+      <li><h3>We look after it</h3><p>Optional, but most people stay on. A garden left alone for a year undoes a lot of work.</p></li>
+    </ol>
+  </div>
+</section>
+
+<section>
+  <div class="wrap quote-card">
+    <blockquote>"They spent an hour walking our garden and told us to hold off on the patio for a year and fix the drainage first. That's when we knew we'd hire them."</blockquote>
+    <cite>Marta &amp; Dev Okonjo · Rhinebeck</cite>
+  </div>
+</section>
+
+<section class="quote" id="quote">
+  <div class="wrap">
+    <div class="quote-grid">
+      <div>
+        <span class="eyebrow">Free, no obligation</span>
+        <h2>Tell us about your garden</h2>
+        <p style="color:var(--muted);font-size:18px;margin-top:14px;max-width:32em">
+          Send this over and we'll ring you within a day to arrange a time. We cover
+          Rhinebeck, Kingston, Red Hook, Hudson and everywhere in between.
+        </p>
+        <p style="margin-top:24px;font-size:16px">
+          Prefer to talk? <a href="tel:+18455550119" style="color:var(--terra-d);font-weight:600">(845) 555-0119</a>
+        </p>
+      </div>
+      <form class="form" onsubmit="event.preventDefault();this.innerHTML='<h3 style=&quot;margin-bottom:8px&quot;>Thanks — that\'s with us.</h3><p style=&quot;color:var(--muted)&quot;>We\'ll call you within one working day to arrange a visit.</p>'">
+        <div class="row two">
+          <div><label for="n">Your name</label><input id="n" name="name" required></div>
+          <div><label for="p">Phone</label><input id="p" name="phone" type="tel" required></div>
+        </div>
+        <div class="row"><div><label for="e">Email</label><input id="e" name="email" type="email" required></div></div>
+        <div class="row"><div>
+          <label for="s">What do you need?</label>
+          <select id="s" name="service">
+            <option>A new garden design</option>
+            <option>Patio, path or wall</option>
+            <option>Planting only</option>
+            <option>Regular maintenance</option>
+            <option>Not sure yet</option>
+          </select>
+        </div></div>
+        <div class="row"><div><label for="m">Anything else</label><textarea id="m" name="message" placeholder="Size of the garden, what's bothering you about it, roughly when you'd like it done…"></textarea></div></div>
+        <button class="btn btn-fill" type="submit">Request my free consultation</button>
+        <small>We reply to every enquiry, usually the same day.</small>
+      </form>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer><div class="wrap foot">
+  <div>
+    <div class="brand">Cedar <i style="font-style:normal;color:var(--moss)">&amp;</i> Stone</div>
+    <p style="margin-top:10px;max-width:22em">Garden design, build and care across the Hudson Valley since 2011.</p>
+  </div>
+  <div>
+    <strong style="color:#fff;display:block;margin-bottom:8px">Contact</strong>
+    <a href="tel:+18455550119">(845) 555-0119</a><br>
+    <a href="mailto:hello@cedarandstone.example">hello@cedarandstone.example</a>
+  </div>
+  <div>
+    <strong style="color:#fff;display:block;margin-bottom:8px">Areas</strong>
+    Rhinebeck · Kingston<br>Red Hook · Hudson
+  </div>
+</div>
+<div class="wrap" style="margin-top:30px;padding-top:22px;border-top:1px solid rgba(255,255,255,.14);font-size:13px">Concept site by GetYourWebsite</div>
+</footer>
+
+</body>
+</html>
