@@ -1,0 +1,280 @@
+---
+/**
+ * Sticky site navigation.
+ *
+ * On the home page it starts transparent over the hero and turns solid black
+ * once you scroll (see the inline script at the bottom). Everywhere else it
+ * is solid from the start.
+ */
+import { NAV_LINKS } from '../data/site.js';
+import { url, isActive } from '../data/url.js';
+import Wordmark from './Wordmark.astro';
+
+interface Props {
+  /** true only on the home page, where the nav floats over the hero */
+  transparent?: boolean;
+}
+
+const { transparent = false } = Astro.props;
+const here = Astro.url.pathname;
+---
+
+<header class:list={['nav', { 'nav--float': transparent }]} data-nav>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <div class="nav__inner shell">
+    <a class="nav__brand" href={url('/')} aria-label="GetYourWebsite — home">
+      <Wordmark />
+    </a>
+
+    <nav class="nav__links" aria-label="Main">
+      {
+        NAV_LINKS.map((link) => (
+          <a
+            href={url(link.href)}
+            class="nav__link"
+            aria-current={isActive(here, link.href) ? 'page' : undefined}
+          >
+            {link.label}
+          </a>
+        ))
+      }
+    </nav>
+
+    <a class="btn btn--gold btn--sm nav__cta" href={url('/contact')}>Free Mockup</a>
+
+    <button
+      class="nav__burger"
+      type="button"
+      aria-expanded="false"
+      aria-controls="nav-drawer"
+      data-burger
+    >
+      <span class="sr-only">Open menu</span>
+      <span class="nav__burger-bar" aria-hidden="true"></span>
+      <span class="nav__burger-bar" aria-hidden="true"></span>
+    </button>
+  </div>
+
+  <!-- Mobile drawer. Hidden from assistive tech and keyboard until opened. -->
+  <div class="nav__drawer" id="nav-drawer" data-drawer hidden>
+    <nav class="nav__drawer-links" aria-label="Mobile">
+      {
+        NAV_LINKS.map((link) => (
+          <a
+            href={url(link.href)}
+            aria-current={isActive(here, link.href) ? 'page' : undefined}
+          >
+            {link.label}
+          </a>
+        ))
+      }
+      <a class="btn btn--gold nav__drawer-cta" href={url('/contact')}>Free Mockup</a>
+    </nav>
+  </div>
+</header>
+
+<style>
+  .nav {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: var(--black);
+    border-bottom: 1px solid transparent;
+    transition: background var(--dur) var(--ease), border-color var(--dur) var(--ease);
+  }
+
+  /* On the home page the bar floats over the hero until you scroll. */
+  .nav--float {
+    position: fixed;
+    inset-inline: 0;
+    background: transparent;
+  }
+
+  .nav--float.is-stuck,
+  .nav:not(.nav--float) {
+    background: rgba(10, 10, 12, 0.88);
+    -webkit-backdrop-filter: blur(14px);
+    backdrop-filter: blur(14px);
+    border-bottom-color: var(--line-dark);
+  }
+
+  .nav__inner {
+    display: flex;
+    align-items: center;
+    gap: var(--s-4);
+    min-height: 72px;
+  }
+
+  .nav__brand {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    margin-right: auto;
+  }
+
+  .nav__links {
+    display: none;
+    align-items: center;
+    gap: 0.35rem;
+  }
+
+  .nav__link {
+    position: relative;
+    padding: 0.5rem 0.85rem;
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--silver);
+    text-decoration: none;
+    border-radius: var(--radius-pill);
+    transition: color var(--dur) var(--ease), background var(--dur) var(--ease);
+  }
+
+  .nav__link:hover {
+    color: var(--white);
+    background: rgba(230, 231, 235, 0.07);
+  }
+
+  /* The current page gets a small gold dot rather than a colour change, so the
+     gold stays reserved for the CTA. */
+  .nav__link[aria-current='page'] {
+    color: var(--white);
+  }
+
+  .nav__link[aria-current='page']::after {
+    content: '';
+    position: absolute;
+    bottom: 0.15rem;
+    left: 50%;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--gold);
+    transform: translateX(-50%);
+  }
+
+  .nav__cta { display: none; }
+
+  /* Burger ---------------------------------------------------------------- */
+
+  .nav__burger {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 5px;
+    width: 44px;
+    height: 44px;
+    padding: 0 10px;
+    border-radius: var(--radius);
+    transition: background var(--dur) var(--ease);
+  }
+
+  .nav__burger:hover { background: rgba(230, 231, 235, 0.08); }
+
+  .nav__burger-bar {
+    display: block;
+    width: 100%;
+    height: 1.5px;
+    background: var(--white);
+    transition: transform var(--dur) var(--ease), opacity var(--dur) var(--ease);
+  }
+
+  .nav__burger[aria-expanded='true'] .nav__burger-bar:first-child {
+    transform: translateY(3.25px) rotate(45deg);
+  }
+
+  .nav__burger[aria-expanded='true'] .nav__burger-bar:last-child {
+    transform: translateY(-3.25px) rotate(-45deg);
+  }
+
+  /* Drawer ---------------------------------------------------------------- */
+
+  .nav__drawer {
+    background: rgba(10, 10, 12, 0.97);
+    -webkit-backdrop-filter: blur(14px);
+    backdrop-filter: blur(14px);
+    border-bottom: 1px solid var(--line-dark);
+  }
+
+  .nav__drawer[hidden] { display: none; }
+
+  .nav__drawer-links {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    width: min(100% - 2.5rem, var(--shell));
+    margin-inline: auto;
+    padding-block: var(--s-3) var(--s-5);
+  }
+
+  .nav__drawer-links a {
+    padding: 0.85rem 0.5rem;
+    font-family: var(--font-display);
+    font-size: 1.35rem;
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    color: var(--silver-light);
+    text-decoration: none;
+    border-bottom: 1px solid var(--line-dark);
+  }
+
+  .nav__drawer-links a[aria-current='page'] { color: var(--gold); }
+
+  .nav__drawer-cta {
+    margin-top: var(--s-3);
+    border-bottom: 0 !important;
+    color: var(--black) !important;
+    justify-content: center;
+  }
+
+  /* Desktop --------------------------------------------------------------- */
+
+  @media (min-width: 900px) {
+    .nav__links,
+    .nav__cta { display: flex; }
+    .nav__burger { display: none; }
+    .nav__drawer { display: none !important; }
+  }
+</style>
+
+<script>
+  // --- Solid-on-scroll -----------------------------------------------------
+  // Only the floating (home page) nav needs this.
+  const nav = document.querySelector<HTMLElement>('[data-nav]');
+
+  if (nav?.classList.contains('nav--float')) {
+    const onScroll = () => {
+      nav.classList.toggle('is-stuck', window.scrollY > 24);
+    };
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+  }
+
+  // --- Mobile drawer -------------------------------------------------------
+  const burger = document.querySelector<HTMLButtonElement>('[data-burger]');
+  const drawer = document.querySelector<HTMLElement>('[data-drawer]');
+
+  if (burger && drawer) {
+    const setOpen = (open: boolean) => {
+      burger.setAttribute('aria-expanded', String(open));
+      drawer.hidden = !open;
+      burger.querySelector('.sr-only')!.textContent = open ? 'Close menu' : 'Open menu';
+    };
+
+    burger.addEventListener('click', () => {
+      setOpen(burger.getAttribute('aria-expanded') !== 'true');
+    });
+
+    // Escape closes the drawer and returns focus to the button.
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && burger.getAttribute('aria-expanded') === 'true') {
+        setOpen(false);
+        burger.focus();
+      }
+    });
+
+    // Close if the viewport grows past the desktop breakpoint while open.
+    const mq = window.matchMedia('(min-width: 900px)');
+    mq.addEventListener('change', (e) => e.matches && setOpen(false));
+  }
+</script>

@@ -1,0 +1,669 @@
+/* ==========================================================================
+   GetYourWebsite — global stylesheet
+   --------------------------------------------------------------------------
+   Everything visual starts here. If you want to change how the whole site
+   looks, change a token in :root below rather than hunting through pages.
+
+   Structure of this file:
+     1. Tokens        colours, type, spacing, motion
+     2. Reset         a small, boring reset
+     3. Base          html/body/headings/links
+     4. Layout        .shell, .section, .stack helpers
+     5. Components    buttons, cards, badges, eyebrows, forms
+     6. Starfield     the reusable dark "space" section background
+     7. Reveal        scroll-reveal animation (see src/scripts/reveal.js)
+   ========================================================================== */
+
+/* ── 1. Tokens ─────────────────────────────────────────────────────────── */
+
+:root {
+  /* Brand palette — white, black, silver and gold only. Nothing else.
+     Keep it that way; the restraint is the whole look. */
+  --white: #ffffff;
+  --black: #0a0a0c;
+  --silver: #a9adb6;
+  --silver-light: #e6e7eb;
+  --gold: #f5c24b;
+
+  /* Working colours derived from the palette above.
+     WCAG AA notes (all measured against their intended background):
+       --silver     on --black  → 8.4:1  ✓ body text on dark
+       --gold       on --black  → 11.2:1 ✓ any size on dark
+       --ink-soft   on --white  → 8.2:1  ✓ body text on light
+       --gold-deep  on --white  → 6.2:1  ✓ headings and links on light
+     Never put plain --gold text on white; use --gold-deep instead. */
+  --ink-soft: #4a4f58;   /* muted text on light backgrounds */
+  --gold-deep: #7a5b0e;  /* gold that is legible on white */
+  --gold-soft: rgba(245, 194, 75, 0.12);
+  --gold-line: rgba(245, 194, 75, 0.32);
+
+  /* Surfaces */
+  --panel: #101015;              /* raised card on a dark section */
+  --panel-2: #16161d;            /* hover / nested card */
+  --line-dark: rgba(230, 231, 235, 0.14);
+  --line-light: #e6e7eb;
+
+  /* Type — Outfit for headings, Work Sans for body, JetBrains Mono for
+     labels, stats and anything that should read as "data". */
+  --font-display: 'Outfit', system-ui, -apple-system, sans-serif;
+  --font-body: 'Work Sans', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', monospace;
+
+  /* Fluid type scale. clamp(min, preferred, max) so it grows with the
+     viewport without a single media query. */
+  --t-display: clamp(2.75rem, 1.6rem + 5.6vw, 6rem);
+  --t-h1: clamp(2.25rem, 1.5rem + 3.4vw, 4rem);
+  --t-h2: clamp(1.75rem, 1.3rem + 2.1vw, 2.85rem);
+  --t-h3: clamp(1.25rem, 1.1rem + 0.8vw, 1.6rem);
+  --t-lead: clamp(1.05rem, 0.99rem + 0.35vw, 1.3rem);
+  --t-body: 1rem;
+  --t-small: 0.9rem;
+  --t-label: 0.75rem;
+
+  /* Spacing — spacious scale (the design brief asks for generous whitespace) */
+  --s-1: 0.5rem;
+  --s-2: 0.75rem;
+  --s-3: 1rem;
+  --s-4: 1.5rem;
+  --s-5: 2rem;
+  --s-6: 3rem;
+  --s-7: 4rem;
+  --s-8: 6rem;
+  --section-y: clamp(4.5rem, 3rem + 7vw, 9rem);
+
+  --shell: 1200px;   /* max content width */
+  --shell-narrow: 780px;
+
+  --radius: 14px;
+  --radius-lg: 22px;
+  --radius-pill: 999px;
+
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);  /* expo.out — everything uses this */
+  --dur: 220ms;
+
+  --shadow-gold: 0 14px 40px rgba(245, 194, 75, 0.18);
+  --shadow-dark: 0 24px 60px rgba(0, 0, 0, 0.45);
+  --shadow-light: 0 18px 44px rgba(10, 10, 12, 0.09);
+}
+
+/* ── 2. Reset ──────────────────────────────────────────────────────────── */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+img,
+picture,
+svg,
+video {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+ul,
+ol {
+  list-style: none;
+}
+
+/* ── 3. Base ───────────────────────────────────────────────────────────── */
+
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  font-family: var(--font-body);
+  font-size: var(--t-body);
+  line-height: 1.65;
+  color: var(--black);
+  background: var(--white);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overflow-x: hidden;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  line-height: 1.06;
+  letter-spacing: -0.035em;
+  text-wrap: balance;
+}
+
+h1 { font-size: var(--t-h1); }
+h2 { font-size: var(--t-h2); }
+h3 { font-size: var(--t-h3); letter-spacing: -0.02em; line-height: 1.2; }
+
+p { text-wrap: pretty; }
+
+a {
+  color: inherit;
+  text-decoration-color: var(--gold-line);
+  text-underline-offset: 0.22em;
+}
+
+/* One focus style for the whole site. Never remove it — it is how keyboard
+   users know where they are. */
+:where(a, button, input, textarea, select, [tabindex]):focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+::selection {
+  background: var(--gold);
+  color: var(--black);
+}
+
+/* Screen-reader-only text (used for the skip link and icon button labels) */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.skip-link {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  z-index: 200;
+  transform: translate(-50%, -120%);
+  padding: 0.7rem 1.2rem;
+  background: var(--gold);
+  color: var(--black);
+  font-weight: 600;
+  border-radius: 0 0 var(--radius) var(--radius);
+  transition: transform var(--dur) var(--ease);
+}
+
+.skip-link:focus-visible {
+  transform: translate(-50%, 0);
+}
+
+/* ── 4. Layout ─────────────────────────────────────────────────────────── */
+
+.shell {
+  width: min(100% - 2.5rem, var(--shell));
+  margin-inline: auto;
+}
+
+@media (min-width: 768px) {
+  .shell { width: min(100% - 4rem, var(--shell)); }
+}
+
+.shell-narrow {
+  width: min(100% - 2.5rem, var(--shell-narrow));
+  margin-inline: auto;
+}
+
+/* A page section. Add .section--dark for a black space section, or nothing
+   for the default white one. They are meant to alternate. */
+.section {
+  position: relative;
+  padding-block: var(--section-y);
+}
+
+.section--dark {
+  background: var(--black);
+  color: var(--silver-light);
+  overflow: hidden;      /* keeps the starfield from causing scrollbars */
+  isolation: isolate;    /* so ::before starfields stay behind content */
+}
+
+.section--dark h1,
+.section--dark h2,
+.section--dark h3 {
+  color: var(--white);
+}
+
+.section--tight { padding-block: clamp(3rem, 2rem + 4vw, 5rem); }
+
+/* Vertical rhythm helper: .stack puts a consistent gap between children. */
+.stack > * + * { margin-top: var(--s-3); }
+.stack-4 > * + * { margin-top: var(--s-4); }
+.stack-6 > * + * { margin-top: var(--s-6); }
+
+/* Section header block — eyebrow, heading, lead paragraph. */
+.section-head {
+  max-width: 46rem;
+  margin-bottom: var(--s-7);
+}
+
+.section-head--center {
+  margin-inline: auto;
+  text-align: center;
+}
+
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  font-family: var(--font-mono);
+  font-size: var(--t-label);
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--gold-deep);
+  margin-bottom: var(--s-3);
+}
+
+.section--dark .eyebrow { color: var(--gold); }
+
+/* The little gold tick before an eyebrow */
+.eyebrow::before {
+  content: '';
+  width: 1.6rem;
+  height: 1px;
+  background: currentColor;
+  opacity: 0.7;
+}
+
+.section-head--center .eyebrow::before { display: none; }
+
+.lead {
+  font-size: var(--t-lead);
+  line-height: 1.6;
+  color: var(--ink-soft);
+  max-width: 40rem;
+}
+
+/* A lead paragraph always needs air under the heading it follows. */
+:where(h1, h2, h3) + .lead,
+.lead + .lead {
+  margin-top: var(--s-4);
+}
+
+.section-head--center .lead { margin-inline: auto; }
+.section--dark .lead { color: var(--silver); }
+
+/* ── 5. Components ─────────────────────────────────────────────────────── */
+
+/* Buttons ---------------------------------------------------------------- */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  min-height: 48px;                /* comfortable touch target */
+  padding: 0.85rem 1.6rem;
+  font-family: var(--font-body);
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  border-radius: var(--radius-pill);
+  text-decoration: none;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: transform var(--dur) var(--ease), background var(--dur) var(--ease),
+    color var(--dur) var(--ease), border-color var(--dur) var(--ease),
+    box-shadow var(--dur) var(--ease);
+}
+
+.btn:hover { transform: translateY(-2px); }
+.btn:active { transform: translateY(0); }
+
+/* The gold button. This is the one that matters — use exactly one per screen. */
+.btn--gold {
+  background: var(--gold);
+  color: var(--black);
+  border: 1px solid var(--gold);
+}
+
+.btn--gold:hover {
+  background: #ffd469;
+  box-shadow: var(--shadow-gold);
+}
+
+/* Ghost button on a dark background */
+.btn--ghost {
+  background: transparent;
+  color: var(--white);
+  border: 1px solid rgba(230, 231, 235, 0.28);
+}
+
+.btn--ghost:hover {
+  border-color: var(--gold);
+  color: var(--gold);
+  background: var(--gold-soft);
+}
+
+/* Ghost button on a white background */
+.btn--outline {
+  background: transparent;
+  color: var(--black);
+  border: 1px solid rgba(10, 10, 12, 0.22);
+}
+
+.btn--outline:hover {
+  border-color: var(--black);
+  background: var(--black);
+  color: var(--white);
+}
+
+.btn--lg { min-height: 56px; padding: 1.05rem 2rem; font-size: 1.05rem; }
+.btn--sm { min-height: 40px; padding: 0.55rem 1.1rem; font-size: 0.9rem; }
+
+.btn-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-3);
+}
+
+.btn-row--center { justify-content: center; }
+
+/* A text link with a gold arrow that nudges on hover */
+.link-arrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  text-decoration: none;
+  color: var(--gold-deep);
+  transition: gap var(--dur) var(--ease);
+}
+
+.section--dark .link-arrow { color: var(--gold); }
+.link-arrow:hover { gap: 0.85rem; }
+
+.link-arrow::after {
+  content: '→';
+  font-family: var(--font-mono);
+  transition: transform var(--dur) var(--ease);
+}
+
+/* Cards ------------------------------------------------------------------ */
+
+.card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding: var(--s-5);
+  background: var(--white);
+  border: 1px solid var(--line-light);
+  border-radius: var(--radius-lg);
+  transition: transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease),
+    border-color var(--dur) var(--ease);
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  border-color: var(--gold-line);
+  box-shadow: var(--shadow-light);
+}
+
+.section--dark .card {
+  background: var(--panel);
+  border-color: var(--line-dark);
+  color: var(--silver-light);
+}
+
+.section--dark .card:hover {
+  background: var(--panel-2);
+  border-color: var(--gold-line);
+  box-shadow: var(--shadow-dark);
+}
+
+.card h3 { margin-bottom: var(--s-2); }
+
+.card p { color: var(--ink-soft); }
+.section--dark .card p { color: var(--silver); }
+
+/* Grid helpers ----------------------------------------------------------- */
+
+.grid {
+  display: grid;
+  gap: var(--s-4);
+}
+
+.grid-2 { grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr)); }
+.grid-3 { grid-template-columns: repeat(auto-fit, minmax(min(100%, 19rem), 1fr)); }
+
+/* Badges ----------------------------------------------------------------- */
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.75rem;
+  font-family: var(--font-mono);
+  font-size: var(--t-label);
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--line-light);
+  color: var(--ink-soft);
+  background: var(--white);
+}
+
+.badge--gold {
+  background: var(--gold);
+  border-color: var(--gold);
+  color: var(--black);
+  font-weight: 600;
+}
+
+.section--dark .badge {
+  background: rgba(230, 231, 235, 0.06);
+  border-color: var(--line-dark);
+  color: var(--silver);
+}
+
+.section--dark .badge--gold {
+  background: var(--gold-soft);
+  border-color: var(--gold-line);
+  color: var(--gold);
+}
+
+/* A big number / stat */
+.stat-num {
+  font-family: var(--font-mono);
+  font-size: clamp(2rem, 1.4rem + 2.4vw, 3rem);
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  color: var(--gold-deep);
+  line-height: 1;
+}
+
+.section--dark .stat-num { color: var(--gold); }
+
+/* Forms ------------------------------------------------------------------ */
+
+.field { display: flex; flex-direction: column; gap: 0.45rem; }
+
+.field > label,
+.fieldset-legend {
+  font-size: var(--t-small);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.field .hint {
+  font-size: var(--t-small);
+  color: var(--ink-soft);
+}
+
+.input,
+.textarea,
+.select {
+  width: 100%;
+  padding: 0.85rem 1rem;
+  font-size: 1rem;
+  color: var(--black);
+  background: var(--white);
+  border: 1px solid rgba(10, 10, 12, 0.2);
+  border-radius: var(--radius);
+  transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+}
+
+.textarea { min-height: 8rem; resize: vertical; }
+
+.input:focus,
+.textarea:focus,
+.select:focus {
+  outline: none;
+  border-color: var(--gold-deep);
+  box-shadow: 0 0 0 3px var(--gold-soft);
+}
+
+.input::placeholder,
+.textarea::placeholder { color: #8b9098; }
+
+.input[aria-invalid='true'],
+.textarea[aria-invalid='true'] { border-color: #b3261e; }
+
+/* Radio cards used on the contact form */
+.radio-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.7rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid rgba(10, 10, 12, 0.2);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: border-color var(--dur) var(--ease), background var(--dur) var(--ease);
+}
+
+.radio-card:hover { border-color: var(--gold-deep); }
+
+.radio-card input { margin-top: 0.28rem; accent-color: var(--gold-deep); }
+
+.radio-card:has(input:checked) {
+  border-color: var(--gold-deep);
+  background: var(--gold-soft);
+}
+
+/* The honeypot field. Real people never see or focus it; bots fill it in. */
+.honeypot {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+/* ── 6. Starfield ──────────────────────────────────────────────────────── */
+
+/* A dark section can opt into a subtle star texture with .has-stars.
+   It is two repeating radial-gradients, so it costs no image request. */
+.has-stars::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image:
+    radial-gradient(1.2px 1.2px at 12% 18%, rgba(255, 255, 255, 0.55), transparent),
+    radial-gradient(1px 1px at 32% 62%, rgba(255, 255, 255, 0.4), transparent),
+    radial-gradient(1.4px 1.4px at 58% 24%, rgba(245, 194, 75, 0.5), transparent),
+    radial-gradient(1px 1px at 74% 71%, rgba(255, 255, 255, 0.38), transparent),
+    radial-gradient(1.1px 1.1px at 88% 36%, rgba(255, 255, 255, 0.45), transparent),
+    radial-gradient(1px 1px at 45% 88%, rgba(255, 255, 255, 0.3), transparent),
+    radial-gradient(1.3px 1.3px at 22% 79%, rgba(245, 194, 75, 0.35), transparent),
+    radial-gradient(1px 1px at 66% 12%, rgba(255, 255, 255, 0.35), transparent);
+  background-size: 620px 620px;
+  opacity: 0.75;
+}
+
+/* A soft gold glow, used behind headings on dark sections */
+.has-glow::after {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  top: -30%;
+  left: 50%;
+  width: min(900px, 90%);
+  aspect-ratio: 2 / 1;
+  transform: translateX(-50%);
+  background: radial-gradient(ellipse at center, rgba(245, 194, 75, 0.13), transparent 65%);
+  pointer-events: none;
+}
+
+/* Hairline divider that fades out at both ends */
+.rule {
+  height: 1px;
+  border: 0;
+  background: linear-gradient(90deg, transparent, var(--line-light), transparent);
+}
+
+.section--dark .rule {
+  background: linear-gradient(90deg, transparent, rgba(230, 231, 235, 0.18), transparent);
+}
+
+/* ── 7. Scroll reveal ──────────────────────────────────────────────────── */
+
+/* Elements marked data-reveal start slightly down and transparent, then get
+   .is-visible from src/scripts/reveal.js when they scroll into view.
+   Note the no-JS safety net below: if JS never runs, everything is visible. */
+[data-reveal] {
+  opacity: 0;
+  transform: translateY(18px);
+  transition: opacity 600ms var(--ease), transform 600ms var(--ease);
+}
+
+[data-reveal].is-visible {
+  opacity: 1;
+  transform: none;
+}
+
+/* Stagger children of a [data-reveal-group] */
+[data-reveal-group] > [data-reveal] { transition-delay: calc(var(--i, 0) * 70ms); }
+
+html.no-js [data-reveal] {
+  opacity: 1;
+  transform: none;
+}
+
+/* ── Reduced motion ────────────────────────────────────────────────────── */
+
+/* Anyone who has asked their OS to reduce motion gets a still, calm site.
+   This is a hard requirement, not a nicety. */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  [data-reveal] {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  .btn:hover { transform: none; }
+  .card:hover { transform: none; }
+}

@@ -1,0 +1,68 @@
+---
+/**
+ * The GetYourWebsite lockup: a gold planet-with-orbit mark plus the wordmark.
+ * The same mark is used for the favicon (public/favicon.svg) and the social
+ * card, so if you redraw it, redraw it in all three places.
+ */
+interface Props {
+  /** Hide the text and show just the mark */
+  markOnly?: boolean;
+  size?: 'sm' | 'md';
+}
+
+const { markOnly = false, size = 'md' } = Astro.props;
+---
+
+<span class:list={['wordmark', `wordmark--${size}`]}>
+  <svg
+    class="wordmark__mark"
+    viewBox="0 0 32 32"
+    fill="none"
+    aria-hidden="true"
+    focusable="false"
+  >
+    <!-- planet -->
+    <circle cx="16" cy="16" r="7" fill="var(--gold)"></circle>
+    <!-- the dark bite that gives it a crescent/terminator -->
+    <circle cx="12.5" cy="13" r="6" fill="var(--black)" opacity="0.35"></circle>
+    <!-- orbit ring, tilted -->
+    <ellipse
+      cx="16"
+      cy="16"
+      rx="14.2"
+      ry="5.4"
+      stroke="var(--gold)"
+      stroke-width="1.6"
+      opacity="0.75"
+      transform="rotate(-28 16 16)"></ellipse>
+  </svg>
+
+  {!markOnly && <span class="wordmark__text">GetYourWebsite</span>}
+</span>
+
+<style>
+  .wordmark {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+  }
+
+  .wordmark__mark {
+    width: 30px;
+    height: 30px;
+    flex-shrink: 0;
+    overflow: visible;
+  }
+
+  .wordmark__text {
+    font-family: var(--font-display);
+    font-size: 1.2rem;
+    font-weight: 600;
+    letter-spacing: -0.045em;
+    color: var(--white);
+    white-space: nowrap;
+  }
+
+  .wordmark--sm .wordmark__mark { width: 24px; height: 24px; }
+  .wordmark--sm .wordmark__text { font-size: 1rem; }
+</style>

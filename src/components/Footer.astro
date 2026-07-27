@@ -1,0 +1,120 @@
+---
+import { NAV_LINKS, CONTACT_EMAIL, SOCIALS } from '../data/site.js';
+import { url } from '../data/url.js';
+import Wordmark from './Wordmark.astro';
+
+const year = new Date().getFullYear();
+---
+
+<footer class="foot">
+  <div class="shell foot__inner">
+    <div class="foot__brand">
+      <a href={url('/')} aria-label="GetYourWebsite — home">
+        <Wordmark />
+      </a>
+      <p class="foot__line">Built by students who'd love to build yours.</p>
+    </div>
+
+    <nav class="foot__nav" aria-label="Footer">
+      <h2 class="foot__heading">Pages</h2>
+      <ul>
+        <li><a href={url('/')}>Home</a></li>
+        {NAV_LINKS.map((link) => <li><a href={url(link.href)}>{link.label}</a></li>)}
+        <li><a href={url('/contact')}>Contact</a></li>
+      </ul>
+    </nav>
+
+    <div class="foot__contact">
+      <h2 class="foot__heading">Get in touch</h2>
+      <ul>
+        <li><a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a></li>
+        {SOCIALS.map((s) => (
+          <li>
+            <a href={s.href} target="_blank" rel="noopener noreferrer">{s.label}</a>
+          </li>
+        ))}
+      </ul>
+      <a class="btn btn--gold btn--sm foot__cta" href={url('/contact')}>Request a free mockup</a>
+    </div>
+  </div>
+
+  <div class="shell foot__base">
+    <p>&copy; {year} GetYourWebsite</p>
+    <p class="foot__credit">
+      Earth and Moon imagery courtesy of
+      <a href="https://visibleearth.nasa.gov/" target="_blank" rel="noopener noreferrer">NASA</a>
+      (public domain).
+    </p>
+  </div>
+</footer>
+
+<style>
+  .foot {
+    background: var(--black);
+    color: var(--silver);
+    border-top: 1px solid var(--line-dark);
+    padding-block: var(--s-7) var(--s-4);
+  }
+
+  .foot__inner {
+    display: grid;
+    gap: var(--s-6);
+    grid-template-columns: 1fr;
+    padding-bottom: var(--s-6);
+  }
+
+  .foot__line {
+    margin-top: var(--s-3);
+    max-width: 22rem;
+    color: var(--silver);
+    font-size: var(--t-small);
+  }
+
+  .foot__heading {
+    font-family: var(--font-mono);
+    font-size: var(--t-label);
+    font-weight: 500;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--white);
+    margin-bottom: var(--s-3);
+  }
+
+  .foot__nav ul,
+  .foot__contact ul {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+
+  .foot a {
+    color: var(--silver);
+    text-decoration: none;
+    font-size: 0.95rem;
+    transition: color var(--dur) var(--ease);
+  }
+
+  .foot a:hover { color: var(--gold); }
+
+  .foot__cta {
+    margin-top: var(--s-4);
+    color: var(--black) !important;
+  }
+
+  .foot__base {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: var(--s-2) var(--s-4);
+    padding-top: var(--s-4);
+    border-top: 1px solid var(--line-dark);
+    font-size: 0.82rem;
+    color: var(--silver);
+  }
+
+  .foot__credit a { font-size: inherit; text-decoration: underline; }
+
+  @media (min-width: 700px) {
+    .foot__inner { grid-template-columns: 1.4fr 1fr 1fr; }
+  }
+</style>
