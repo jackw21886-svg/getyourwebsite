@@ -103,8 +103,12 @@ import { url } from '../data/url.js';
        pinned stage itself, so the animation gets height - 100vh of travel.
        The beats in hero.js are positioned in absolute vh, so changing this
        only lengthens or shortens the quiet tail after the CTAs land — it
-       does not retime the assembly or the launch. */
-    height: 338vh;
+       does not retime the assembly or the launch.
+
+       It's deliberately generous: a flick has a roughly fixed pixel length,
+       so a longer hero means an ordinary one covers less of the sequence and
+       each beat gets more time to be read. */
+    height: 400vh;
     background: var(--black);
   }
 
@@ -169,6 +173,15 @@ import { url } from '../data/url.js';
   }
 
   .hero__beat--center { justify-content: center; }
+
+  /* The finale stays centred, on purpose.
+     Raising it looks like it should shorten the empty sky between the CTAs
+     and Our Work, but the opposite is true: once the pin releases, the stage
+     and the section below it scroll together, so the gap between them is
+     rigid and equals (viewport height - how far down the stage the CTAs sit).
+     Moving the CTAs UP makes that gap BIGGER — measured 386px centred vs
+     494px raised. If this ever needs to shrink, the lever is moving the
+     finale DOWN the stage, at the cost of an off-centre finale. */
 
   .hero__beat--bottom {
     justify-content: flex-end;

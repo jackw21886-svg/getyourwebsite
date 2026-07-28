@@ -161,6 +161,19 @@ Two rules the scene must never break, both from design review:
 On desktop the scene also drifts gently with the mouse, so it feels alive
 before you scroll.
 
+**Pacing.** Scroll-linked opacity on its own can't keep copy readable — flick
+through the hero and every line is gone before you've read it, however wide
+the windows are. So the timeline has a speed limit: `MIN_PLAY_S` in
+`hero.js` is the fewest seconds the whole sequence can take. Scroll slower
+than that and it's a pure scrub, frame for frame; scroll faster and it plays
+at that pace rather than skipping. The hold windows are sized against it, so
+each of the first three beats gets roughly 0.8s of full-opacity reading time
+even for someone who flicks the entire hero in one go.
+
+If you retime the beats, re-run the pacing check (below) — the two are a
+matched pair, and widening a hold without checking the limit is how copy
+starts flashing past again.
+
 ---
 
 ## Deploying
@@ -235,7 +248,13 @@ npm run build
 ```
 
 Then check the pages at three widths — 360px, 768px and 1280px — and click
-through the nav, the Our Work cards and the demo sandbox. If you changed the
+through the nav, the Our Work cards and the demo sandbox.
+
+For the hero specifically there are two things worth checking by hand, because
+they're easy to break and hard to see in a screenshot: flick-scroll the whole
+hero in a couple of seconds and confirm you can actually read all four lines,
+and scroll it slowly to confirm it still tracks your finger rather than
+playing on its own. If you changed the
 hero, scroll it slowly from top to bottom and watch for stutter, then turn on
 "Reduce motion" in **System Settings → Accessibility → Display** and reload to
 confirm the static fallback still shows the headline and both buttons.

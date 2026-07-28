@@ -67,20 +67,38 @@ const WHITE = '255, 255, 255';
 // there" / "stays". These windows are what guarantee only one beat is ever
 // on screen at a time.
 const BEATS_VH = {
-  open: [null, null, 40, 65],
-  build: [75, 95, 140, 157.5],
-  launch: [165, 180, 200, 212.5],
-  close: [215, 232.5, null, null],
+  open: [null, null, 62, 74],
+  build: [86, 98, 160, 172],
+  launch: [184, 196, 256, 268],
+  close: [278, 290, null, null],
 };
 
-const HINT_FADE_VH = [5, 22.5];
+const HINT_FADE_VH = [8, 30];
 
 // The assembly runs between these two points in the scroll.
-const BUILD_FROM_VH = 65;
-const BUILD_TO_VH = 170;
+const BUILD_FROM_VH = 74;
+const BUILD_TO_VH = 200;
 // …and the launch between these.
-const LAUNCH_FROM_VH = 170;
-const LAUNCH_TO_VH = 217.5;
+const LAUNCH_FROM_VH = 200;
+const LAUNCH_TO_VH = 272;
+
+/**
+ * The floor on how fast the sequence can play, in seconds for the whole thing.
+ *
+ * Scroll-linked opacity alone can't keep copy readable: flick through the hero
+ * in a couple of seconds and every line is gone before you've read it, no
+ * matter how wide the windows are. So the timeline is rate-limited. Scroll
+ * slower than this and it's scrubbed exactly as before, frame for frame;
+ * scroll faster and it plays at this pace instead of skipping.
+ *
+ * Sized against the hold windows above: each of the first three beats holds
+ * ~60vh of the 300vh sequence, which at 4s is ~0.8s of full-opacity reading
+ * time even for someone who flicks the whole hero in one go.
+ *
+ * Scrolling back up isn't reading, so reverse gets to move faster.
+ */
+const MIN_PLAY_S = 4;
+const REVERSE_FACTOR = 3;
 
 /**
  * The assembled website, in normalised site coordinates: x and y both run
@@ -547,9 +565,17 @@ function start() {
     const smoothing = (rate) => 1 - Math.pow(1 - rate, dt * 60);
 
     const target = readProgress();
-    // Scroll inertia: the scene trails the scrollbar slightly so the camera
-    // has weight. The copy does NOT — text lagging your thumb feels broken.
-    shown += (target - shown) * smoothing(0.12);
+
+    // Scroll inertia, then a speed limit on top of it.
+    //
+    // The easing gives the scene weight at any speed. The clamp is what makes
+    // the copy readable: it caps how much of the sequence a single frame can
+    // consume, so a fast flick plays the hero through rather than smearing it.
+    // Below the limit the clamp never binds and this is a pure scrub.
+    const eased = shown + (target - shown) * smoothing(0.12);
+    const maxForward = dt / MIN_PLAY_S;
+    const maxBack = maxForward * REVERSE_FACTOR;
+    shown = Math.max(shown - maxBack, Math.min(shown + maxForward, eased));
     if (Math.abs(target - shown) < 0.0002) shown = target;
     const p = shown;
 
@@ -762,8 +788,11 @@ function start() {
     ctx.fillStyle = vg;
     ctx.fillRect(0, 0, W, H);
 
-    // Copy follows the raw scroll, not the damped scene.
-    setBeats(target, scrollVH);
+    // Copy rides the same rate-limited timeline as the scene. It used to
+    // follow the raw scroll so it couldn't lag your thumb, but that was
+    // before there was a speed limit — with one, the two must share a clock
+    // or the narration and the picture describe different moments.
+    setBeats(p, scrollVH);
 
     if (!drawn) {
       drawn = true;
