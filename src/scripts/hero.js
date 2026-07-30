@@ -92,12 +92,16 @@ const LAUNCH_TO_VH = 272;
  * scroll faster and it plays at this pace instead of skipping.
  *
  * Sized against the hold windows above: each of the first three beats holds
- * ~60vh of the 300vh sequence, which at 4s is ~0.8s of full-opacity reading
- * time even for someone who flicks the whole hero in one go.
+ * ~60vh of the 300vh sequence, so the reading time per beat is
+ * (hold / 300) * MIN_PLAY_S. At 4s that lands exactly on the 0.8s target with
+ * no margin, so it's 4.6s — about 0.9s a beat, which `tools/pacing.mjs`
+ * measures. Raising this number is the one lever that buys reading time
+ * without touching the composition; the cost is that after a fast flick the
+ * scene keeps playing for the remainder of the 4.6s.
  *
  * Scrolling back up isn't reading, so reverse gets to move faster.
  */
-const MIN_PLAY_S = 4;
+const MIN_PLAY_S = 4.6;
 const REVERSE_FACTOR = 3;
 
 /**

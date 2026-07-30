@@ -2,6 +2,9 @@
 dist/
 .astro/
 
+# screenshots from the tools/ scripts — regenerated on demand, don't commit them
+.shots/
+
 # dependencies
 node_modules/
 

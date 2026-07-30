@@ -53,10 +53,13 @@ src/
   styles/
     global.css     the whole design system: colours, type, spacing, components
   scripts/
-    hero.js        the WebGL black-hole hero
+    hero.js        the build-and-launch hero, drawn on a 2D canvas
     buttons.js     the button press interaction
     reveal.js      the scroll-reveal animation
+    ambient.js     starts the dark sections' ambient drift, pauses it off screen
     demo.js        the demo sandbox
+
+tools/             checks and screenshot harnesses — see "Verifying changes"
 
 public/            copied to the site as-is, no build step
   bakery.html      the six mock client sites
@@ -111,6 +114,43 @@ and figures, all from Google Fonts.
 
 Sections alternate: `.section` for white, `.section--dark` for black. Add
 `.has-stars` for the star texture and `.has-glow` for the gold halo.
+
+### Dark-section atmosphere
+
+Every dark section drifts, very slightly, in the same visual language as the
+hero — so the site reads as one thing rather than a space hero bolted onto a
+normal website. It's all in `global.css` §6, all CSS, and there are four layers:
+
+| Layer | What it is | Cycle |
+| --- | --- | --- |
+| the section's own `background-image` | four stars that never move | — |
+| `::before` | five more stars, breathing | 13s |
+| `::after` | a gold and a silver lobe drifting across the section | 19s |
+| `.card::after` / `.tier__sheen::before` | a narrow gold band crossing a card, like a reflection travelling over metal | 14s |
+| gold `.btn--gold::after` on dark | a white glint | 12s |
+
+Three knobs control the whole thing, at the top of §6: `--sheen-gold`,
+`--sheen-silver` and `--spec-a`. Turn those down and everything gets subtler
+together. `.has-glow` sections raise `--sheen-gold` on their own.
+
+Four rules if you touch any of it:
+
+1. **White sections stay clean.** Nothing here applies to `.section`.
+2. **Text must stay readable.** The sheens lighten the background, so contrast
+   is a real constraint, not a formality. `npm run verify:contrast` freezes the
+   animations at ten points in the cycle, hides all the content, and measures
+   the brightest backdrop each dark band ever reaches against `--silver`. It
+   currently passes at about 7.8:1 against a 4.5:1 requirement — that's the
+   headroom you'd be spending.
+3. **Background level only.** Every layer sits at `z-index: -1` behind the
+   content, which is why the sections and cards need `isolation: isolate`.
+   `.tier` can't take `overflow: hidden` (the "Most popular" flag hangs over
+   its top edge), so the pricing card uses a `.tier__sheen` span to clip instead.
+4. **Motion is opt-in.** `src/scripts/ambient.js` adds `ambient-live` to
+   `<html>` after load, and only then does anything animate; it also pauses
+   sections while they're off screen. With JS off, or under
+   `prefers-reduced-motion`, you get the same gradients holding still — which is
+   a design state we checked, not a fallback.
 
 ### Buttons
 
@@ -250,14 +290,45 @@ npm run build
 Then check the pages at three widths — 360px, 768px and 1280px — and click
 through the nav, the Our Work cards and the demo sandbox.
 
-For the hero specifically there are two things worth checking by hand, because
-they're easy to break and hard to see in a screenshot: flick-scroll the whole
-hero in a couple of seconds and confirm you can actually read all four lines,
-and scroll it slowly to confirm it still tracks your finger rather than
-playing on its own. If you changed the
-hero, scroll it slowly from top to bottom and watch for stutter, then turn on
-"Reduce motion" in **System Settings → Accessibility → Display** and reload to
-confirm the static fallback still shows the headline and both buttons.
+### The automated checks
+
+Most of the things that have broken on this site broke invisibly, so they're
+tests now rather than things to remember. They live in `tools/` and each one
+needs `npm run dev` running in another terminal.
+
+```bash
+npm run verify           # 32 checks: links, the demo flow, hero copy clearance,
+                         # reduced motion, the contact form, buttons, ambient layers
+npm run verify:pacing    # flick-scroll the hero in 3s; every line readable ≥0.8s
+npm run verify:contrast  # text contrast under the moving ambient gradients
+npm run shots:ambient    # screenshots of the dark sections, hover and reduced motion
+```
+
+`tools/shots.mjs` is a general screenshot harness if you want to eyeball
+something: `node tools/shots.mjs .shots "pricing=/pricing" "hero70=/@0.7"`, where
+`@0.7` scrubs the hero to 70% of its scroll.
+
+One thing to know before you trust a failure: headless Chrome renders this site
+at roughly 6fps, and `hero.js` deliberately clamps each frame's time step, so the
+hero's timeline advances at about 0.6× wall time in these tests. That's why the
+settle waits look absurdly long (12 seconds). Shorten them and the hero tests
+start failing on half-finished frames that look exactly like real bugs.
+
+### And by hand
+
+For the hero there are two things worth checking yourself, because they're about
+feel: flick-scroll the whole hero in a couple of seconds and confirm you can
+actually read all four lines, and scroll it slowly to confirm it still tracks
+your finger rather than playing on its own. If you changed the hero, scroll it
+slowly from top to bottom and watch for stutter, then turn on "Reduce motion" in
+**System Settings → Accessibility → Display** and reload to confirm the static
+fallback still shows the headline and both buttons.
+
+Lighthouse: run it against `npm run preview`, not the dev server. Expect 100 on
+accessibility, best practices and SEO, and 0ms Total Blocking Time, everywhere.
+Performance is 100 on most pages but bounces between about 95 and 100 on `/demo`
+and `/benefits` depending on which image wins the Largest Contentful Paint race —
+that's measurement noise, so don't chase a three-point drop on one run.
 
 ---
 

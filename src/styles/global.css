@@ -10,7 +10,7 @@
      3. Base          html/body/headings/links
      4. Layout        .shell, .section, .stack helpers
      5. Components    buttons, cards, badges, eyebrows, forms
-     6. Starfield     the reusable dark "space" section background
+     6. Atmosphere    the ambient motion every dark section shares
      7. Reveal        scroll-reveal animation (see src/scripts/reveal.js)
    ========================================================================== */
 
@@ -232,10 +232,10 @@ a {
 }
 
 .section--dark {
-  background: var(--black);
+  /* background-color (not the `background` shorthand — that would wipe out
+     the star field), plus position/overflow/isolation, are all set in §6
+     alongside the rest of the ambient layers. */
   color: var(--silver-light);
-  overflow: hidden;      /* keeps the starfield from causing scrollbars */
-  isolation: isolate;    /* so ::before starfields stay behind content */
 }
 
 .section--dark h1,
@@ -712,41 +712,252 @@ a {
   overflow: hidden;
 }
 
-/* ── 6. Starfield ──────────────────────────────────────────────────────── */
+/* ── 6. Dark-section atmosphere ─────────────────────────────────────────────
 
-/* A dark section can opt into a subtle star texture with .has-stars.
-   It is two repeating radial-gradients, so it costs no image request. */
-.has-stars::before {
+   Every dark section gets the same ambient treatment, so the site reads as
+   one piece with the hero rather than a lively hero bolted onto flat pages.
+   It's the hero's own vocabulary — soft gold and silver bloom gradients,
+   sparse stars, a specular sweep like light travelling over metal — stretched
+   out and slowed right down.
+
+   Three layers, all on pseudo-elements, all animating transform or opacity
+   only so they stay on the compositor:
+
+     .section--dark          half the stars, static
+     .section--dark::before  the other half, breathing (so twinkle looks
+                             per-star rather than the whole sky pulsing)
+     .section--dark::after   the drifting gold/silver sheen
+
+   Everything here is background-level. The alphas are deliberately tiny: the
+   brightest the backdrop ever gets is measured in the verification pass, and
+   silver body text has to stay above 4.5:1 over the peak of it. If you turn
+   these up, re-run that check — it is the whole reason the numbers look
+   over-cautious.
+
+   ------------------------------------------------------------------------- */
+
+:root {
+  /* Peak alpha of each bloom lobe. Small on purpose — see the note above. */
+  --sheen-gold: 0.055;
+  --sheen-silver: 0.032;
+  /* Peak alpha of the specular band that crosses cards and gold buttons. */
+  --spec-a: 0.1;
+}
+
+/* Sections with .has-glow sit behind a heading and can carry a little more. */
+.has-glow {
+  --sheen-gold: 0.08;
+}
+
+/* The static half of the star field. Note background-color rather than the
+   `background` shorthand, which would wipe out this image. */
+.section--dark,
+.foot {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  background-color: var(--black);
+  background-image:
+    radial-gradient(1.2px 1.2px at 12% 18%, rgba(255, 255, 255, 0.5), transparent),
+    radial-gradient(1.4px 1.4px at 58% 24%, rgba(245, 194, 75, 0.45), transparent),
+    radial-gradient(1px 1px at 74% 71%, rgba(255, 255, 255, 0.34), transparent),
+    radial-gradient(1.3px 1.3px at 22% 79%, rgba(245, 194, 75, 0.3), transparent);
+  background-size: 620px 620px;
+}
+
+/* The breathing half. Only some of the stars fade, which is what stops it
+   reading as one synchronised pulse. */
+.section--dark::before,
+.foot::before {
   content: '';
   position: absolute;
   inset: 0;
   z-index: -1;
   pointer-events: none;
   background-image:
-    radial-gradient(1.2px 1.2px at 12% 18%, rgba(255, 255, 255, 0.55), transparent),
-    radial-gradient(1px 1px at 32% 62%, rgba(255, 255, 255, 0.4), transparent),
-    radial-gradient(1.4px 1.4px at 58% 24%, rgba(245, 194, 75, 0.5), transparent),
-    radial-gradient(1px 1px at 74% 71%, rgba(255, 255, 255, 0.38), transparent),
-    radial-gradient(1.1px 1.1px at 88% 36%, rgba(255, 255, 255, 0.45), transparent),
-    radial-gradient(1px 1px at 45% 88%, rgba(255, 255, 255, 0.3), transparent),
-    radial-gradient(1.3px 1.3px at 22% 79%, rgba(245, 194, 75, 0.35), transparent),
-    radial-gradient(1px 1px at 66% 12%, rgba(255, 255, 255, 0.35), transparent);
+    radial-gradient(1px 1px at 32% 62%, rgba(255, 255, 255, 0.42), transparent),
+    radial-gradient(1.1px 1.1px at 88% 36%, rgba(255, 255, 255, 0.46), transparent),
+    radial-gradient(1px 1px at 45% 88%, rgba(255, 255, 255, 0.32), transparent),
+    radial-gradient(1px 1px at 66% 12%, rgba(255, 255, 255, 0.36), transparent),
+    radial-gradient(1.2px 1.2px at 8% 47%, rgba(245, 194, 75, 0.3), transparent);
   background-size: 620px 620px;
-  opacity: 0.75;
+  opacity: 0.78;
 }
 
-/* A soft gold glow, used behind headings on dark sections */
-.has-glow::after {
+/* The sheen: two soft lobes, one gold and one silver, drifting across the
+   section together. Oversized and inset negatively so the edges never enter
+   frame; the section's own overflow:hidden does the clipping. */
+.section--dark::after,
+.foot::after {
   content: '';
   position: absolute;
+  inset: -35% -25%;
   z-index: -1;
-  top: -30%;
-  left: 50%;
-  width: min(900px, 90%);
-  aspect-ratio: 2 / 1;
-  transform: translateX(-50%);
-  background: radial-gradient(ellipse at center, rgba(245, 194, 75, 0.13), transparent 65%);
   pointer-events: none;
+  background-image:
+    radial-gradient(
+      38% 44% at 32% 34%,
+      rgba(245, 194, 75, var(--sheen-gold)),
+      transparent 70%
+    ),
+    radial-gradient(
+      32% 38% at 71% 66%,
+      rgba(230, 231, 235, var(--sheen-silver)),
+      transparent 72%
+    );
+}
+
+@keyframes star-breathe {
+  from { opacity: 0.42; }
+  to   { opacity: 0.9; }
+}
+
+@keyframes sheen-drift {
+  from { transform: translate3d(-5%, -2.5%, 0) scale(1); }
+  to   { transform: translate3d(6%, 3.5%, 0) scale(1.09); }
+}
+
+/* Specular sweep ---------------------------------------------------------
+   A narrow band of gold light crossing a dark card, like a reflection
+   travelling over brushed metal. The keyframes spend most of the cycle
+   parked off the right edge, so it reads as an occasional glint rather than
+   a strobe. Opacity (not the gradient) carries the hover boost, because
+   opacity transitions smoothly and stays on the compositor. */
+
+@keyframes spec-sweep {
+  0%   { transform: translateX(-135%); }
+  38%  { transform: translateX(135%); }
+  100% { transform: translateX(135%); }
+}
+
+.section--dark .card,
+.section--dark .project {
+  isolation: isolate;
+  /* Needed to clip the sweep. Neither of these has children that overflow. */
+  overflow: hidden;
+}
+
+.section--dark .card::after,
+.section--dark .project::after,
+.tier__sheen::before {
+  content: '';
+  position: absolute;
+  inset: -25% -50%;
+  z-index: -1;
+  pointer-events: none;
+  background-image: linear-gradient(
+    104deg,
+    transparent 42%,
+    rgba(245, 194, 75, var(--spec-a)) 50%,
+    transparent 58%
+  );
+  transform: translateX(-135%);
+  opacity: 0.6;
+  transition: opacity 260ms var(--ease);
+}
+
+.section--dark .card:hover::after,
+.section--dark .project:hover::after,
+.tier:hover .tier__sheen::before {
+  opacity: 1;
+}
+
+/* The pricing card needs its own element rather than a pseudo: the "Most
+   popular" flag deliberately hangs over the top edge, so .tier can't take
+   overflow:hidden. The span clips the sweep instead. */
+.tier__sheen {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+/* .tier is position:relative but that alone is not a stacking context, so a
+   z-index:-1 child would paint *behind* the card's own background and vanish.
+   isolate makes .tier a stacking context, which puts the sheen above the
+   background and below the content — where it belongs. It does not clip, so
+   the "Most popular" flag still hangs over the top edge. */
+.tier {
+  isolation: isolate;
+}
+
+/* A glint on the gold CTAs, but only on dark backgrounds — the nav button and
+   anything on white stays exactly as it was. Paused while you're interacting
+   with it so it never fights the hover treatment. */
+.section--dark .btn--gold::after,
+.foot .btn--gold::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image: linear-gradient(
+    100deg,
+    transparent 44%,
+    rgba(255, 255, 255, 0.45) 50%,
+    transparent 56%
+  );
+  transform: translateX(-150%);
+}
+
+/* Everything above is static: gradients that cost a plain paint and nothing
+   more. The motion is gated on a class src/scripts/ambient.js adds once the
+   page has finished loading.
+
+   The reason is that an animated transform gets its own compositor layer, and
+   those layers have to be allocated and rastered before the first frame can be
+   presented. On a page like /pricing that's a dark section, the footer and
+   three cards, each layer larger than the element it belongs to. Deferring the
+   start moves that work out of load, and it's free: nobody has scrolled to a
+   dark section in the first second anyway.
+
+   Honest note for whoever reads this next — this is prevention, not a measured
+   fix. Lighthouse on this site swings by several points run to run because a
+   large image can win or lose the LCP race, and that noise is bigger than the
+   effect being avoided. Don't go hunting for the regression this prevents; it
+   just costs nothing to not do the work early.
+
+   A visitor with JS off keeps the static gradients, which is the same thing
+   prefers-reduced-motion gets — see the bottom of this file. */
+:root.ambient-live .section--dark::before,
+:root.ambient-live .foot::before {
+  animation: star-breathe 13s ease-in-out infinite alternate;
+}
+
+:root.ambient-live .section--dark::after,
+:root.ambient-live .foot::after {
+  animation: sheen-drift 19s ease-in-out infinite alternate;
+}
+
+:root.ambient-live .section--dark .card::after,
+:root.ambient-live .section--dark .project::after,
+:root.ambient-live .tier__sheen::before {
+  animation: spec-sweep 14s linear infinite;
+}
+
+:root.ambient-live .section--dark .btn--gold::after,
+:root.ambient-live .foot .btn--gold::after {
+  animation: spec-sweep 12s linear infinite;
+}
+
+.section--dark .btn--gold:hover::after,
+.section--dark .btn--gold:focus-visible::after,
+.foot .btn--gold:hover::after,
+.foot .btn--gold:focus-visible::after {
+  animation-play-state: paused;
+  opacity: 0;
+}
+
+/* Offscreen sections stop animating. src/scripts/ambient.js adds the class. */
+.ambient-paused::before,
+.ambient-paused::after,
+.ambient-paused .card::after,
+.ambient-paused .project::after,
+.ambient-paused .tier__sheen::before,
+.ambient-paused .btn--gold::after {
+  animation-play-state: paused;
 }
 
 /* Hairline divider that fades out at both ends */
@@ -807,6 +1018,33 @@ html.no-js [data-reveal] {
 
   /* Buttons keep their colour, border and focus feedback — only the
      decorative motion goes. */
+  /* The ambient layers keep their gradients — they just stop moving, parked
+     at a pose that looks deliberate rather than mid-sweep. */
+  .section--dark::before,
+  .section--dark::after,
+  .foot::before,
+  .foot::after,
+  .section--dark .card::after,
+  .section--dark .project::after,
+  .tier__sheen::before,
+  .section--dark .btn--gold::after,
+  .foot .btn--gold::after {
+    animation: none !important;
+  }
+
+  .section--dark::before,
+  .foot::before { opacity: 0.7; }
+
+  .section--dark::after,
+  .foot::after { transform: translate3d(0, 0, 0) scale(1.04); }
+
+  .section--dark .card::after,
+  .section--dark .project::after,
+  .tier__sheen::before { transform: translateX(-18%); opacity: 0.7; }
+
+  .section--dark .btn--gold::after,
+  .foot .btn--gold::after { transform: translateX(-30%); opacity: 0.6; }
+
   .btn:hover { transform: none; }
   .btn:active { transform: none; }
   .btn::before { transition: opacity 0.01ms, border-color 0.01ms; inset: 3.5px; }

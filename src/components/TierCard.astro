@@ -32,6 +32,11 @@ const { tier, condensed = false, reveal = false } = Astro.props;
   class:list={['tier', { 'tier--popular': tier.popular }]}
   data-reveal={reveal ? '' : undefined}
 >
+  {/* The specular sweep needs its own clipping box: .tier can't take
+      overflow:hidden because the "Most popular" flag hangs over the top edge
+      on purpose. Styled in global.css §6 with the rest of the ambient layers. */}
+  <span class="tier__sheen" aria-hidden="true"></span>
+
   {tier.popular && <span class="tier__flag">Most popular</span>}
 
   <header class="tier__head">
