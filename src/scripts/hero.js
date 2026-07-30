@@ -68,19 +68,46 @@ const WHITE = '255, 255, 255';
 // on screen at a time.
 const BEATS_VH = {
   open: [null, null, 62, 74],
-  build: [86, 98, 160, 172],
-  launch: [184, 196, 256, 268],
-  close: [278, 290, null, null],
+  // Holds all the way through the press and the lift-off. An earlier version
+  // faded it at 192 and left 44vh of scroll — the two most eventful moments in
+  // the stage — with no copy on screen at all.
+  prompt: [80, 92, 224, 236],
+  build: [236, 248, 310, 322],
+  launch: [334, 346, 406, 418],
+  close: [428, 440, null, null],
 };
 
 const HINT_FADE_VH = [8, 30];
 
+/**
+ * The prompt stage: you ask, and then we build it.
+ *
+ * A bar rises into frame, the request types itself in, the send button presses
+ * and the whole thing lifts off — and the site's pieces come back down out of
+ * the same hole it left through.
+ *
+ * The rest window between TYPE and PRESS is not padding. The typed request is
+ * copy, so it gets the same guarantee as every other line: fully typed, then
+ * held still long enough to read, before anything happens to it. That's the
+ * 66vh gap between TYPE_VH ending and PRESS_VH starting — ~1.0s of the 6.9s
+ * sequence. `tools/pacing.mjs` measures it off the canvas rather than trusting
+ * this comment; an earlier 54vh gap measured 0.80s against a 0.8s floor, which
+ * is not a margin.
+ */
+const BAR_IN_VH = [74, 92];
+const TYPE_VH = [96, 140];
+const PRESS_VH = [206, 220];
+const LIFT_VH = [220, 240];
+
+/** Under ~6 words, and it names the client whose site assembles next. */
+const REQUEST = 'Make my bakery site warmer.';
+
 // The assembly runs between these two points in the scroll.
-const BUILD_FROM_VH = 74;
-const BUILD_TO_VH = 200;
+const BUILD_FROM_VH = 224;
+const BUILD_TO_VH = 350;
 // …and the launch between these.
-const LAUNCH_FROM_VH = 200;
-const LAUNCH_TO_VH = 272;
+const LAUNCH_FROM_VH = 350;
+const LAUNCH_TO_VH = 422;
 
 /**
  * The floor on how fast the sequence can play, in seconds for the whole thing.
@@ -91,17 +118,21 @@ const LAUNCH_TO_VH = 272;
  * slower than this and it's scrubbed exactly as before, frame for frame;
  * scroll faster and it plays at this pace instead of skipping.
  *
- * Sized against the hold windows above: each of the first three beats holds
- * ~60vh of the 300vh sequence, so the reading time per beat is
- * (hold / 300) * MIN_PLAY_S. At 4s that lands exactly on the 0.8s target with
- * no margin, so it's 4.6s — about 0.9s a beat, which `tools/pacing.mjs`
- * measures. Raising this number is the one lever that buys reading time
- * without touching the composition; the cost is that after a fast flick the
- * scene keeps playing for the remainder of the 4.6s.
+ * Sized against the hold windows above: the copy beats hold ~60-88vh of the
+ * 450vh sequence, so the reading time for each is (hold / 450) * MIN_PLAY_S.
+ *
+ * This scales with the sequence. It was 4.6s when the whole thing was 300vh;
+ * adding the 150vh prompt stage without raising it in proportion would have
+ * quietly sped every existing beat up by a third, which is exactly the
+ * "don't compress the existing beats" failure. 4.6 * 450/300 = 6.9.
+ *
+ * The cost is real and worth stating: after a fast flick the scene keeps
+ * playing for the remainder of the 6.9s. That's the price of a five-stage
+ * story where every stage is legible. `tools/pacing.mjs` measures the result.
  *
  * Scrolling back up isn't reading, so reverse gets to move faster.
  */
-const MIN_PLAY_S = 4.6;
+const MIN_PLAY_S = 6.9;
 const REVERSE_FACTOR = 3;
 
 /**
@@ -200,6 +231,7 @@ function start() {
 
   const panels = {
     open: heroEl.querySelector('[data-beat="open"]'),
+    prompt: heroEl.querySelector('[data-beat="prompt"]'),
     build: heroEl.querySelector('[data-beat="build"]'),
     launch: heroEl.querySelector('[data-beat="launch"]'),
     close: heroEl.querySelector('[data-beat="close"]'),
@@ -417,6 +449,175 @@ function start() {
     ctx.globalAlpha = 1;
   }
 
+  /**
+   * The prompt bar: a dark-glass pill with the request typing into it and a
+   * gold send button on the right.
+   *
+   * Deliberately not a chat-app clone. It's built from the same parts as the
+   * rest of the site — the pill radius and gold of a `.btn--gold`, the silver
+   * hairline of a dark card, and a slow gold sheen sliding across it like the
+   * one on the dark sections.
+   *
+   * `st` carries the whole stage: how far in the bar is, how much of the
+   * request is typed, whether the button is being pressed, and how far it has
+   * lifted. Everything here is derived from scroll — nothing animates on its
+   * own except the caret blink and the sheen, which are the two things that
+   * would look dead if they froze when you stopped scrolling.
+   */
+  function drawPromptBar(st, time) {
+    if (st.alpha <= 0.01) return;
+
+    const barW = Math.min(W * (isSmall ? 0.88 : 0.56), isSmall ? 396 : 620);
+    const barH = isSmall ? 52 : 62;
+    const cx = W / 2 + mx * 16;
+    // Rides in from below, then lifts out through the top of the frame. The
+    // pieces come back down through the same gap — see `stowed` in frame().
+    const cy = siteCY + lerp(H * 0.22, 0, st.in) - st.lift * (H * 0.78 + barH) + my * 12;
+
+    const x = cx - barW / 2;
+    const y = cy - barH / 2;
+    const r = barH / 2;
+    const a = st.alpha;
+
+    // Exhaust: a mini version of the big launch plume, so the two reads rhyme.
+    if (st.lift > 0.001) {
+      const tail = st.lift * H * 0.9;
+      for (let i = 0; i < 5; i++) {
+        const f = i / 4;
+        glow(
+          glowGold,
+          cx,
+          cy + barH * 0.4 + tail * f * 0.9,
+          barW * (0.42 - 0.24 * f),
+          tail * 0.5,
+          0.26 * a * (1 - f * 0.7)
+        );
+      }
+      glow(glowWhite, cx, cy + barH * 0.5, barW * 0.1, tail * 0.3, 0.42 * a);
+    }
+
+    // A soft gold bloom under the bar, the same trick the gold buttons use.
+    glow(glowGold, cx, cy, barW * 1.05, barH * 3.4, 0.16 * a);
+
+    ctx.save();
+    ctx.globalAlpha = a;
+
+    // Dark glass — a near-opaque base, then the white film on top.
+    //
+    // The base is doing real work, not just deepening the colour. Without it
+    // the star field shows straight through the bar, and a star landing on a
+    // letter reads as a diacritic: "Måke my bakery site warmer." Glass over
+    // something, rather than glass over the void.
+    ctx.fillStyle = 'rgba(10,10,12,0.82)';
+    roundRect(x, y, barW, barH, r);
+    ctx.fill();
+    ctx.fillStyle = `rgba(${WHITE},0.055)`;
+    roundRect(x, y, barW, barH, r);
+    ctx.fill();
+
+    // The ambient sheen, travelling left to right on its own slow clock.
+    const sheenAt = ((time * 0.09) % 1.6) - 0.3;
+    ctx.save();
+    roundRect(x, y, barW, barH, r);
+    ctx.clip();
+    const sheen = ctx.createLinearGradient(
+      x + barW * (sheenAt - 0.22),
+      y,
+      x + barW * (sheenAt + 0.22),
+      y + barH
+    );
+    sheen.addColorStop(0, `rgba(${GOLD},0)`);
+    sheen.addColorStop(0.5, `rgba(${GOLD},0.07)`);
+    sheen.addColorStop(1, `rgba(${GOLD},0)`);
+    ctx.fillStyle = sheen;
+    ctx.fillRect(x, y, barW, barH);
+    ctx.restore();
+
+    // Silver hairline.
+    ctx.strokeStyle = `rgba(${SILVER},0.42)`;
+    ctx.lineWidth = 1.2;
+    roundRect(x, y, barW, barH, r);
+    ctx.stroke();
+
+    // -- the request, typing itself in --------------------------------------
+    const btnR = (barH - (isSmall ? 12 : 14)) / 2;
+    const btnCX = x + barW - btnR - (isSmall ? 6 : 8);
+    const textX = x + (isSmall ? 18 : 24);
+    const fontPx = isSmall ? 15 : 18;
+
+    ctx.font = `500 ${fontPx}px "Work Sans", system-ui, -apple-system, sans-serif`;
+    ctx.textBaseline = 'middle';
+
+    const chars = Math.round(st.typed * REQUEST.length);
+    const text = REQUEST.slice(0, chars);
+    ctx.fillStyle = `rgba(${WHITE},0.92)`;
+    ctx.fillText(text, textX, cy + 1);
+
+    // Caret. Solid while typing — a caret that blinks mid-word looks broken —
+    // and blinking once the request is sitting there waiting to be sent.
+    const caretX = textX + ctx.measureText(text).width + 2;
+    const blink = st.typed >= 1 ? (Math.sin(time * 4.4) > -0.2 ? 1 : 0) : 1;
+    if (blink && caretX < btnCX - btnR - 8) {
+      ctx.fillStyle = `rgba(${GOLD},0.95)`;
+      ctx.fillRect(caretX, cy - fontPx * 0.62, 2, fontPx * 1.24);
+    }
+
+    // -- the send button ----------------------------------------------------
+    // Dips on the press, exactly as .btn does.
+    const press = st.press;
+    const btnScale = 1 - 0.17 * Math.sin(clamp01(press) * Math.PI);
+    const rr = btnR * btnScale;
+
+    ctx.fillStyle = `rgba(${GOLD},${0.94 * (1 - 0.15 * press)})`;
+    ctx.beginPath();
+    ctx.arc(btnCX, cy, rr, 0, Math.PI * 2);
+    ctx.fill();
+
+    // The arrow — up, because that's where the request is about to go.
+    ctx.strokeStyle = 'rgba(10,10,12,0.9)';
+    ctx.lineWidth = 2.1;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    const ar = rr * 0.46;
+    ctx.beginPath();
+    ctx.moveTo(btnCX, cy + ar);
+    ctx.lineTo(btnCX, cy - ar);
+    ctx.moveTo(btnCX - ar * 0.72, cy - ar * 0.28);
+    ctx.lineTo(btnCX, cy - ar);
+    ctx.lineTo(btnCX + ar * 0.72, cy - ar * 0.28);
+    ctx.stroke();
+
+    ctx.restore();
+
+    // The press ripple, collapsing inward — the same gesture as
+    // .btn__ripple/@keyframes btn-collapse, drawn with a canvas ring instead
+    // of a radial-gradient div.
+    //
+    // Two details copied from the CSS rather than reinvented, because getting
+    // either wrong makes the ripple invisible: the ring is `currentColor`,
+    // which on a gold button is the near-black ink, not gold — a gold ring
+    // collapsing into a gold button cannot be seen. And the button clips it,
+    // so the ring only ever shows against the gold, never against the sky.
+    if (press > 0.001 && press < 1) {
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(btnCX, cy, rr, 0, Math.PI * 2);
+      ctx.clip();
+      ctx.globalAlpha = a * 0.78 * (1 - press);
+      ctx.strokeStyle = 'rgba(10,10,12,1)';
+      ctx.lineWidth = btnR * 0.46;
+      ctx.beginPath();
+      // Scaled off `rr`, the pressed radius — not the resting one. Sizing it
+      // off btnR meant the ring spent the first half of the press outside its
+      // own clip circle, i.e. invisible, which is the whole gesture missing.
+      ctx.arc(btnCX, cy, Math.max(0.1, rr * 1.12 * (1 - press)), 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    glow(glowGold, btnCX, cy, btnR * 5, btnR * 5, 0.34 * a * (1 + press * 0.8));
+  }
+
   /** Draw one assembled-site piece in its own local space. */
   function drawPiece(p, w, h, alpha, scale) {
     const x = -w / 2;
@@ -629,6 +830,28 @@ function start() {
     const launch = range(p, LAUNCH_FROM, LAUNCH_TO);
     const launchE = easeInCubic(launch);
 
+    // ── The prompt stage ────────────────────────────────────────────────
+    const vh = (v) => v / scrollVH;
+    const barIn = easeOutExpo(range(p, vh(BAR_IN_VH[0]), vh(BAR_IN_VH[1])));
+    const lift = easeInCubic(range(p, vh(LIFT_VH[0]), vh(LIFT_VH[1])));
+    const prompt = {
+      in: barIn,
+      typed: range(p, vh(TYPE_VH[0]), vh(TYPE_VH[1])),
+      press: range(p, vh(PRESS_VH[0]), vh(PRESS_VH[1])),
+      lift,
+      // Fades as it goes, but not before it's well clear of the frame.
+      alpha: barIn * (1 - range(lift, 0.5, 1)),
+    };
+
+    // Cause and effect. The site's pieces sit scattered in the ring through
+    // the opening, drift up and out of frame as the bar takes over, and then
+    // come back down from where the request left — so the build reads as an
+    // answer to the request rather than something that was always going to
+    // happen. `stowed` is 1 while the bar owns the frame and 0 either side.
+    const arrive = easeOutExpo(range(p, vh(LIFT_VH[0]), vh(BUILD_FROM_VH + 34)));
+    const stowed = clamp01(barIn - arrive);
+    const exitY = -H * 0.4;
+
     // How far the whole mockup has risen, and how much it's stretched by
     // the speed. By launch = 1 it is comfortably off the top of the frame.
     // Tuned so the mockup is still half in frame at ~80% of the launch — you
@@ -648,7 +871,12 @@ function start() {
       const sweep = easeInCubic(range(p, LAUNCH_FROM + 0.02, LAUNCH_TO + 0.04)) * d.drift;
       // Debris hangs around a little past the mockup, so the launch stretch
       // still has movement in it rather than emptying out early.
-      const alpha = (1 - range(p, LAUNCH_FROM + 0.11, LAUNCH_TO + 0.02)) * (0.5 / d.z);
+      // Dimmed but never gone while the prompt bar has the frame: it keeps the
+      // background alive without competing with the thing being read.
+      const alpha =
+        (1 - range(p, LAUNCH_FROM + 0.11, LAUNCH_TO + 0.02)) *
+        (0.5 / d.z) *
+        (1 - stowed * 0.55);
       if (alpha <= 0.01) continue;
 
       const bob = Math.sin(time * 0.5 + d.bob) * 10;
@@ -745,8 +973,11 @@ function start() {
         (p2.w * SW * par) / W,
         (p2.h * (p2.k === 'dot' ? SW : SH) * par) / H
       );
-      const sx = W / 2 + p2.ax * push * (W / 2);
-      const sy = H / 2 + p2.ay * push * (H / 2) + bob;
+      // While the bar owns the frame the pieces are parked above it, loosely
+      // spread around the point it exits through.
+      const sx =
+        lerp(W / 2 + p2.ax * push * (W / 2), W / 2 + p2.ax * (W * 0.16), stowed);
+      const sy = lerp(H / 2 + p2.ay * push * (H / 2) + bob, exitY, stowed);
       const tx = siteCX + p2.x * SW;
       const ty = siteCY + p2.y * SH;
 
@@ -760,7 +991,7 @@ function start() {
 
       const w = p2.w * SW * scale;
       const h = p2.h * (p2.k === 'dot' ? SW : SH) * scale;
-      const alpha = lerp(0.3 + 0.34 / p2.z, 1, t) * siteFade;
+      const alpha = lerp(0.3 + 0.34 / p2.z, 1, t) * siteFade * (1 - stowed);
 
       ctx.save();
       ctx.translate(x, y);
@@ -773,6 +1004,10 @@ function start() {
         glow(glowGold, x, y, w * 3.2, h * 5 * stretch, 0.4 * p2.glow * alpha);
       }
     }
+
+    // ── The prompt bar ──────────────────────────────────────────────────
+    // Last, so nothing from the scene can ever cross it.
+    drawPromptBar(prompt, time);
 
     // ── Grain ───────────────────────────────────────────────────────────
     ctx.globalCompositeOperation = 'lighter';

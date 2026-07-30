@@ -184,7 +184,8 @@ async function litBehind(beat, fraction) {
 for (const [beat, at, limit] of [
   ['close', 1, 1.5],
   ['open', 0, 2.5],
-  ['build', 0.45, 2.5],
+  ['prompt', 0.34, 2.5],
+  ['build', 0.62, 2.5],
 ]) {
   const lit = await litBehind(beat, at);
   lit < limit
@@ -205,8 +206,13 @@ await rm.waitForTimeout(1200);
 const heroH = await rm.evaluate(
   () => document.querySelector('[data-hero]').getBoundingClientRect().height
 );
-heroH <= 1000
-  ? pass(`hero collapses to one screen (${Math.round(heroH)}px)`)
+// What this is really checking is that the 550vh scroll hero has collapsed to a
+// still one — not that it fits in a viewport. The still hero carries five
+// blocks now (headline, the prompt beat, the bar, the CTAs, the mockup) and is
+// legitimately a bit taller than one screen; 4950px would mean it hadn't
+// collapsed at all.
+heroH <= 1600
+  ? pass(`hero collapses to a still screen (${Math.round(heroH)}px, not 4950px)`)
   : fail(`hero still ${Math.round(heroH)}px tall`);
 
 (await rm.evaluate(() => document.querySelector('[data-hero]').classList.contains('is-live')))
@@ -216,6 +222,26 @@ heroH <= 1000
 (await rm.locator('[data-beat="close"] a.btn').first().isVisible())
   ? pass('static fallback still shows both CTAs')
   : fail('CTAs hidden in the reduced-motion hero');
+
+// The prompt stage has to survive into the still hero: the beat that narrates
+// it, and the bar itself with the request already typed in.
+(await rm.locator('[data-beat="prompt"]').isVisible())
+  ? pass('the prompt beat is part of the still hero')
+  : fail('prompt beat hidden under reduced motion');
+
+{
+  const bar = rm.locator('.hero__promptbar');
+  const text = (await bar.locator('.hero__promptbar-text').textContent().catch(() => '')) ?? '';
+  const send = await bar.locator('.hero__promptbar-send').isVisible().catch(() => false);
+  (await bar.isVisible()) && /warmer/.test(text) && send
+    ? pass(`static prompt bar shows the finished request — "${text.trim()}"`)
+    : fail(`static prompt bar wrong: visible=${await bar.isVisible()}, text="${text}", send=${send}`);
+}
+
+// …and it must never appear when the canvas is doing the job.
+(await page.locator('.hero__promptbar').isVisible())
+  ? fail('the static prompt bar is showing on top of the live canvas hero')
+  : pass('static prompt bar stays hidden while the canvas runs');
 
 (await rm.evaluate(() =>
   [...document.querySelectorAll('[data-reveal]')].every(

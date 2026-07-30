@@ -175,17 +175,37 @@ feedback on their own.
 
 ### The hero
 
-The animation is the pitch: fragments of a website drift in space, assemble
-themselves into a mockup, and launch. `src/scripts/hero.js` draws it on a 2D
-canvas — no 3D library, no textures, no images.
+The animation is the pitch, in five stages: fragments of a website drift in
+space, you ask for what you want, the pieces assemble into a mockup, it
+launches, and the CTAs land on clean black. `src/scripts/hero.js` draws it on a
+2D canvas — no 3D library, no textures, no images.
 
-Two things to edit:
+| Stage | What happens | Copy |
+| --- | --- | --- |
+| `open` | fragments drift in a ring around the headline | Websites that are out of this world. |
+| `prompt` | a bar rises, a request types itself in, the send button presses, the bar lifts off | You tell us what you want. |
+| `build` | the pieces come back down and assemble | We design it. We build it. |
+| `launch` | the mockup flies up out of frame | Then we launch it. |
+| `close` | empty frame, CTAs on clean black | Above and beyond. |
+
+Things to edit:
 
 - **`LAYOUT`** — the assembled site. Each entry is one piece, positioned in
   normalised coordinates (`-0.5` to `0.5` across the mockup) so it scales with
   the viewport. `g` is the assembly group: lower numbers fly in first, which
   is what makes the build legible.
-- **`BEATS`** — the scroll windows for the four lines of copy.
+- **`BEATS_VH`** — the scroll windows for the five lines of copy.
+- **`REQUEST`** — the sentence that types into the prompt bar. Keep it short
+  (it has to fit the bar at 390px wide) and keep it tied to a real client — it
+  names Rosa's Bakery, whose site is the one that assembles immediately after.
+
+**The prompt stage** has its own windows: `BAR_IN_VH`, `TYPE_VH`, `PRESS_VH`,
+`LIFT_VH`. The gap between `TYPE_VH` ending and `PRESS_VH` starting is the
+important one — the typed request is copy, so it has to be finished and then
+sit still long enough to read before the send fires, and that gap is what
+guarantees it. The pieces are deliberately stowed above the frame while the bar
+is up and come back down through the point it exits, so the build reads as an
+answer to the request rather than something that was always going to happen.
 
 Two rules the scene must never break, both from design review:
 
@@ -207,8 +227,13 @@ the windows are. So the timeline has a speed limit: `MIN_PLAY_S` in
 `hero.js` is the fewest seconds the whole sequence can take. Scroll slower
 than that and it's a pure scrub, frame for frame; scroll faster and it plays
 at that pace rather than skipping. The hold windows are sized against it, so
-each of the first three beats gets roughly 0.8s of full-opacity reading time
-even for someone who flicks the entire hero in one go.
+every beat gets at least ~0.9s of full-opacity reading time even for someone
+who flicks the entire hero in one go.
+
+`MIN_PLAY_S` scales with the sequence, and this is the easiest thing to get
+wrong. It's 6.9s for 450vh of scroll. Add a stage without raising it in
+proportion and you haven't added anything — you've just sped every existing
+beat up to pay for the new one.
 
 If you retime the beats, re-run the pacing check (below) — the two are a
 matched pair, and widening a hold without checking the limit is how copy
@@ -297,10 +322,12 @@ tests now rather than things to remember. They live in `tools/` and each one
 needs `npm run dev` running in another terminal.
 
 ```bash
-npm run verify           # 32 checks: links, the demo flow, hero copy clearance,
+npm run verify           # 36 checks: links, the demo flow, hero copy clearance,
                          # reduced motion, the contact form, buttons, ambient layers
-npm run verify:pacing    # flick-scroll the hero in 3s; every line readable ≥0.8s
-npm run verify:contrast  # text contrast under the moving ambient gradients
+npm run verify:pacing    # flick-scroll the hero in 3s; every line readable ≥0.8s,
+                         # and the request finishes typing and rests before it sends
+npm run verify:contrast  # text contrast under the moving ambient gradients, and
+                         # the typed request over the prompt bar's own backdrop
 npm run shots:ambient    # screenshots of the dark sections, hover and reduced motion
 ```
 

@@ -187,6 +187,96 @@ for (const path of PAGES) {
   worst.ratio >= MIN_RATIO ? pass(line) : fail(line + `  — under ${MIN_RATIO}:1`);
 }
 
+// ── The hero's prompt bar ──────────────────────────────────────────────────
+// The typed request is copy sitting on a piece of the scene, so it needs the
+// same proof. Its backdrop isn't static: the bar's glass is semi-transparent
+// and a gold sheen slides across it on its own clock, so the brightest moment
+// can land anywhere. Sample the backdrop across a spread of sheen phases and
+// check the dimmest thing the text ever has to sit on.
+console.log('\nHero prompt bar — the typed request over its own backdrop\n');
+{
+  // rgba(255,255,255,0.92) over the bar, i.e. what drawPromptBar() paints.
+  const TEXT = [235, 235, 235];
+  const TEXT_L = luminance(TEXT);
+
+  await page.goto(`${BASE}/`, { waitUntil: 'networkidle' });
+  await page.waitForTimeout(1200);
+
+  const readings = await page.evaluate(async ([settle, frames]) => {
+    document.documentElement.style.scrollBehavior = 'auto';
+    const hero = document.querySelector('[data-hero]');
+    const canvas = document.querySelector('[data-hero-canvas]');
+    const g = canvas.getContext('2d', { willReadFrequently: true });
+    const dist = hero.getBoundingClientRect().height - window.innerHeight;
+
+    // Park at the rest position: request fully typed, nothing else happening.
+    window.scrollTo(0, dist * 0.38);
+    await new Promise((r) => setTimeout(r, settle));
+
+    const cw = canvas.clientWidth;
+    const ch = canvas.clientHeight;
+    const small = window.matchMedia('(max-width: 820px)').matches;
+    const scale = canvas.width / cw;
+    const barW = Math.min(cw * (small ? 0.88 : 0.56), small ? 396 : 620);
+    const barH = small ? 52 : 62;
+    const cx = cw / 2;
+    const cy = ch * (small ? 0.37 : 0.4);
+    const px = (v) => Math.max(0, Math.round(v * scale));
+
+    // A band inside the bar just under the text, so it's pure backdrop — the
+    // glyphs themselves would otherwise be the brightest thing in the crop.
+    const box = {
+      x: px(cx - barW / 2 + 14),
+      y: px(cy + barH * 0.2),
+      w: px(barW * 0.72),
+      h: px(barH * 0.22),
+    };
+
+    const out = [];
+    for (let i = 0; i < frames; i++) {
+      await new Promise((r) => setTimeout(r, 260));
+      const d = g.getImageData(box.x, box.y, box.w, box.h).data;
+      // Mean over a text-stroke-sized neighbourhood, same reasoning as the
+      // blur above: one bright speck isn't what a letterform sits on.
+      let best = -1;
+      const rowLen = box.w * 4;
+      for (let y = 0; y + 3 < box.h; y += 2) {
+        for (let x = 0; x + 3 < box.w; x += 2) {
+          let sr = 0;
+          let sg = 0;
+          let sb = 0;
+          for (let dy = 0; dy < 4; dy++) {
+            for (let dx = 0; dx < 4; dx++) {
+              const i2 = (y + dy) * rowLen + (x + dx) * 4;
+              sr += d[i2];
+              sg += d[i2 + 1];
+              sb += d[i2 + 2];
+            }
+          }
+          const px2 = [sr / 16, sg / 16, sb / 16];
+          const l = 0.2126 * px2[0] + 0.7152 * px2[1] + 0.0722 * px2[2];
+          if (l > best) {
+            best = l;
+            out[i] = px2.map(Math.round);
+          }
+        }
+      }
+    }
+    return out;
+  }, [12000, 10]);
+
+  let worst = { ratio: Infinity };
+  for (const px of readings) {
+    const ratio = contrast(TEXT_L, luminance(px));
+    if (ratio < worst.ratio) worst = { ratio, px };
+  }
+
+  const line =
+    `prompt bar  worst ${worst.ratio.toFixed(2)}:1 across ${readings.length} sheen phases ` +
+    `(brightest backdrop rgb(${worst.px.join(',')}))`;
+  worst.ratio >= MIN_RATIO ? pass(line) : fail(line + `  — under ${MIN_RATIO}:1`);
+}
+
 console.log(`\n${failures === 0 ? 'CONTRAST OK' : `${failures} FAILURE(S)`}\n`);
 await browser.close();
 process.exit(failures ? 1 : 0);

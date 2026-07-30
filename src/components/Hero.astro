@@ -11,13 +11,14 @@
  * jank-free and means there is no layout shift if JS is slow.
  *
  * src/scripts/hero.js reads how far through .hero we are (0 → 1), draws the
- * scene on the canvas, and cross-fades the four copy beats below.
+ * scene on the canvas, and cross-fades the five copy beats below.
  *
  * Where the copy sits, and why
  * ----------------------------
  * Nothing in the scene is ever allowed behind or across the text:
  *
  *   open    centred   the scene scatters fragments into a ring *around* it
+ *   prompt  bottom    a request types itself into a bar in the upper middle
  *   build   bottom    the mockup assembles in the upper two-thirds
  *   launch  bottom    the mockup is flying up and out of the top
  *   close   centred   everything has left the frame; this lands on clean black
@@ -49,7 +50,23 @@ import { url } from '../data/url.js';
       </div>
     </div>
 
-    <!-- Beat 2 — the assembly -------------------------------------------- -->
+    <!-- Beat 2 — the request --------------------------------------------- -->
+    <div class="hero__beat hero__beat--bottom" data-beat="prompt">
+      <div class="shell">
+        <p class="hero__line">You tell us what you want.</p>
+        <p class="hero__caption">In your own words. That's the whole brief.</p>
+      </div>
+    </div>
+
+    <!-- The prompt bar, drawn in CSS. Same job as .hero__mock below: it only
+         ever appears when the canvas isn't running, so reduced motion still
+         gets the bar with the request already typed into it. -->
+    <div class="hero__promptbar" aria-hidden="true">
+      <span class="hero__promptbar-text">Make my bakery site warmer.</span>
+      <span class="hero__promptbar-send"></span>
+    </div>
+
+    <!-- Beat 3 — the assembly -------------------------------------------- -->
     <div class="hero__beat hero__beat--bottom" data-beat="build">
       <div class="shell">
         <p class="hero__line">We design it. We build it.</p>
@@ -57,7 +74,7 @@ import { url } from '../data/url.js';
       </div>
     </div>
 
-    <!-- Beat 3 — the launch ---------------------------------------------- -->
+    <!-- Beat 4 — the launch ---------------------------------------------- -->
     <div class="hero__beat hero__beat--bottom" data-beat="launch">
       <div class="shell">
         <p class="hero__line">Then we launch it.</p>
@@ -65,7 +82,7 @@ import { url } from '../data/url.js';
       </div>
     </div>
 
-    <!-- Beat 4 — the finale, on clean black ------------------------------ -->
+    <!-- Beat 5 — the finale, on clean black ------------------------------ -->
     <div class="hero__beat hero__beat--center" data-beat="close">
       <div class="shell">
         <h2 class="hero__closing">Above and beyond.</h2>
@@ -107,8 +124,12 @@ import { url } from '../data/url.js';
 
        It's deliberately generous: a flick has a roughly fixed pixel length,
        so a longer hero means an ordinary one covers less of the sequence and
-       each beat gets more time to be read. */
-    height: 400vh;
+       each beat gets more time to be read.
+
+       550vh gives hero.js 450vh of travel. It was 400vh/300vh before the
+       prompt stage; that stage was given its own 150vh rather than squeezed
+       into the existing budget, so no earlier beat lost any room. */
+    height: 550vh;
     background: var(--black);
   }
 
@@ -197,6 +218,7 @@ import { url } from '../data/url.js';
      closing beat deliberately has none: by then the frame is empty, and a
      scrim there would be covering nothing. */
   .hero__beat[data-beat='open']::before,
+  .hero__beat[data-beat='prompt']::before,
   .hero__beat[data-beat='build']::before,
   .hero__beat[data-beat='launch']::before {
     content: '';
@@ -281,6 +303,7 @@ import { url } from '../data/url.js';
   /* Static mockup -------------------------------------------------------- */
 
   .hero__mock { display: none; }
+  .hero__promptbar { display: none; }
 
   /* Scroll hint ---------------------------------------------------------- */
 
@@ -336,9 +359,80 @@ import { url } from '../data/url.js';
       padding-block: calc(72px + var(--s-7)) var(--s-7);
     }
 
-    /* The mid-scroll narration has no animation to narrate. */
+    /* The mid-scroll narration has no animation to narrate. The prompt beat
+       stays: unlike those two it isn't describing motion, it's the first half
+       of the story, and the bar below it is right there to make it concrete. */
     .hero__beat[data-beat='build'],
     .hero__beat[data-beat='launch'] { display: none !important; }
+
+    /* The prompt bar, with the request already typed. Same parts as the canvas
+       version — pill radius, silver hairline, gold send button — just held
+       still. No caret: a blinking one would be motion, and a frozen one reads
+       as a rendering bug. */
+    .hero__promptbar {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      gap: var(--s-3);
+      width: min(90%, 30rem);
+      margin-top: var(--s-4);
+      padding: 0.55rem 0.55rem 0.55rem 1.35rem;
+      border: 1px solid rgba(169, 173, 182, 0.42);
+      border-radius: 99px;
+      background:
+        linear-gradient(104deg, transparent 38%, rgba(245, 194, 75, 0.07) 50%, transparent 62%),
+        rgba(255, 255, 255, 0.05);
+    }
+
+    .hero__promptbar-text {
+      flex: 1 1 auto;
+      text-align: left;
+      font-size: var(--t-small);
+      color: rgba(255, 255, 255, 0.92);
+    }
+
+    /* The send button, arrow drawn with a rotated corner rather than an icon
+       file — it's two borders, and it can't fail to load. */
+    .hero__promptbar-send {
+      position: relative;
+      flex: 0 0 auto;
+      width: 2.25rem;
+      height: 2.25rem;
+      border-radius: 50%;
+      background: var(--gold);
+      box-shadow: 0 0 22px rgba(245, 194, 75, 0.4);
+    }
+
+    /* The head. A square with two borders, rotated 45°, points up — and once
+       it's centred on the button its apex lands 0.707 x its own width above
+       centre. That's why it's 0.62rem against a 0.9rem stem: any smaller and
+       the apex sits inside the stem instead of on top of it, which reads as a
+       tiny aeroplane rather than an arrow. */
+    .hero__promptbar-send::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0.62rem;
+      height: 0.62rem;
+      border-top: 2px solid var(--black);
+      border-left: 2px solid var(--black);
+      transform: translate(-50%, -50%) rotate(45deg);
+    }
+
+    /* The stem. */
+    .hero__promptbar-send::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 2px;
+      height: 0.9rem;
+      background: var(--black);
+      transform: translate(-50%, -50%);
+      border-radius: 1px;
+    }
 
     /* position:relative, not static — z-index only applies to positioned
        elements, and .hero__static is absolutely positioned, so without this
@@ -354,6 +448,7 @@ import { url } from '../data/url.js';
       padding-bottom: 0;
     }
 
+    .hero__beat[data-beat='prompt'] { margin-top: var(--s-5); }
     .hero__beat[data-beat='close'] { margin-top: var(--s-5); }
     .hero__beat[data-beat='close'] .hero__closing { display: none; }
 
