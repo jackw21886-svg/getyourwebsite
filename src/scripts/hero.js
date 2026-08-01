@@ -704,6 +704,97 @@ function start() {
   const t0 = performance.now();
   let last = t0;
 
+  // -- the scroll gate -----------------------------------------------------
+  //
+  // The timeline has a speed limit, and the page does not. Flick hard enough
+  // and the viewport clears the hero while the sequence is still halfway
+  // through, so you arrive in Our Work having never seen the prompt bar, the
+  // assembly or the launch — the entire pitch, skipped.
+  //
+  // So while the sequence is unfinished, downward scrolling can't take you
+  // past the end of the pin. It's a one-time thing: once the hero has played
+  // through, the gate is done for the visit and scrolling behaves normally
+  // forever after, including on the way back up and down again.
+  //
+  // Being gated means the visitor has already pushed past the hero, so the
+  // playback rate doubles for the rest of the hold — they've said they want to
+  // move on, and the worst case becomes MIN_PLAY_S / 2 rather than the full
+  // 6.9s. Scrolling back up is never touched.
+  /**
+   * How long the gate may hold you, and the hardest it's allowed to push to
+   * get there.
+   *
+   * The boost isn't a fixed multiplier — it's whatever rate finishes the
+   * remaining progress inside the remaining budget, capped at GATE_BOOST. A
+   * fixed 2x sounds equivalent and isn't: it assumes the sequence starts at
+   * zero and that no frames are lost, so a slow device or a mid-scroll start
+   * quietly overruns. Deriving the rate from what's actually left means the
+   * hold self-corrects instead of drifting.
+   */
+  const GATE_MAX_S = 3.5;
+  const GATE_BOOST = 2;
+  let gateLeft = GATE_MAX_S;
+
+  /**
+   * Progress at which the gate considers the sequence watched.
+   *
+   * Not 1.0. The timeline eases toward its target, so the last percent is an
+   * asymptotic settle that adds most of a second and looks like nothing —
+   * everything has already left the frame and the closing beat reaches full
+   * opacity at 0.978. Holding for the arithmetic rather than the picture is
+   * what pushed the worst case past 4.5s.
+   */
+  const GATE_DONE_AT = 0.985;
+  let gateDone = false;
+  let gated = false;
+  let boost = 1;
+
+  /**
+   * Page Y beyond which the section below the hero starts to show, or null if
+   * there's nothing to pin.
+   *
+   * The null case matters. If the hero is ever shorter than the viewport — or
+   * display:none, which is how the contrast harness isolates the sections
+   * below it — then `rect.bottom` is meaningless and the naive arithmetic
+   * returns a point *above* the current scroll position. The gate then drags
+   * the page upward on every frame, forever. Guard on there actually being
+   * scroll distance rather than trusting the geometry.
+   */
+  function pinEnd() {
+    const r = heroEl.getBoundingClientRect();
+    if (r.height - window.innerHeight <= 0) return null;
+    return window.scrollY + r.bottom - window.innerHeight;
+  }
+
+  // Someone who arrives already below the hero — a deep link, a restored
+  // scroll position, a back button — must never be yanked back up to watch it.
+  const startPin = pinEnd();
+  if (startPin !== null && window.scrollY > startPin + 4) gateDone = true;
+
+  /**
+   * Give up the gate for good.
+   *
+   * Anything that deliberately moves someone past the hero outranks the
+   * animation. The skip link and in-page anchors both land focus below the
+   * hero, and a keyboard user tabbing out of it is doing the same thing by
+   * hand — none of them should hit an invisible wall.
+   */
+  function releaseGate() {
+    gateDone = true;
+    gated = false;
+    // Back to the normal speed limit. Leaving the boost on would permanently
+    // halve MIN_PLAY_S for the rest of the visit, so re-scrolling the hero
+    // would play at double speed and the copy would stop being readable.
+    boost = 1;
+    gateLeft = GATE_MAX_S;
+    heroEl.classList.remove('is-gated');
+  }
+
+  window.addEventListener('hashchange', releaseGate);
+  document.addEventListener('focusin', (e) => {
+    if (!heroEl.contains(e.target)) releaseGate();
+  });
+
   function ensureRunning() {
     if (running) return;
     running = true;
@@ -722,7 +813,11 @@ function start() {
   const io = new IntersectionObserver(
     (entries) => {
       const visible = entries[entries.length - 1].isIntersecting;
-      if (visible) ensureRunning();
+      // Never stop while the gate is still armed. A hard flick moves the
+      // viewport before the loop gets a frame to clamp it, so the hero goes
+      // out of view, the observer stops the loop, and the clamp never runs
+      // again — the gate would fail open in exactly the case it exists for.
+      if (visible || !gateDone) ensureRunning();
       else running = false;
     },
     { threshold: 0 }
@@ -733,7 +828,7 @@ function start() {
     'scroll',
     () => {
       const r = heroEl.getBoundingClientRect();
-      if (r.bottom > 0 && r.top < window.innerHeight) ensureRunning();
+      if (!gateDone || (r.bottom > 0 && r.top < window.innerHeight)) ensureRunning();
     },
     { passive: true }
   );
@@ -769,6 +864,30 @@ function start() {
     last = now;
     const smoothing = (rate) => 1 - Math.pow(1 - rate, dt * 60);
 
+    // Hold the viewport at the end of the pin while the sequence catches up.
+    // Done here rather than in a scroll handler on purpose: clamping once per
+    // frame settles trackpad momentum and keyboard paging the same way, with
+    // no competing writes to scroll position and so no rubber-banding.
+    const maxY = gateDone ? null : pinEnd();
+    if (maxY !== null) {
+      const over = window.scrollY - maxY;
+      gated = over > 0;
+      // The half-pixel deadband keeps sub-pixel scroll positions from
+      // triggering a write every frame, which is what reads as jitter.
+      if (over > 0.5) window.scrollTo(0, maxY);
+      heroEl.classList.toggle('is-gated', gated);
+    }
+
+    // Spend the budget, then ask for whatever rate clears what's left inside
+    // what remains of it. Once set it doesn't decay while the gate is on:
+    // letting it fall back when the flick's momentum runs out would put the
+    // worst case at the full MIN_PLAY_S, which is what this exists to avoid.
+    if (gated) {
+      gateLeft = Math.max(gateLeft - dt, 0.05);
+      const needed = ((1 - shown) / gateLeft) * MIN_PLAY_S;
+      boost = Math.min(GATE_BOOST, Math.max(boost, needed));
+    }
+
     const target = readProgress();
 
     // Scroll inertia, then a speed limit on top of it.
@@ -778,11 +897,16 @@ function start() {
     // consume, so a fast flick plays the hero through rather than smearing it.
     // Below the limit the clamp never binds and this is a pure scrub.
     const eased = shown + (target - shown) * smoothing(0.12);
-    const maxForward = dt / MIN_PLAY_S;
-    const maxBack = maxForward * REVERSE_FACTOR;
+    const maxForward = (dt / MIN_PLAY_S) * boost;
+    // Reverse is measured off the unboosted rate: scrolling back up was never
+    // the thing being held, so it shouldn't speed up because the gate fired.
+    const maxBack = (dt / MIN_PLAY_S) * REVERSE_FACTOR;
     shown = Math.max(shown - maxBack, Math.min(shown + maxForward, eased));
     if (Math.abs(target - shown) < 0.0002) shown = target;
     const p = shown;
+
+    // Played through once. The gate is spent for this visit.
+    if (!gateDone && p >= GATE_DONE_AT) releaseGate();
 
     const mSmooth = smoothing(0.07);
     mx += (mtx - mx) * mSmooth;

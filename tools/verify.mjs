@@ -193,6 +193,129 @@ for (const [beat, at, limit] of [
     : fail(`something is behind the ${beat} copy — ${lit}% lit (limit ${limit}%)`);
 }
 
+// ── 2c. The scroll gate ────────────────────────────────────────────────────
+// A hard flick must not carry you past the hero while the sequence is still
+// playing — that's how someone ends up in Our Work having never seen the
+// prompt bar, the assembly or the launch.
+console.log('\n[2c] Hero scroll gate');
+
+// Each pass gets a fresh page. The gate is deliberately once-per-visit, and it
+// disarms itself for anyone who arrives already below the hero — so a reload
+// with a restored scroll position would quietly test nothing.
+const freshHero = async () => {
+  const p = await ctx.newPage();
+  await p.goto(`${BASE}/`, { waitUntil: 'networkidle' });
+  await p.waitForTimeout(1200);
+  return p;
+};
+
+// ── Pass A: a max-speed flick, uninterrupted ───────────────────────────────
+const flick = await freshHero();
+const gate = await flick.evaluate(async () => {
+  document.documentElement.style.scrollBehavior = 'auto';
+  const hero = document.querySelector('[data-hero]');
+  // The next real section, not hero.nextElementSibling — that's Astro's
+  // inlined <script>, which has no box and reports top: 0 forever.
+  const below = [...hero.parentElement.children].find(
+    (el) => el !== hero && el.tagName === 'SECTION'
+  );
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+  window.scrollTo(0, 0);
+  await sleep(600);
+
+  // The worst case: ask for the very bottom of the document, every frame.
+  //
+  // The hold is accumulated in ANIMATION time, with the same 0.1s-per-frame
+  // clamp hero.js uses, not on a stopwatch. Headless software rendering runs
+  // this at a few frames a second, so wall time overstates every duration in
+  // the scene by roughly the same factor — a correct 3.45s hold measures ~5.8s
+  // on a stopwatch here and looks like a failure.
+  let leaked = 0;      // frames where content below the hero was on screen while gated
+  let gatedFrames = 0;
+  let held = 0;
+  let last = performance.now();
+  const t0 = last;
+
+  while (performance.now() - t0 < 25000) {
+    window.scrollTo(0, document.body.scrollHeight);
+    await new Promise((r) => requestAnimationFrame(r));
+
+    const now = performance.now();
+    const dt = Math.min((now - last) / 1000, 0.1);
+    last = now;
+
+    if (hero.classList.contains('is-gated')) {
+      gatedFrames++;
+      held += dt;
+      if (below && below.getBoundingClientRect().top < window.innerHeight - 1) leaked++;
+    } else if (gatedFrames > 0) {
+      break; // it let go
+    }
+  }
+
+  // Once it has played through, it must never gate again this visit.
+  window.scrollTo(0, 0);
+  await sleep(2500);
+  let reGated = false;
+  const t1 = performance.now();
+  while (performance.now() - t1 < 5000) {
+    window.scrollTo(0, document.body.scrollHeight);
+    await new Promise((r) => requestAnimationFrame(r));
+    if (hero.classList.contains('is-gated')) reGated = true;
+  }
+
+  return { gatedFrames, leaked, held: +held.toFixed(2), reGated };
+});
+await flick.close();
+
+// ── Pass B: scrolling up while gated ───────────────────────────────────────
+const upPage = await freshHero();
+const upWorked = await upPage.evaluate(async () => {
+  const hero = document.querySelector('[data-hero]');
+  // The site sets scroll-behavior: smooth, so a scrollTo animates over several
+  // frames. Measuring one frame later would read "barely moved" and report the
+  // gate as blocking upward scroll when it isn't.
+  document.documentElement.style.scrollBehavior = 'auto';
+  window.scrollTo(0, 0);
+  await new Promise((r) => setTimeout(r, 600));
+
+  for (let i = 0; i < 400; i++) {
+    window.scrollTo(0, document.body.scrollHeight);
+    await new Promise((r) => requestAnimationFrame(r));
+    if (hero.classList.contains('is-gated') && i > 6) {
+      const from = window.scrollY;
+      window.scrollTo(0, Math.max(0, from - 600));
+      await new Promise((r) => requestAnimationFrame(r));
+      return window.scrollY < from - 200;
+    }
+  }
+  return null;
+});
+await upPage.close();
+
+gate.gatedFrames > 0
+  ? pass(`gate engages on a max-speed flick (${gate.gatedFrames} frames)`)
+  : fail('gate never engaged — the flick went straight past the hero');
+
+gate.leaked === 0
+  ? pass('nothing below the hero was ever on screen while gated')
+  : fail(`content below the hero showed on ${gate.leaked} gated frames`);
+
+upWorked === true
+  ? pass('scrolling up still works while gated')
+  : fail(`upward scroll was blocked while gated (${upWorked})`);
+
+// MIN_PLAY_S is 6.9s and the gate doubles the rate, so a hold that starts from
+// the top should land near 3.45s of animation time.
+gate.held > 0 && gate.held < 4.2
+  ? pass(`hold capped at ${gate.held.toFixed(2)}s of playback, not the full 6.9s`)
+  : fail(`gate held for ${gate.held.toFixed(2)}s of playback`);
+
+gate.reGated
+  ? fail('the gate re-engaged after the hero had already played through')
+  : pass('gate stays off once the hero has completed');
+
 // ── 3. Reduced motion ──────────────────────────────────────────────────────
 console.log('\n[3] Reduced motion');
 const rmCtx = await browser.newContext({
@@ -222,6 +345,24 @@ heroH <= 1600
 (await rm.locator('[data-beat="close"] a.btn').first().isVisible())
   ? pass('static fallback still shows both CTAs')
   : fail('CTAs hidden in the reduced-motion hero');
+
+// Reduced motion is never gated: there's no sequence to wait for.
+{
+  const rmGated = await rm.evaluate(async () => {
+    const hero = document.querySelector('[data-hero]');
+    let seen = false;
+    const t0 = performance.now();
+    while (performance.now() - t0 < 2500) {
+      window.scrollTo(0, document.body.scrollHeight);
+      await new Promise((r) => requestAnimationFrame(r));
+      if (hero.classList.contains('is-gated')) seen = true;
+    }
+    return { seen, y: window.scrollY };
+  });
+  !rmGated.seen && rmGated.y > 0
+    ? pass('reduced motion scrolls straight past the hero, never gated')
+    : fail(`reduced motion was gated (gated=${rmGated.seen}, scrollY=${rmGated.y})`);
+}
 
 // The prompt stage has to survive into the still hero: the beat that narrates
 // it, and the bar itself with the request already typed in.
