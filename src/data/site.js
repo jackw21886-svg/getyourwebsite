@@ -163,3 +163,20 @@ export const TIERS = [
 
 export const PRICING_DISCLAIMER =
   'Example pricing. Every business is different — send an inquiry and we’ll reply with a personal quote after we review it.';
+
+/**
+ * Which typeface the headings use. Body and mono are unaffected.
+ *
+ *   'outfit'  — the current one, loaded from Google Fonts with the others
+ *   'clash'   — Clash Display, self-hosted (Fontshare, ITF Free Font License)
+ *   'cabinet' — Cabinet Grotesk, self-hosted (Fontshare, ITF Free Font License)
+ *   'sora'    — Sora, self-hosted (Google Fonts, SIL Open Font License 1.1)
+ *
+ * The three alternatives are variable fonts sitting in `public/fonts/`, all
+ * under 45KB. Changing this line is the whole switch: BaseLayout preloads the
+ * right file and points `--font-display` at it, and every heading follows.
+ * Whichever is picked keeps Outfit behind it in the stack.
+ *
+ * Run `node tools/font-compare.mjs` to see them side by side.
+ */
+export const HEADING_FONT = 'outfit';

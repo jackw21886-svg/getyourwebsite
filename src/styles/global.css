@@ -16,6 +16,42 @@
 
 /* ── 1. Tokens ─────────────────────────────────────────────────────────── */
 
+/* Self-hosted heading faces ------------------------------------------------
+   Declared here, selected in src/data/site.js (HEADING_FONT). A @font-face is
+   lazy: the browser downloads a face only when something actually uses it, so
+   having all three declared costs nothing until one is switched on.
+
+   Licences, both of which permit self-hosting for commercial use:
+     Clash Display, Cabinet Grotesk — ITF Free Font License (Fontshare)
+     Sora — SIL Open Font License 1.1 (Google Fonts)
+
+   These are variable fonts, so the weight range covers every heading weight
+   from one file. font-display: swap means a slow font never blocks the text. */
+
+@font-face {
+  font-family: 'Clash Display';
+  src: url('/fonts/ClashDisplay-Variable.woff2') format('woff2');
+  font-weight: 200 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Cabinet Grotesk';
+  src: url('/fonts/CabinetGrotesk-Variable.woff2') format('woff2');
+  font-weight: 100 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Sora';
+  src: url('/fonts/Sora-Variable.woff2') format('woff2');
+  font-weight: 400 800;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   /* Brand palette — white, black, silver and gold only. Nothing else.
      Keep it that way; the restraint is the whole look. */

@@ -9,6 +9,21 @@ import '../styles/global.css';
 import Nav from '../components/Nav.astro';
 import Footer from '../components/Footer.astro';
 import { url } from '../data/url.js';
+import { HEADING_FONT } from '../data/site.js';
+
+/**
+ * The self-hosted heading faces. See HEADING_FONT in src/data/site.js — that
+ * one line is the switch; nothing here needs editing to change fonts.
+ *
+ * Each is a variable font, so one file covers every weight the headings use.
+ */
+const HEADING_FACES = {
+  clash: { family: 'Clash Display', file: 'ClashDisplay-Variable.woff2' },
+  cabinet: { family: 'Cabinet Grotesk', file: 'CabinetGrotesk-Variable.woff2' },
+  sora: { family: 'Sora', file: 'Sora-Variable.woff2' },
+};
+
+const headingFace = HEADING_FACES[HEADING_FONT];
 
 interface Props {
   title: string;
@@ -75,6 +90,28 @@ const FONT_CSS =
       onload="this.media='all'; this.onload=null;"
     />
     <noscript><link rel="stylesheet" href={FONT_CSS} /></noscript>
+
+    <!-- A self-hosted heading face, if one is selected. Preloaded because it
+         is on the critical path for the largest text on the page and comes
+         from our own origin, so there's no DNS or TLS handshake to wait on —
+         and the @font-face in global.css carries font-display: swap, so the
+         page still paints in the fallback if it's slow. -->
+    {
+      headingFace && (
+        <>
+          <link
+            rel="preload"
+            as="font"
+            type="font/woff2"
+            crossorigin
+            href={url(`/fonts/${headingFace.file}`)}
+          />
+          <style
+            set:html={`:root{--font-display:'${headingFace.family}','Outfit',system-ui,-apple-system,sans-serif}`}
+          />
+        </>
+      )
+    }
 
     <!-- Swap .no-js for .js before first paint so [data-reveal] elements are
          hidden only when JS can actually reveal them again. -->
