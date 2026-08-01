@@ -18,6 +18,13 @@ function init() {
   const targets = document.querySelectorAll('[data-reveal]');
   if (!targets.length) return;
 
+  // Anything marked, or inside something marked, [data-reveal-now] skips the
+  // animation entirely. For a page that is mostly one or two big blocks there
+  // is nothing to stagger, and animating them in only creates a window where a
+  // fast scroller can arrive before they land.
+  document.querySelectorAll('[data-reveal-now] [data-reveal], [data-reveal][data-reveal-now]')
+    .forEach((el) => el.classList.add('is-visible'));
+
   // Reduced motion, or a browser without IntersectionObserver: show everything
   // immediately rather than animating it.
   if (REDUCED.matches || !('IntersectionObserver' in window)) {
@@ -40,8 +47,14 @@ function init() {
         observer.unobserve(entry.target);
       });
     },
-    // Fire slightly before the element reaches the bottom of the viewport.
-    { rootMargin: '0px 0px -10% 0px', threshold: 0.05 }
+    // Fire BEFORE the element reaches the viewport, not after.
+    //
+    // This margin used to be -10%, which held the reveal back until the element
+    // was a tenth of a screen inside the fold. That looks good when you scroll
+    // at a reading pace and works against you when someone flicks: they can
+    // outrun the observer and land on content that hasn't been told to appear
+    // yet. A positive bottom margin gives it a head start instead.
+    { rootMargin: '0px 0px 14% 0px', threshold: 0.02 }
   );
 
   targets.forEach((el) => observer.observe(el));

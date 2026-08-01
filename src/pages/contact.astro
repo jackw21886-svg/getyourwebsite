@@ -31,7 +31,10 @@ const keyIsSet = WEB3FORMS_KEY && !WEB3FORMS_KEY.startsWith('REPLACE_WITH');
     </div>
   </section>
 
-  <section class="section">
+  <!-- data-reveal-now: this section is two big blocks and nothing else, so
+       there is no stagger to be had from animating them in — only a window in
+       which a fast scroller can arrive before they land. See reveal.js. -->
+  <section class="section" data-reveal-now>
     <div class="shell contact">
       <!-- Side rail -->
       <aside class="contact__aside" data-reveal>

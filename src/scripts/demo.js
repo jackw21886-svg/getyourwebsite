@@ -22,8 +22,11 @@ if (root) init(root);
 
 function seed() {
   return {
-    tab: 'mock-site',
+    tab: 'explore',
     businessName: "Rosa's Bakery",
+    // The Assets library starts empty, which is the state the real Explore tab
+    // has a distinct recommendation for ("Upload your first photos").
+    assets: [],
     mock: { placeId: 'demo-rosas-bakery', businessName: "Rosa's Bakery", createdAt: '2025-03-04' },
     site: {
       businessName: "Rosa's Bakery",
@@ -234,7 +237,23 @@ function init(root) {
 
   const el = {
     tabs: $$('[data-tab]'),
-    panels: { 'mock-site': $('[data-panel="mock-site"]'), 'real-site': $('[data-panel="real-site"]') },
+    panels: Object.fromEntries(
+      $$('[data-panel]').map((p) => [p.dataset.panel, p])
+    ),
+    crumb: $('[data-crumb]'),
+    burger: $('[data-burger]'),
+    portal: $('[data-portal]'),
+    exploreSummary: $('[data-explore-summary]'),
+    kpiStatus: $('[data-kpi-status]'),
+    kpiStatusTrend: $('[data-kpi-status-trend]'),
+    kpiVersions: $('[data-kpi-versions]'),
+    kpiVersionsTrend: $('[data-kpi-versions-trend]'),
+    kpiAssets: $('[data-kpi-assets]'),
+    kpiAssetsTrend: $('[data-kpi-assets-trend]'),
+    recommended: $('[data-recommended]'),
+    vtree: $('[data-vtree]'),
+    assets: $('[data-assets]'),
+    assetsEmpty: $('[data-assets-empty]'),
     versions: $('[data-versions]'),
     success: $('[data-success]'),
     latestVersion: $('[data-latest-version]'),
@@ -277,10 +296,150 @@ function init(root) {
 
   // ── Rendering ────────────────────────────────────────────────────────────
 
+  const TAB_LABELS = {
+    explore: 'Explore',
+    'real-site': 'My website',
+    'version-tree': 'Version tree',
+    'mock-site': 'Free preview',
+    assets: 'Assets',
+  };
+
   function renderTabs() {
-    el.tabs.forEach((btn) => btn.classList.toggle('active', btn.dataset.tab === state.tab));
+    // Only the sidebar buttons carry the active state — the Explore quick-action
+    // tiles also have data-tab and must not light up as nav.
+    el.tabs.forEach((btn) => {
+      if (btn.classList.contains('client-nav-tab')) {
+        btn.classList.toggle('active', btn.dataset.tab === state.tab);
+      }
+    });
     Object.entries(el.panels).forEach(([id, panel]) => {
       panel.hidden = id !== state.tab;
+    });
+    el.crumb.textContent = TAB_LABELS[state.tab] || 'Portal';
+  }
+
+  /**
+   * The Explore dashboard.
+   *
+   * The three cards and the recommendation list are derived the same way the
+   * real ExploreTab does it: status and version count come from the site,
+   * the image count from the asset library, and the recommendations are chosen
+   * by those same conditions rather than being a fixed list.
+   */
+  function renderExplore() {
+    const site = state.site;
+    const versions = site.versions.length;
+    const assets = state.assets.length;
+    const ready = site.viewStatus === 'ready';
+
+    el.exploreSummary.textContent = ready
+      ? `Your website is ready on version ${site.versionNumber}. Jump into changes, images, or your free preview.`
+      : 'Welcome to your client portal. Check back as we build your website and preview.';
+
+    el.kpiStatus.textContent = ready ? 'Ready' : 'Not started';
+    el.kpiStatusTrend.textContent = site.approvedAt
+      ? `Approved ${fmtDate(site.approvedAt)}`
+      : 'No approval yet';
+    el.kpiVersions.textContent = String(versions);
+    el.kpiVersionsTrend.textContent = versions
+      ? `Latest v${site.versionNumber}`
+      : 'No prior versions';
+    el.kpiAssets.textContent = String(assets);
+    el.kpiAssetsTrend.textContent = assets ? `${assets} public` : 'No photos uploaded';
+
+    const recommended = [
+      {
+        title: 'Request website changes',
+        detail: 'Click elements on your live site and tell us what to update.',
+        cta: 'Open My website',
+        tab: 'real-site',
+      },
+      {
+        title: 'Review your free preview',
+        detail: `Finished ${fmtDate(state.mock.createdAt)}. Open it anytime.`,
+        cta: 'Open preview',
+        tab: 'mock-site',
+      },
+      assets === 0
+        ? {
+            title: 'Upload your first photos',
+            detail: 'Build a library of images you can attach to website placeholders.',
+            cta: 'Go to Assets',
+            tab: 'assets',
+          }
+        : {
+            title: 'Browse your image library',
+            detail: `${assets} image${assets === 1 ? '' : 's'} ready for your site.`,
+            cta: 'Open Assets',
+            tab: 'assets',
+          },
+    ];
+
+    el.recommended.innerHTML = '';
+    recommended.forEach((item) => {
+      const li = document.createElement('li');
+      li.className = 'explore-recommended-row';
+      li.innerHTML = `
+        <span class="explore-recommended-mark" aria-hidden="true"></span>
+        <div class="explore-recommended-copy">
+          <div class="explore-recommended-title"></div>
+          <div class="explore-recommended-detail"></div>
+        </div>
+        <button type="button" class="client-btn-soft" data-tab="${item.tab}"></button>`;
+      li.querySelector('.explore-recommended-title').textContent = item.title;
+      li.querySelector('.explore-recommended-detail').textContent = item.detail;
+      li.querySelector('button').textContent = item.cta;
+      el.recommended.appendChild(li);
+    });
+  }
+
+  function renderVersionTree() {
+    el.vtree.innerHTML = '';
+    // Newest first, same order the version list uses.
+    state.site.versions.forEach((v) => {
+      const isCurrent = v.versionNumber === state.site.versionNumber;
+      const li = document.createElement('li');
+      li.className = `vtree-node${isCurrent ? ' is-current' : ''}`;
+      li.innerHTML = `
+        <span class="vtree-dot" aria-hidden="true"></span>
+        <div class="vtree-body">
+          <div class="vtree-title"></div>
+          <div class="vtree-meta"></div>
+        </div>
+        ${isCurrent ? '<span class="vtree-badge">Current</span>' : ''}`;
+      li.querySelector('.vtree-title').textContent = `Version ${v.versionNumber}`;
+      li.querySelector('.vtree-meta').textContent =
+        v.versionNumber === 1
+          ? `Approved ${fmtDate(v.approvedAt)} · first build`
+          : `Approved ${fmtDate(v.approvedAt)} · from version ${v.versionNumber - 1}`;
+      el.vtree.appendChild(li);
+    });
+  }
+
+  const SAMPLE_ASSETS = [
+    'Sourdough loaves',
+    'Shopfront morning',
+    'Counter display',
+    'Cinnamon buns',
+  ];
+
+  function renderAssets() {
+    const has = state.assets.length > 0;
+    el.assetsEmpty.hidden = has;
+    el.assets.hidden = !has;
+    el.assets.innerHTML = '';
+    state.assets.forEach((name, i) => {
+      const li = document.createElement('li');
+      li.className = 'assets-card';
+      const img = document.createElement('img');
+      img.src = `https://loremflickr.com/320/240/bakery?lock=${i + 21}`;
+      img.alt = '';
+      img.loading = 'lazy';
+      const span = document.createElement('span');
+      span.className = 'assets-card__name';
+      span.textContent = name;
+      li.append(img, span);
+      el.assets.appendChild(li);
     });
   }
 
@@ -480,17 +639,40 @@ function init(root) {
 
   // ── Events ───────────────────────────────────────────────────────────────
 
-  el.tabs.forEach((btn) =>
-    btn.addEventListener('click', () => {
-      state.tab = btn.dataset.tab;
-      el.success.hidden = true;
-      renderTabs();
-    })
-  );
-
   root.addEventListener('click', (e) => {
     const t = e.target.closest('button');
     if (!t) return;
+
+    // Delegated, not bound per button: the Recommended-actions buttons are
+    // rendered after init and carry data-tab too, so binding up front would
+    // miss them and they'd do nothing.
+    if (t.dataset.tab) {
+      state.tab = t.dataset.tab;
+      el.success.hidden = true;
+      el.portal.classList.remove('is-nav-open');
+      el.burger.setAttribute('aria-expanded', 'false');
+      renderTabs();
+      el.panels[state.tab]?.scrollIntoView?.({ block: 'nearest' });
+      return;
+    }
+
+    if (t.hasAttribute('data-burger')) {
+      const open = el.portal.classList.toggle('is-nav-open');
+      t.setAttribute('aria-expanded', String(open));
+      return;
+    }
+
+    // The real Assets tab uploads from your computer. There's no backend here,
+    // so this drops in a few named samples to show what a filled library looks
+    // like — and it's called out in the honesty list on the page.
+    if (t.hasAttribute('data-add-asset')) {
+      if (state.assets.length < SAMPLE_ASSETS.length) {
+        state.assets = SAMPLE_ASSETS.slice(0, state.assets.length + 2);
+        renderAssets();
+        renderExplore();
+      }
+      return;
+    }
 
     // "Check again" — the real button re-fetches; here it just blinks.
     if (t.dataset.check) {
@@ -546,6 +728,9 @@ function init(root) {
       el.success.hidden = true;
       renderTabs();
       renderSite();
+      renderExplore();
+      renderVersionTree();
+      renderAssets();
       renderLog();
       return;
     }
@@ -602,5 +787,8 @@ function init(root) {
 
   renderTabs();
   renderSite();
+  renderExplore();
+  renderVersionTree();
+  renderAssets();
   renderLog();
 }

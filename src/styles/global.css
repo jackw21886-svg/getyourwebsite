@@ -87,6 +87,11 @@
      BaseLayout overrides this alongside --font-display when a self-hosted face
      is selected, so switching fonts carries its own tracking with it. */
   --h-track: -0.035em;
+  /* Word spacing for headings, paired with --h-track. Tightening the letters
+     also tightens the gaps between words, and past a point a display line stops
+     reading as words at all. This buys the gaps back without loosening the
+     letterforms. Set per face alongside --h-track. */
+  --h-word: normal;
   --font-body: 'Work Sans', system-ui, -apple-system, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', monospace;
 
@@ -195,6 +200,7 @@ h4 {
   font-weight: 600;
   line-height: 1.06;
   letter-spacing: var(--h-track);
+  word-spacing: var(--h-word);
   text-wrap: balance;
 }
 

@@ -119,15 +119,20 @@ it. Each face can also carry its own `track`, which overrides `--h-track`: a
 wider face has to be set tighter to hold the same line counts, and that belongs
 to the face rather than to the layout.
 
+Two tokens travel with the face: `--h-track` and `--h-word`. They are a pair
+and have to be tuned together — opening the word gaps widens every line, so the
+letters have to go tighter to pay for it. Clash Display runs at -0.055em with
+0.08em of word spacing.
+
 **If you change the heading font, run `npm run verify:wraps`.** Swapping the
 face changes the width of every heading on the site, so "does it still look
 right" is a question about forty headings, not the one you happened to look at.
 It counts the line boxes for each and flags orphans — a line much shorter than
-the rest — at desktop and mobile. Clash Display needed three adjustments to
-match Outfit's line counts, all recorded in the CSS next to the values:
-`--h-track` to -0.045em, the final CTA heading down from 3.4rem, and
-`--t-display`'s mobile end down so "Websites that are" stops breaking across
-two lines and orphaning "are".
+the rest, anywhere in the heading — at desktop and mobile. Clash Display needed
+four adjustments to match Outfit's line counts, all recorded in the CSS next to
+the values: `--h-track` to -0.055em, `--t-h3` down from 1.6rem, the final CTA
+heading down from 3.4rem, and `--t-display`'s mobile end down so "Websites that
+are" stops breaking across two lines and orphaning "are".
 
 Sections alternate: `.section` for white, `.section--dark` for black. Add
 `.has-stars` for the star texture and `.has-glow` for the gold halo.
@@ -258,6 +263,18 @@ starts flashing past again.
 
 ---
 
+## Analytics
+
+Off by default. Set `GOATCOUNTER_ID` in `src/data/site.js` to your GoatCounter
+site code and the tag appears; leave it empty and no script is emitted at all,
+which is why an unset placeholder costs nothing.
+
+GoatCounter rather than Plausible or Google Analytics: no cookies, so no consent
+banner, nothing personal stored, and roughly 3KB. The tag is `defer`red, so it
+can't block a paint or add to Total Blocking Time.
+
+---
+
 ## Deploying
 
 The site is static, so all three free hosts work. Two environment variables
@@ -346,6 +363,7 @@ npm run verify:pacing    # flick-scroll the hero in 3s; every line readable ≥0
 npm run verify:contrast  # text contrast under the moving ambient gradients, and
                          # the typed request over the prompt bar's own backdrop
 npm run verify:wraps     # how every heading wraps at desktop and mobile
+npm run verify:voids     # scroll-reveal never leaves a fast scroller a blank screen
 npm run shots:ambient    # screenshots of the dark sections, hover and reduced motion
 ```
 
@@ -391,6 +409,7 @@ Search the project for `[EDIT]` to find them all. In priority order:
 | 6 | **Team photo** — drop it at `public/team.webp`, then swap the placeholder for an `<img>` | `src/pages/why-us.astro` and `src/pages/index.astro` |
 | 7 | **A real statistic with a source**, if you want one on Benefits | `src/pages/benefits.astro`, the `.stat-slot` block |
 | 8 | **Custom domain** when you buy one | see "Deploying" above |
+| 9 | **GoatCounter site code**, if you want visitor stats | `GOATCOUNTER_ID` in `src/data/site.js` |
 
 ---
 
@@ -400,7 +419,8 @@ Search the project for `[EDIT]` to find them all. In priority order:
   a random image per keyword. They occasionally return something odd. When you
   have real client photos, host them in `public/` and swap the `src` attributes.
 - **The demo sandbox mirrors our client app** (`GetYourWebsiteAdmin`,
-  `development` branch, `client/`). If that app's screens change, update
+  `development` branch, the **`client/`** workspace — not `frontend/`, which is
+  the staff admin app). If that app's screens change, update
   `src/components/DemoSandbox.astro` and `src/scripts/demo.js` to match — the
   whole value of that page is that it's honest.
 - **There is no approve button in the demo** because there isn't one in the real

@@ -12,6 +12,7 @@
     "verify:pacing": "node tools/pacing.mjs",
     "verify:contrast": "node tools/contrast.mjs",
     "verify:wraps": "node tools/wraps.mjs",
+    "verify:voids": "node tools/voids.mjs",
     "shots:ambient": "node tools/ambient-shots.mjs"
   },
   "dependencies": {

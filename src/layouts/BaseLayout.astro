@@ -9,7 +9,7 @@ import '../styles/global.css';
 import Nav from '../components/Nav.astro';
 import Footer from '../components/Footer.astro';
 import { url } from '../data/url.js';
-import { HEADING_FONT } from '../data/site.js';
+import { HEADING_FONT, GOATCOUNTER_ID } from '../data/site.js';
 
 /**
  * The self-hosted heading faces. See HEADING_FONT in src/data/site.js — that
@@ -25,7 +25,13 @@ const HEADING_FACES = {
   clash: {
     family: 'Clash Display',
     file: 'ClashDisplay-Variable.woff2',
-    track: '-0.045em',
+    // These two are a pair and have to be tuned together. Opening the word
+    // gaps widens every line, which on its own pushed the pricing and Why Us
+    // H1s back to three lines — so the letters go tighter to pay for it.
+    // -0.055em with 0.08em holds both at two lines and reads as words rather
+    // than one long run. tools/wraps.mjs checks the line counts.
+    track: '-0.055em',
+    word: '0.08em',
   },
   cabinet: { family: 'Cabinet Grotesk', file: 'CabinetGrotesk-Variable.woff2' },
   sora: { family: 'Sora', file: 'Sora-Variable.woff2' },
@@ -123,10 +129,24 @@ const FONT_CSS =
             set:html={
               `html:root{--font-display:'${headingFace.family}','Outfit',system-ui,-apple-system,sans-serif` +
               (headingFace.track ? `;--h-track:${headingFace.track}` : '') +
+              (headingFace.word ? `;--h-word:${headingFace.word}` : '') +
               `}`
             }
           />
         </>
+      )
+    }
+
+    <!-- Analytics, only if a site code is set. Emitting the tag with an empty
+         code would request a dead endpoint on every page load and cost a
+         request for nothing, so an unset placeholder ships no script at all. -->
+    {
+      GOATCOUNTER_ID && (
+        <script
+          defer
+          data-goatcounter={`https://${GOATCOUNTER_ID}.goatcounter.com/count`}
+          src="//gc.zgo.at/count.js"
+        />
       )
     }
 

@@ -180,3 +180,17 @@ export const PRICING_DISCLAIMER =
  * Run `node tools/font-compare.mjs` to see them side by side.
  */
 export const HEADING_FONT = 'clash';
+
+/**
+ * GoatCounter site code, for privacy-friendly visitor counts.
+ *
+ * [EDIT] Sign up free at https://www.goatcounter.com and put your site code
+ * here — just the code, not the full URL. For `rosas.goatcounter.com` that's
+ * `rosas`. Leave it empty and no analytics script is emitted at all.
+ *
+ * GoatCounter over Plausible: no cookies, no consent banner needed, nothing
+ * personal stored, and the script is about 3KB. It's free for non-commercial
+ * use and cheap otherwise. The tag is `defer`red so it can never block a paint
+ * or add to Total Blocking Time.
+ */
+export const GOATCOUNTER_ID = '';
