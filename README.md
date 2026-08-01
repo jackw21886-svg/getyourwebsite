@@ -109,8 +109,25 @@ that exist purely for contrast:
 Every pairing meets WCAG AA. **Never put plain `--gold` text on white** — use
 `--gold-deep`.
 
-Type is Outfit for headings, Work Sans for body and JetBrains Mono for labels
-and figures, all from Google Fonts.
+Type is Clash Display for headings, Work Sans for body and JetBrains Mono for
+labels and figures. The heading face is self-hosted from `public/fonts/`; the
+other two come from Google Fonts.
+
+`HEADING_FONT` in `src/data/site.js` is the switch — `clash`, `cabinet`, `sora`
+or `outfit`. BaseLayout preloads the right file and points `--font-display` at
+it. Each face can also carry its own `track`, which overrides `--h-track`: a
+wider face has to be set tighter to hold the same line counts, and that belongs
+to the face rather than to the layout.
+
+**If you change the heading font, run `npm run verify:wraps`.** Swapping the
+face changes the width of every heading on the site, so "does it still look
+right" is a question about forty headings, not the one you happened to look at.
+It counts the line boxes for each and flags orphans — a line much shorter than
+the rest — at desktop and mobile. Clash Display needed three adjustments to
+match Outfit's line counts, all recorded in the CSS next to the values:
+`--h-track` to -0.045em, the final CTA heading down from 3.4rem, and
+`--t-display`'s mobile end down so "Websites that are" stops breaking across
+two lines and orphaning "are".
 
 Sections alternate: `.section` for white, `.section--dark` for black. Add
 `.has-stars` for the star texture and `.has-glow` for the gold halo.
@@ -328,6 +345,7 @@ npm run verify:pacing    # flick-scroll the hero in 3s; every line readable ≥0
                          # and the request finishes typing and rests before it sends
 npm run verify:contrast  # text contrast under the moving ambient gradients, and
                          # the typed request over the prompt bar's own backdrop
+npm run verify:wraps     # how every heading wraps at desktop and mobile
 npm run shots:ambient    # screenshots of the dark sections, hover and reduced motion
 ```
 

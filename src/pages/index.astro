@@ -325,7 +325,12 @@ import { url } from '../data/url.js';
   /* Final CTA ------------------------------------------------------------ */
 
   .cta-band__title {
-    font-size: clamp(2rem, 1.4rem + 2.8vw, 3.4rem);
+    /* Sized so this sentence holds two lines at desktop and three on a phone.
+       It sits in .shell-narrow (780px), which is the tightest measure any
+       heading this large has to live in, so it's the first thing to break when
+       the heading face gets wider — it ran to three and four lines
+       respectively before this came down from 3.4rem. tools/wraps.mjs. */
+    font-size: clamp(1.85rem, 1.25rem + 2.8vw, 3.1rem);
     margin-bottom: var(--s-4);
   }
 

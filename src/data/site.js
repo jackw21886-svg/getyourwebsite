@@ -179,4 +179,4 @@ export const PRICING_DISCLAIMER =
  *
  * Run `node tools/font-compare.mjs` to see them side by side.
  */
-export const HEADING_FONT = 'outfit';
+export const HEADING_FONT = 'clash';

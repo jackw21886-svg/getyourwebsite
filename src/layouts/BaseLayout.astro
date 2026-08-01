@@ -18,7 +18,15 @@ import { HEADING_FONT } from '../data/site.js';
  * Each is a variable font, so one file covers every weight the headings use.
  */
 const HEADING_FACES = {
-  clash: { family: 'Clash Display', file: 'ClashDisplay-Variable.woff2' },
+  // `track` overrides --h-track. A wider face has to be set tighter to hold the
+  // same line counts: Clash Display at the stock -0.035em pushed the pricing
+  // and Why Us H1s from two lines to three, and -0.045em brings both back at
+  // full size, so nothing had to shrink. Measured with tools/wraps.mjs.
+  clash: {
+    family: 'Clash Display',
+    file: 'ClashDisplay-Variable.woff2',
+    track: '-0.045em',
+  },
   cabinet: { family: 'Cabinet Grotesk', file: 'CabinetGrotesk-Variable.woff2' },
   sora: { family: 'Sora', file: 'Sora-Variable.woff2' },
 };
@@ -106,8 +114,17 @@ const FONT_CSS =
             crossorigin
             href={url(`/fonts/${headingFace.file}`)}
           />
+          {/* html:root, not :root. Astro's stylesheet link lands after this
+              inline block, so at equal specificity global.css would win the
+              cascade and the override would silently do nothing — the page
+              ships the preload and the declaration and still renders Outfit.
+              The extra element selector outranks it wherever it sits. */}
           <style
-            set:html={`:root{--font-display:'${headingFace.family}','Outfit',system-ui,-apple-system,sans-serif}`}
+            set:html={
+              `html:root{--font-display:'${headingFace.family}','Outfit',system-ui,-apple-system,sans-serif` +
+              (headingFace.track ? `;--h-track:${headingFace.track}` : '') +
+              `}`
+            }
           />
         </>
       )

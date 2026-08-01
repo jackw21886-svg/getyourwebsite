@@ -306,9 +306,14 @@ upWorked === true
   ? pass('scrolling up still works while gated')
   : fail(`upward scroll was blocked while gated (${upWorked})`);
 
-// MIN_PLAY_S is 6.9s and the gate doubles the rate, so a hold that starts from
-// the top should land near 3.45s of animation time.
-gate.held > 0 && gate.held < 4.2
+// GATE_MAX_S budgets 3.5s, and measured runs land between 3.3s and 4.5s.
+//
+// The spread is the headless frame rate: progress moves in ~0.1s steps, and the
+// boost is capped at 2x, so frames lost to a slow tick can't be made back
+// inside the budget. The bound is set to tell apart the thing that actually
+// matters — a hold at half MIN_PLAY_S rather than the full 6.9s — instead of
+// sitting on the mean, where it just fails one run in three.
+gate.held > 0 && gate.held < 5
   ? pass(`hold capped at ${gate.held.toFixed(2)}s of playback, not the full 6.9s`)
   : fail(`gate held for ${gate.held.toFixed(2)}s of playback`);
 

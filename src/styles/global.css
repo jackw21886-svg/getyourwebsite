@@ -82,15 +82,24 @@
   /* Type — Outfit for headings, Work Sans for body, JetBrains Mono for
      labels, stats and anything that should read as "data". */
   --font-display: 'Outfit', system-ui, -apple-system, sans-serif;
+  /* Heading tracking. A token because it belongs to the face, not the layout:
+     a wider display face needs to be set tighter to hold the same line counts.
+     BaseLayout overrides this alongside --font-display when a self-hosted face
+     is selected, so switching fonts carries its own tracking with it. */
+  --h-track: -0.035em;
   --font-body: 'Work Sans', system-ui, -apple-system, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', monospace;
 
   /* Fluid type scale. clamp(min, preferred, max) so it grows with the
      viewport without a single media query. */
-  --t-display: clamp(2.75rem, 1.6rem + 5.6vw, 6rem);
+  /* The hero headline. The mobile end came down (2.75rem/1.6rem -> 2.6rem/1.3rem)
+     because at the old size Clash Display broke "Websites that are" across two
+     lines on a 390px screen, orphaning "are" on a line of its own. Desktop is
+     untouched: the preferred term still clears the 6rem cap well before 1440px. */
+  --t-display: clamp(2.6rem, 1.3rem + 5.6vw, 6rem);
   --t-h1: clamp(2.25rem, 1.5rem + 3.4vw, 4rem);
   --t-h2: clamp(1.75rem, 1.3rem + 2.1vw, 2.85rem);
-  --t-h3: clamp(1.25rem, 1.1rem + 0.8vw, 1.6rem);
+  --t-h3: clamp(1.25rem, 1.1rem + 0.8vw, 1.5rem);
   --t-lead: clamp(1.05rem, 0.99rem + 0.35vw, 1.3rem);
   --t-body: 1rem;
   --t-small: 0.9rem;
@@ -185,7 +194,7 @@ h4 {
   font-family: var(--font-display);
   font-weight: 600;
   line-height: 1.06;
-  letter-spacing: -0.035em;
+  letter-spacing: var(--h-track);
   text-wrap: balance;
 }
 
