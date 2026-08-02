@@ -13,7 +13,8 @@
     "verify:contrast": "node tools/contrast.mjs",
     "verify:wraps": "node tools/wraps.mjs",
     "verify:voids": "node tools/voids.mjs",
-    "shots:ambient": "node tools/ambient-shots.mjs"
+    "shots:ambient": "node tools/ambient-shots.mjs",
+    "shots:teaser": "node tools/teaser.mjs"
   },
   "dependencies": {
     "astro": "^5.16.2"

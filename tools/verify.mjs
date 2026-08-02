@@ -11,10 +11,12 @@
  *   4  the contact form validates and fails loudly when it can't send
  *   5  every button comes from the shared system
  *   6  the ambient dark-section layers behave
+ *   7  the static captures of the portal aren't from a previous design
  *
  * Needs a dev server on :4321.
  */
 import { chromium } from 'playwright';
+import sharp from 'sharp';
 
 const BASE = process.env.BASE ?? 'http://localhost:4321';
 const PAGES = ['/', '/work', '/demo', '/pricing', '/benefits', '/why-us', '/contact'];
@@ -585,6 +587,59 @@ paused.offscreen === 0 || paused.pausedOffscreen === paused.offscreen
         : `all ${paused.offscreen} offscreen dark sections are paused`
     )
   : fail(`${paused.offscreen - paused.pausedOffscreen} offscreen sections still animating`);
+
+// ── 7. Static captures of the portal ───────────────────────────────────────
+// The home page teaser is a picture of a component that lives in this repo, so
+// it can drift out of date without anything failing. It did: the portal was
+// redesigned from mint to gold and the teaser kept showing the old one.
+//
+// Hue is the tell. The old portal's accent was mint (#3dd6a5, hue ~160) and the
+// new one is our gold (#f5c24b, hue ~44), so a capture of the wrong era is
+// obvious from the pixels without needing to know anything about layout.
+//
+// Deliberately scoped to the portal captures only. Two of the client-site
+// screenshots are legitimately green — landscaping is foliage, dental is teal
+// branding — and a blanket "no green anywhere" rule would fail on both.
+console.log('\n[7] Portal captures are current');
+{
+  const PORTAL_SHOTS = ['public/shots/demo.webp'];
+
+  const hueCounts = async (file) => {
+    const { data, info } = await sharp(file).raw().toBuffer({ resolveWithObject: true });
+    let mint = 0;
+    let gold = 0;
+    for (let i = 0; i < data.length; i += info.channels * 7) {
+      const r = data[i];
+      const g = data[i + 1];
+      const b = data[i + 2];
+      const mx = Math.max(r, g, b);
+      const mn = Math.min(r, g, b);
+      // Skip near-black and near-grey: the portal is mostly both, and neither
+      // has a meaningful hue.
+      if (mx < 60 || mx - mn < 30) continue;
+      let h;
+      if (mx === r) h = 60 * ((((g - b) / (mx - mn)) % 6 + 6) % 6);
+      else if (mx === g) h = 60 * ((b - r) / (mx - mn) + 2);
+      else h = 60 * ((r - g) / (mx - mn) + 4);
+      if (h >= 120 && h <= 190) mint++;
+      if (h >= 30 && h <= 60) gold++;
+    }
+    return { mint, gold };
+  };
+
+  for (const file of PORTAL_SHOTS) {
+    const { mint, gold } = await hueCounts(file);
+    const line = `${file} — ${gold} gold px, ${mint} mint px`;
+    if (gold > 200 && gold > mint * 3) {
+      pass(`${line} (current gold portal)`);
+    } else {
+      fail(
+        `${line} — this looks like a capture of the pre-rebuild mint portal. ` +
+          `Regenerate it with \`npm run shots:teaser\`.`
+      );
+    }
+  }
+}
 
 console.log(`\n${failures === 0 ? 'ALL CHECKS PASSED' : `${failures} FAILURE(S)`}\n`);
 await browser.close();
