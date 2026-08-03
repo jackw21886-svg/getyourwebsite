@@ -736,6 +736,22 @@ function start() {
   let gateLeft = GATE_MAX_S;
 
   /**
+   * How long scroll input must be quiet before the gate lets go.
+   *
+   * Releasing the instant the timeline finishes means releasing mid-flick, and
+   * whatever the browser still has queued lands in one frame — the page jumps
+   * the boundary instead of resuming from it. Waiting for the flick to actually
+   * end costs a few frames nobody notices and removes the jump entirely.
+   */
+  const GATE_QUIET_MS = 130;
+
+  /** Downward scroll swallowed while gated, in px. Drives the catch-up urgency. */
+  let consumed = 0;
+  let lastInputAt = 0;
+  /** Timeline is done; waiting for input to go quiet before actually releasing. */
+  let pendingRelease = false;
+
+  /**
    * Progress at which the gate considers the sequence watched.
    *
    * Not 1.0. The timeline eases toward its target, so the last percent is an
@@ -780,15 +796,120 @@ function start() {
    * hand — none of them should hit an invisible wall.
    */
   function releaseGate() {
+    if (gateDone) return;
     gateDone = true;
     gated = false;
+    pendingRelease = false;
     // Back to the normal speed limit. Leaving the boost on would permanently
     // halve MIN_PLAY_S for the rest of the visit, so re-scrolling the hero
     // would play at double speed and the copy would stop being readable.
     boost = 1;
     gateLeft = GATE_MAX_S;
+    // Throw the swallowed delta away rather than applying it. It was input the
+    // visitor spent trying to leave; replaying it at the moment we let go is
+    // exactly the jump this is meant to prevent. The page resumes from rest and
+    // moves only on fresh input.
+    consumed = 0;
+    // Drop the interceptors in one go, permanently for this visit.
+    gateInput.abort();
     heroEl.classList.remove('is-gated');
   }
+
+  // ── Holding the scroll, rather than putting it back ──────────────────────
+  //
+  // The first version of this clamped window.scrollY in the render loop. That
+  // is always one frame late: the browser scrolls, paints the section below the
+  // hero, and only then gets moved back — which on video is the white Our Work
+  // band sliding up behind "Above and beyond." and then snapping away.
+  //
+  // So the scroll never happens in the first place. While the gate is up and
+  // the viewport is at the end of the pin, downward wheel, touch and key input
+  // is swallowed with preventDefault and fed into the catch-up urgency instead.
+  // The rAF clamp below stays, but only as a backstop for the one path that
+  // can't be intercepted this way: dragging the scrollbar itself.
+  //
+  // Upward input is never touched, at any point.
+  const gateInput = new AbortController();
+  const listen = (target, type, fn, opts) =>
+    target.addEventListener(type, fn, { ...opts, signal: gateInput.signal });
+
+  function swallow(px) {
+    consumed += px;
+    lastInputAt = performance.now();
+    ensureRunning();
+  }
+
+  /**
+   * Decide what to do with `delta` px of downward scroll.
+   *
+   * Returns true if the caller should preventDefault. Anything that still fits
+   * before the pin is let through untouched; the moment a gesture would carry
+   * past it, we take the gesture over — travel the remaining distance ourselves
+   * and swallow the rest.
+   *
+   * Only intercepting once already *at* the pin is not enough, and this is the
+   * subtle half of the bug: the last event before the wall is the one that
+   * jumps it. A 900px wheel tick arriving 450px short of the pin passed the
+   * "not there yet" test and scrolled the full 900 — measured overshoot of
+   * exactly 450px, which is one white band of Our Work.
+   */
+  function holdDown(delta) {
+    const maxY = pinEnd();
+    if (maxY === null) return false;
+    const room = maxY - window.scrollY;
+    if (delta <= room) return false; // fits; leave it alone
+    if (room > 0) window.scrollTo(0, maxY); // cover the last of the distance
+    swallow(delta - Math.max(0, room));
+    return true;
+  }
+
+  listen(
+    window,
+    'wheel',
+    (e) => {
+      if (gateDone || e.deltaY <= 0) return;
+      if (holdDown(e.deltaY)) e.preventDefault();
+    },
+    { passive: false }
+  );
+
+  let touchY = null;
+  listen(window, 'touchstart', (e) => { touchY = e.touches[0]?.clientY ?? null; }, { passive: true });
+  listen(
+    window,
+    'touchmove',
+    (e) => {
+      if (gateDone || touchY === null) return;
+      const y = e.touches[0]?.clientY ?? touchY;
+      // Finger moving up drags the content up, i.e. scrolls down.
+      const delta = touchY - y;
+      touchY = y;
+      if (delta <= 0) return;
+      if (holdDown(delta)) e.preventDefault();
+    },
+    { passive: false }
+  );
+
+  // Only the keys that scroll down, and never while someone is typing.
+  const DOWN_KEYS = new Set(['ArrowDown', 'PageDown', 'End', ' ', 'Spacebar']);
+  listen(
+    window,
+    'keydown',
+    (e) => {
+      if (gateDone || e.shiftKey || e.metaKey || e.ctrlKey || e.altKey) return;
+      if (!DOWN_KEYS.has(e.key)) return;
+      const t = e.target;
+      if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
+      // A key press has no delta of its own; value it at roughly what the
+      // browser would have scrolled, so held keys build urgency like a flick.
+      // End means "the very bottom", so it always has to be taken over.
+      // Chrome pages by the viewport less about 40px; measured at 860 for a
+      // 900px window, so 0.95 rather than a rounder-looking guess.
+      const delta = e.key === 'End' ? Infinity : window.innerHeight * 0.95;
+      if (holdDown(delta)) e.preventDefault();
+    },
+    { passive: false }
+  );
 
   window.addEventListener('hashchange', releaseGate);
   document.addEventListener('focusin', (e) => {
@@ -864,17 +985,24 @@ function start() {
     last = now;
     const smoothing = (rate) => 1 - Math.pow(1 - rate, dt * 60);
 
-    // Hold the viewport at the end of the pin while the sequence catches up.
-    // Done here rather than in a scroll handler on purpose: clamping once per
-    // frame settles trackpad momentum and keyboard paging the same way, with
-    // no competing writes to scroll position and so no rubber-banding.
+    // The backstop. Input interception above stops wheel, touch and keys before
+    // the browser ever scrolls; this catches the one path it can't — dragging
+    // the scrollbar, which produces no cancellable event. It should almost
+    // never fire, and when it does it is a frame late by definition.
     const maxY = gateDone ? null : pinEnd();
     if (maxY !== null) {
       const over = window.scrollY - maxY;
-      gated = over > 0;
+      // Gated means "the gate is up and we're at the wall", not "we overshot" —
+      // with interception working, `over` stays 0 and the old test never fired.
+      gated = over > -1;
       // The half-pixel deadband keeps sub-pixel scroll positions from
       // triggering a write every frame, which is what reads as jitter.
-      if (over > 0.5) window.scrollTo(0, maxY);
+      // Feed it into the same urgency signal the intercepted paths use, so a
+      // scrollbar drag builds catch-up pressure exactly like a flick does.
+      if (over > 0.5) {
+        window.scrollTo(0, maxY);
+        swallow(over);
+      }
       heroEl.classList.toggle('is-gated', gated);
     }
 
@@ -882,10 +1010,21 @@ function start() {
     // what remains of it. Once set it doesn't decay while the gate is on:
     // letting it fall back when the flick's momentum runs out would put the
     // worst case at the full MIN_PLAY_S, which is what this exists to avoid.
-    if (gated) {
+    //
+    // Swallowed scroll adds to it. Someone still pushing has said plainly that
+    // they want to move on, so the harder they push the sooner the sequence
+    // finishes — up to the same cap.
+    // `consumed > 0` is the condition, not `gated` alone. Sitting at the pin
+    // end is not the same as pushing against it: someone who scrolled down
+    // gently and stopped is watching, and speeding the sequence up for them
+    // would shorten every remaining beat. Only input we actually had to
+    // swallow — wheel, touch, key, or a scrollbar drag the clamp caught —
+    // counts as "let me out".
+    if (gated && consumed > 0) {
       gateLeft = Math.max(gateLeft - dt, 0.05);
       const needed = ((1 - shown) / gateLeft) * MIN_PLAY_S;
-      boost = Math.min(GATE_BOOST, Math.max(boost, needed));
+      const urge = 1 + Math.min(1, consumed / 1200) * (GATE_BOOST - 1);
+      boost = Math.min(GATE_BOOST, Math.max(boost, needed, urge));
     }
 
     const target = readProgress();
@@ -906,7 +1045,11 @@ function start() {
     const p = shown;
 
     // Played through once. The gate is spent for this visit.
-    if (!gateDone && p >= GATE_DONE_AT) releaseGate();
+    // Timeline done — but don't let go mid-flick. Arm the release, then wait
+    // for input to go quiet so nothing queued lands the instant we stop
+    // intercepting. Without this the page clears the boundary in one frame.
+    if (!gateDone && p >= GATE_DONE_AT) pendingRelease = true;
+    if (pendingRelease && now - lastInputAt >= GATE_QUIET_MS) releaseGate();
 
     const mSmooth = smoothing(0.07);
     mx += (mtx - mx) * mSmooth;

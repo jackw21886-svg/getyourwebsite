@@ -252,6 +252,36 @@ at that pace rather than skipping. The hold windows are sized against it, so
 every beat gets at least ~0.9s of full-opacity reading time even for someone
 who flicks the entire hero in one go.
 
+**The scroll gate.** While the sequence is unfinished, downward scrolling can't
+carry you past the end of the pin — otherwise a hard flick lands you in Our Work
+having never seen the prompt bar, the assembly or the launch. It is once per
+visit; after the hero has played through, scrolling behaves normally forever.
+
+It works by *preventing* the scroll, not correcting it. Wheel, touch and key
+input are intercepted with non-passive listeners and cancelled the moment a
+gesture would cross the pin, and the swallowed distance is fed into the
+catch-up boost so pushing harder finishes the sequence sooner. The rAF clamp is
+still there, but only as a backstop for dragging the scrollbar, which produces
+no cancellable event.
+
+The obvious-looking version — let it scroll, then put it back in the render
+loop — is wrong, and wrong in a way that a test reading the DOM in rAF cannot
+see: the browser paints the section below the hero and only then gets moved
+back, so the correction is always one frame late. On video that is a white band
+sliding up behind "Above and beyond." and then snapping away. `verify.mjs`
+measures it from the scroll event and from real screenshots of the fold for
+exactly that reason.
+
+Two smaller traps, both of which produced visible glitches:
+
+- The last event *before* the wall is the one that jumps it. Intercepting only
+  once already at the pin let a 900px wheel tick arriving 450px short scroll the
+  full 900. Deltas are clamped to the remaining room instead.
+- Releasing the moment the timeline finishes releases mid-flick, and whatever
+  the browser still has queued lands in one frame. The gate waits for input to
+  go quiet (`GATE_QUIET_MS`) and throws the swallowed delta away, so the page
+  resumes from rest.
+
 `MIN_PLAY_S` scales with the sequence, and this is the easiest thing to get
 wrong. It's 6.9s for 450vh of scroll. Add a stage without raising it in
 proportion and you haven't added anything — you've just sped every existing

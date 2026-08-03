@@ -199,129 +199,246 @@ for (const [beat, at, limit] of [
 // A hard flick must not carry you past the hero while the sequence is still
 // playing — that's how someone ends up in Our Work having never seen the
 // prompt bar, the assembly or the launch.
+//
+// The first version of this test read the DOM inside requestAnimationFrame and
+// passed while the bug was plainly visible on video. That is because the old
+// implementation let the browser scroll and then corrected it, and the
+// correction ran at the top of the render loop — so by the time any rAF
+// callback looked, the damage had been painted and undone. Two instruments
+// here, both of which see what that one couldn't:
+//
+//   the scroll event   fires when the browser actually scrolls, before any
+//                      correction, so overshoot can't be hidden
+//   real screenshots   the bottom strip of the viewport must stay hero-dark
+//                      while the gate is up; Our Work is white
 console.log('\n[2c] Hero scroll gate');
 
-// Each pass gets a fresh page. The gate is deliberately once-per-visit, and it
-// disarms itself for anyone who arrives already below the hero — so a reload
-// with a restored scroll position would quietly test nothing.
-const freshHero = async () => {
+/** Opens /demo-free page at the top with the gate instrumented. */
+async function freshGate() {
   const p = await ctx.newPage();
   await p.goto(`${BASE}/`, { waitUntil: 'networkidle' });
-  await p.waitForTimeout(1200);
+  await p.evaluate(() => document.fonts.ready);
+  await p.evaluate(() => {
+    document.documentElement.style.scrollBehavior = 'auto';
+    window.scrollTo(0, 0);
+    const hero = document.querySelector('[data-hero]');
+    const g = { maxOver: -1e9, released: false, releaseY: null, afterRelease: [] };
+    window.__gate = g;
+    const pinEnd = () => {
+      const r = hero.getBoundingClientRect();
+      return window.scrollY + r.bottom - window.innerHeight;
+    };
+    // Recorded from the scroll event, not from rAF: this is the browser telling
+    // us it moved, before anything gets a chance to move it back.
+    window.addEventListener(
+      'scroll',
+      () => {
+        if (!g.released) {
+          const over = window.scrollY - pinEnd();
+          if (over > g.maxOver) g.maxOver = over;
+        } else {
+          g.afterRelease.push(Math.round(window.scrollY));
+        }
+      },
+      { passive: true }
+    );
+    // Watch for the gate letting go, and snapshot the position at that instant.
+    const obs = new MutationObserver(() => {
+      if (!g.released && !hero.classList.contains('is-gated')) {
+        // Only count it as release once the gate has actually engaged at least
+        // once, otherwise the initial un-gated state trips this immediately.
+        if (g.everGated) {
+          g.released = true;
+          g.releaseY = Math.round(window.scrollY);
+        }
+      }
+      if (hero.classList.contains('is-gated')) g.everGated = true;
+    });
+    obs.observe(hero, { attributes: true, attributeFilter: ['class'] });
+  });
+  await p.waitForTimeout(700);
   return p;
+}
+
+const heroDarkBottom = async (p) => {
+  // Bottom 12 rows of the viewport. While the gate is up this is hero sky.
+  const png = await p.screenshot({ clip: { x: 0, y: 888, width: 1440, height: 12 } });
+  const { data, info } = await sharp(png).raw().toBuffer({ resolveWithObject: true });
+  let light = 0;
+  let n = 0;
+  for (let i = 0; i < data.length; i += info.channels * 5) {
+    const l = 0.2126 * data[i] + 0.7152 * data[i + 1] + 0.0722 * data[i + 2];
+    if (l > 120) light++;
+    n++;
+  }
+  return light / n;
 };
 
-// ── Pass A: a max-speed flick, uninterrupted ───────────────────────────────
-const flick = await freshHero();
-const gate = await flick.evaluate(async () => {
-  document.documentElement.style.scrollBehavior = 'auto';
-  const hero = document.querySelector('[data-hero]');
-  // The next real section, not hero.nextElementSibling — that's Astro's
-  // inlined <script>, which has no box and reports top: 0 forever.
-  const below = [...hero.parentElement.children].find(
-    (el) => el !== hero && el.tagName === 'SECTION'
+// ── wheel: a continuous, maximum-speed flick ───────────────────────────────
+{
+  const p = await freshGate();
+  let worstLight = 0;
+  let gatedSeen = false;
+
+  // Wheel in bursts rather than checking after every tick. Same flick, far
+  // fewer round trips to the page — the chatty version was slow enough that the
+  // execution context occasionally went away mid-run.
+  for (let burst = 0; burst < 16; burst++) {
+    for (let i = 0; i < 5; i++) await p.mouse.wheel(0, 900);
+    const isGated = await p.evaluate(() =>
+      document.querySelector('[data-hero]').classList.contains('is-gated')
+    );
+    if (isGated) {
+      gatedSeen = true;
+      // Only meaningful while the gate is up — after release the white section
+      // is supposed to arrive.
+      const light = await heroDarkBottom(p);
+      if (light > worstLight) worstLight = light;
+    }
+  }
+
+  const g = await p.evaluate(() => window.__gate);
+  gatedSeen ? pass('wheel: gate engages on a continuous flick') : fail('wheel: gate never engaged');
+  g.maxOver <= 1
+    ? pass(`wheel: scroll never passes the pin end (max overshoot ${Math.round(g.maxOver)}px)`)
+    : fail(`wheel: scroll passed the pin end by ${Math.round(g.maxOver)}px before being corrected`);
+  worstLight < 0.02
+    ? pass(`wheel: nothing below the hero is ever painted (${(worstLight * 100).toFixed(1)}% light pixels at the fold)`)
+    : fail(`wheel: post-hero content painted while gated — ${(worstLight * 100).toFixed(1)}% of the bottom strip was light`);
+
+  // Release must not dump stored momentum. Stop all input, wait for the quiet
+  // window to elapse and the gate to let go, then confirm the page stays put.
+  await p.waitForFunction(
+    () => !document.querySelector('[data-hero]').classList.contains('is-gated'),
+    null,
+    { timeout: 20000 }
   );
-  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-
-  window.scrollTo(0, 0);
-  await sleep(600);
-
-  // The worst case: ask for the very bottom of the document, every frame.
-  //
-  // The hold is accumulated in ANIMATION time, with the same 0.1s-per-frame
-  // clamp hero.js uses, not on a stopwatch. Headless software rendering runs
-  // this at a few frames a second, so wall time overstates every duration in
-  // the scene by roughly the same factor — a correct 3.45s hold measures ~5.8s
-  // on a stopwatch here and looks like a failure.
-  let leaked = 0;      // frames where content below the hero was on screen while gated
-  let gatedFrames = 0;
-  let held = 0;
-  let last = performance.now();
-  const t0 = last;
-
-  while (performance.now() - t0 < 25000) {
-    window.scrollTo(0, document.body.scrollHeight);
-    await new Promise((r) => requestAnimationFrame(r));
-
-    const now = performance.now();
-    const dt = Math.min((now - last) / 1000, 0.1);
-    last = now;
-
-    if (hero.classList.contains('is-gated')) {
-      gatedFrames++;
-      held += dt;
-      if (below && below.getBoundingClientRect().top < window.innerHeight - 1) leaked++;
-    } else if (gatedFrames > 0) {
-      break; // it let go
-    }
-  }
-
-  // Once it has played through, it must never gate again this visit.
-  window.scrollTo(0, 0);
-  await sleep(2500);
-  let reGated = false;
-  const t1 = performance.now();
-  while (performance.now() - t1 < 5000) {
-    window.scrollTo(0, document.body.scrollHeight);
-    await new Promise((r) => requestAnimationFrame(r));
-    if (hero.classList.contains('is-gated')) reGated = true;
-  }
-
-  return { gatedFrames, leaked, held: +held.toFixed(2), reGated };
-});
-await flick.close();
-
-// ── Pass B: scrolling up while gated ───────────────────────────────────────
-const upPage = await freshHero();
-const upWorked = await upPage.evaluate(async () => {
-  const hero = document.querySelector('[data-hero]');
-  // The site sets scroll-behavior: smooth, so a scrollTo animates over several
-  // frames. Measuring one frame later would read "barely moved" and report the
-  // gate as blocking upward scroll when it isn't.
-  document.documentElement.style.scrollBehavior = 'auto';
-  window.scrollTo(0, 0);
-  await new Promise((r) => setTimeout(r, 600));
-
-  for (let i = 0; i < 400; i++) {
-    window.scrollTo(0, document.body.scrollHeight);
-    await new Promise((r) => requestAnimationFrame(r));
-    if (hero.classList.contains('is-gated') && i > 6) {
-      const from = window.scrollY;
-      window.scrollTo(0, Math.max(0, from - 600));
+  const settle = await p.evaluate(async () => {
+    const ys = [];
+    for (let i = 0; i < 3; i++) {
       await new Promise((r) => requestAnimationFrame(r));
-      return window.scrollY < from - 200;
+      ys.push(Math.round(window.scrollY));
+    }
+    return ys;
+  });
+  const jump = Math.max(...settle) - Math.min(...settle);
+  jump <= 2
+    ? pass(`release: page stays at rest with no fresh input (moved ${jump}px over 3 frames)`)
+    : fail(`release: page jumped ${jump}px with no input — buffered momentum is being applied`);
+
+  await p.close();
+}
+
+// ── keyboard ───────────────────────────────────────────────────────────────
+// Tested by contract rather than by outcome. Headless Chrome will not scroll on
+// PageDown here even with the page focused and the event unprevented — the key
+// arrives, nothing moves — so measuring scroll position would only ever prove
+// something about the harness. What matters is the handler's decision: at the
+// pin end a downward key must be cancelled, and anywhere else it must not be.
+{
+  const p = await freshGate();
+  // Record the flag AFTER hero.js's listener has had its turn. Both are
+  // non-capturing on window, and listeners run in registration order, so this
+  // one — added later — sees the outcome.
+  await p.evaluate(() => {
+    window.__keys = [];
+    window.addEventListener('keydown', (e) => {
+      window.__keys.push({ key: e.key, prevented: e.defaultPrevented });
+    });
+  });
+
+  // Away from the pin, keys must pass straight through.
+  await p.evaluate(() => window.scrollTo(0, 0));
+  await p.waitForTimeout(300);
+  await p.keyboard.press('PageDown');
+
+  // At the pin, with the gate up, they must be swallowed.
+  await p.evaluate(() => {
+    const r = document.querySelector('[data-hero]').getBoundingClientRect();
+    window.scrollTo(0, window.scrollY + r.bottom - window.innerHeight);
+  });
+  await p.waitForTimeout(400);
+  const gatedNow = await p.evaluate(() =>
+    document.querySelector('[data-hero]').classList.contains('is-gated')
+  );
+  await p.keyboard.press('PageDown');
+  await p.keyboard.press('ArrowDown');
+  // Upward keys are never touched, wherever you are.
+  await p.keyboard.press('PageUp');
+  await p.keyboard.press('ArrowUp');
+  await p.waitForTimeout(200);
+
+  const keys = await p.evaluate(() => window.__keys);
+  const away = keys[0];
+  const atPin = keys.slice(1, 3);
+  const upward = keys.slice(3);
+
+  gatedNow ? pass('keyboard: gate is up at the pin end') : fail('keyboard: gate not engaged at the pin end');
+  away && !away.prevented
+    ? pass('keyboard: PageDown passes through while still inside the hero')
+    : fail('keyboard: PageDown was swallowed before the pin end');
+  atPin.length === 2 && atPin.every((k) => k.prevented)
+    ? pass('keyboard: PageDown and ArrowDown are swallowed at the pin end')
+    : fail(`keyboard: downward keys not swallowed — ${JSON.stringify(atPin)}`);
+  upward.length === 2 && upward.every((k) => !k.prevented)
+    ? pass('keyboard: PageUp and ArrowUp are never touched')
+    : fail(`keyboard: an upward key was swallowed — ${JSON.stringify(upward)}`);
+
+  await p.close();
+}
+
+// ── scrollbar (programmatic) — the backstop path ───────────────────────────
+// Dragging the scrollbar produces no cancellable event, so this one is caught
+// by the rAF clamp rather than prevented. It is allowed to overshoot for a
+// frame; what it must not do is get through.
+{
+  const p = await freshGate();
+  let escaped = false;
+  for (let i = 0; i < 40; i++) {
+    await p.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+    await p.evaluate(() => new Promise((r) => requestAnimationFrame(r)));
+    const state = await p.evaluate(() => {
+      const hero = document.querySelector('[data-hero]');
+      const r = hero.getBoundingClientRect();
+      return {
+        gated: hero.classList.contains('is-gated'),
+        below: r.bottom - window.innerHeight,
+      };
+    });
+    if (state.gated && state.below > 4) escaped = true;
+  }
+  escaped
+    ? fail('scrollbar: the clamp let the viewport past the pin end')
+    : pass('scrollbar: the rAF clamp still holds the viewport at the pin end');
+  await p.close();
+}
+
+// ── the gate is once per visit ─────────────────────────────────────────────
+{
+  const p = await freshGate();
+  for (let i = 0; i < 80; i++) await p.mouse.wheel(0, 900);
+  await p.waitForFunction(
+    () => !document.querySelector('[data-hero]').classList.contains('is-gated'),
+    null,
+    { timeout: 20000 }
+  );
+  await p.evaluate(() => window.scrollTo(0, 0));
+  await p.waitForTimeout(2500);
+  let reGated = false;
+  for (let burst = 0; burst < 10; burst++) {
+    for (let i = 0; i < 4; i++) await p.mouse.wheel(0, 900);
+    if (
+      await p.evaluate(() => document.querySelector('[data-hero]').classList.contains('is-gated'))
+    ) {
+      reGated = true;
     }
   }
-  return null;
-});
-await upPage.close();
+  reGated
+    ? fail('the gate re-engaged after the hero had already played through')
+    : pass('gate stays off once the hero has completed');
+  await p.close();
+}
 
-gate.gatedFrames > 0
-  ? pass(`gate engages on a max-speed flick (${gate.gatedFrames} frames)`)
-  : fail('gate never engaged — the flick went straight past the hero');
-
-gate.leaked === 0
-  ? pass('nothing below the hero was ever on screen while gated')
-  : fail(`content below the hero showed on ${gate.leaked} gated frames`);
-
-upWorked === true
-  ? pass('scrolling up still works while gated')
-  : fail(`upward scroll was blocked while gated (${upWorked})`);
-
-// GATE_MAX_S budgets 3.5s, and measured runs land between 3.3s and 4.5s.
-//
-// The spread is the headless frame rate: progress moves in ~0.1s steps, and the
-// boost is capped at 2x, so frames lost to a slow tick can't be made back
-// inside the budget. The bound is set to tell apart the thing that actually
-// matters — a hold at half MIN_PLAY_S rather than the full 6.9s — instead of
-// sitting on the mean, where it just fails one run in three.
-gate.held > 0 && gate.held < 5
-  ? pass(`hold capped at ${gate.held.toFixed(2)}s of playback, not the full 6.9s`)
-  : fail(`gate held for ${gate.held.toFixed(2)}s of playback`);
-
-gate.reGated
-  ? fail('the gate re-engaged after the hero had already played through')
-  : pass('gate stays off once the hero has completed');
 
 // ── 3. Reduced motion ──────────────────────────────────────────────────────
 console.log('\n[3] Reduced motion');
